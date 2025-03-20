@@ -1,20 +1,28 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import Button from 'primevue/button';
-
 </script>
 
 <template>
-
-  <RouterView />
-  <div class="p-4">
-    <Button label="Click Me" icon="pi pi-check" />
-  </div>
-  <h1>hello world </h1>
+  <main>
+    <RouterView />
+  </main>
 </template>
 
-<style scoped>
+<style>
+/* Add these global styles to support dark mode */
+:root {
+  --text-color: #213547;
+  --background-color: #ffffff;
+}
 
+.dark-mode {
+  --text-color: #ffffffde;
+  --background-color: #1e1e1e;
+}
 
-  
+body {
+  color: var(--text-color);
+  background-color: var(--background-color);
+  transition: color 0.3s, background-color 0.3s;
+}
 </style>
