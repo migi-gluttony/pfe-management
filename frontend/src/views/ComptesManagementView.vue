@@ -491,7 +491,7 @@
   async function fetchComptes() {
     loading.value = true;
     try {
-      const response = await ApiService.get('/api/utilisateurs');
+      const response = await ApiService.get('/utilisateurs');
       comptes.value = response;
     } catch (error) {
       handleApiError(error, 'Erreur lors du chargement des utilisateurs');
@@ -502,7 +502,7 @@
   
   async function fetchEtudiants() {
     try {
-      const response = await ApiService.get('/api/etudiant');
+      const response = await ApiService.get('/etudiant');
       etudiants.value = response;
     } catch (error) {
       handleApiError(error, 'Erreur lors du chargement des étudiants');
@@ -511,7 +511,7 @@
   
   async function fetchClasses() {
     try {
-      const response = await ApiService.get('/api/filiere');
+      const response = await ApiService.get('/filiere');
       classes.value = response;
     } catch (error) {
       handleApiError(error, 'Erreur lors du chargement des filières');
@@ -574,7 +574,7 @@
       }
       
       // Register the user
-      const response = await ApiService.post('/api/auth/register', accountData);
+      const response = await ApiService.post('/auth/register', accountData);
       
       // If this is a student, we need to associate with a filière
       if (newCompte.value.role === 'ETUDIANT' && newCompte.value.filiere) {
@@ -638,7 +638,7 @@
       }
       
       // Update user
-      const response = await ApiService.put(`/api/utilisateurs/${editingCompte.value.id}`, userData);
+      const response = await ApiService.put(`/utilisateurs/${editingCompte.value.id}`, userData);
       
       // If student and filiere changed, update etudiant entry
       if (editingCompte.value.role === 'ETUDIANT' && editingCompte.value.filiere) {
@@ -646,14 +646,14 @@
         
         if (etudiant) {
           // Update existing etudiant
-          await ApiService.put(`/api/etudiant/${etudiant.id}`, {
+          await ApiService.put(`/etudiant/${etudiant.id}`, {
             id: etudiant.id,
             utilisateur: { id: editingCompte.value.id },
             filiere: { id: editingCompte.value.filiere }
           });
         } else {
           // Create new etudiant entry
-          await ApiService.post('/api/etudiant', {
+          await ApiService.post('/etudiant', {
             id: editingCompte.value.id,
             utilisateur: { id: editingCompte.value.id },
             filiere: { id: editingCompte.value.filiere }
