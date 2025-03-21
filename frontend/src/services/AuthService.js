@@ -5,6 +5,20 @@ import ApiService from './ApiService';
  */
 export default {
   /**
+   * Register a new user
+   * @param {Object} userData - User registration data
+   * @returns {Promise} - Promise with registration response
+   */
+  async register(userData) {
+    try {
+      return await ApiService.post('/auth/register', userData);
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Login a user with email and password
    * @param {string} email - User's email
    * @param {string} password - User's password
@@ -23,8 +37,10 @@ export default {
       if (data.token) {
         if (rememberMe) {
           localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
         } else {
           sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('user', JSON.stringify(data.user));
         }
       }
 
@@ -40,8 +56,9 @@ export default {
    */
   logout() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     sessionStorage.removeItem('token');
-    // If you have a refresh token or other auth data, remove it here
+    sessionStorage.removeItem('user');
     
     // Optionally, you can call a logout endpoint to invalidate the token on the server
     // ApiService.post('/auth/logout').catch(err => console.error('Logout error:', err));
@@ -96,10 +113,19 @@ export default {
   },
   
   /**
-   * Get the current user profile
+   * Get the current user data
+   * @returns {Object|null} - User data or null if not authenticated
+   */
+  getCurrentUser() {
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  },
+  
+  /**
+   * Fetch current user's profile from API
    * @returns {Promise} - Promise with user data
    */
-  async getCurrentUser() {
+  async fetchUserProfile() {
     try {
       return await ApiService.get('/auth/me');
     } catch (error) {
