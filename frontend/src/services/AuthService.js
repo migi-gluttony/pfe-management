@@ -19,6 +19,28 @@ export default {
   },
 
   /**
+   * Parse JWT token to extract user information
+   * @param {string} token - JWT token
+   * @returns {Object} - User information from token
+   */
+  parseToken(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      return {
+        email: payload.sub,
+        role: payload.role,
+        userId: payload.userId
+      };
+    } catch (e) {
+      console.error('Error parsing token:', e);
+      return null;
+    }
+  },
+
+  /**
    * Login a user with email and password
    * @param {string} email - User's email
    * @param {string} password - User's password
@@ -27,20 +49,27 @@ export default {
    */
   async login(email, password, rememberMe = false) {
     try {
+      // Match the field names expected by the backend (LoginRequest.java)
       const data = await ApiService.post('/auth/login', { 
-        email, 
-        password, 
-        rememberMe 
+        email,
+        password
       });
 
       // Store token in localStorage/sessionStorage based on remember me option
       if (data.token) {
+        // Parse token to extract user info
+        const userInfo = this.parseToken(data.token);
+        
         if (rememberMe) {
           localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          if (userInfo) {
+            localStorage.setItem('user', JSON.stringify(userInfo));
+          }
         } else {
           sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('user', JSON.stringify(data.user));
+          if (userInfo) {
+            sessionStorage.setItem('user', JSON.stringify(userInfo));
+          }
         }
       }
 
@@ -65,13 +94,13 @@ export default {
   },
 
   /**
-   * Request password reset link
-   * @param {string} email - User's email
+   * Request password reset
+   * @param {Object} resetData - Password reset data (email, cni/cne, dateNaissance)
    * @returns {Promise} - Promise with request response
    */
-  async requestPasswordReset(email) {
+  async requestPasswordReset(resetData) {
     try {
-      return await ApiService.post('/auth/forgot-password', { email });
+      return await ApiService.post('/auth/reset-password-request', resetData);
     } catch (error) {
       console.error('Password reset request error:', error);
       throw error;
@@ -80,15 +109,15 @@ export default {
 
   /**
    * Reset password with token and new password
-   * @param {string} token - Reset password token from email
+   * @param {string} token - Reset password token
    * @param {string} newPassword - New password
    * @returns {Promise} - Promise with reset response
    */
-  async resetPassword(token, newPassword) {
+  async confirmPasswordReset(token, newPassword) {
     try {
-      return await ApiService.post('/auth/reset-password', { 
+      return await ApiService.post('/auth/reset-password-confirm', { 
         token, 
-        password: newPassword 
+        newPassword 
       });
     } catch (error) {
       console.error('Password reset error:', error);
@@ -119,18 +148,5 @@ export default {
   getCurrentUser() {
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
-  },
-  
-  /**
-   * Fetch current user's profile from API
-   * @returns {Promise} - Promise with user data
-   */
-  async fetchUserProfile() {
-    try {
-      return await ApiService.get('/auth/me');
-    } catch (error) {
-      console.error('Get current user error:', error);
-      throw error;
-    }
   }
 };
