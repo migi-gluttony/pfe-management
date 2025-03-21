@@ -3,8 +3,7 @@ import router from '../router';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8333/api',
-  withCredentials: true, // This is important for CORS with credentials
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
