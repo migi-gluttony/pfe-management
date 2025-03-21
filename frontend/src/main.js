@@ -7,14 +7,25 @@ import axios from 'axios'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
 
 // Import PrimeVue components
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import Checkbox from 'primevue/checkbox'
+import Dropdown from 'primevue/dropdown'
 import Toast from 'primevue/toast'
+import ProgressBar from 'primevue/progressbar'
 import Tooltip from 'primevue/tooltip'
+import ConfirmDialog from 'primevue/confirmdialog'
+import Dialog from 'primevue/dialog'
+
+// Import PrimeFlex (responsive CSS utilities)
+import 'primeflex/primeflex.css'
+
+// Import PrimeIcons
+import 'primeicons/primeicons.css'
 
 // Create app instance
 const app = createApp(App)
@@ -32,15 +43,23 @@ app.use(PrimeVue, {
 // Add global properties
 app.config.globalProperties.$axios = axios
 
+// Configure axios baseURL for API
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api'
+
 // Use PrimeVue services
 app.use(ToastService)
+app.use(ConfirmationService)
 
 // Register PrimeVue components
 app.component('Button', Button)
 app.component('InputText', InputText)
 app.component('Password', Password)
 app.component('Checkbox', Checkbox)
+app.component('Dropdown', Dropdown)
 app.component('Toast', Toast)
+app.component('ProgressBar', ProgressBar)
+app.component('ConfirmDialog', ConfirmDialog)
+app.component('Dialog', Dialog)
 
 // Register directives
 app.directive('tooltip', Tooltip)

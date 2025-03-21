@@ -1,5 +1,4 @@
 import axios from 'axios';
-import AuthService from './ApiService';
 import router from '../router';
 
 // Create axios instance
@@ -10,10 +9,15 @@ const api = axios.create({
   },
 });
 
+// Helper functions for token management
+const getToken = () => {
+  return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
+};
+
 // Request interceptor for adding the auth token
 api.interceptors.request.use(
   (config) => {
-    const token = AuthService.getToken();
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -33,7 +37,13 @@ api.interceptors.response.use(
   (error) => {
     // Handle unauthorized errors (token expired, etc.)
     if (error.response && error.response.status === 401) {
-      AuthService.logout();
+      // Clear the token
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      
+      // Redirect to login
       router.push('/login');
     }
     
@@ -44,7 +54,7 @@ api.interceptors.response.use(
 /**
  * Service for making API requests
  */
-export default {
+const ApiService = {
   /**
    * Make a GET request
    * @param {string} endpoint - API endpoint
@@ -148,8 +158,7 @@ export default {
       console.error(`UPLOAD to ${endpoint} error:`, error);
       throw error;
     }
-  },
-  
-  // Export the axios instance for direct use if needed
-  api
+  }
 };
+
+export default ApiService;
