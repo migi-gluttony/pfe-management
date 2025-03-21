@@ -341,7 +341,7 @@
   async function fetchSujets() {
     loading.value = true;
     try {
-      const response = await ApiService.get('/api/sujet');
+      const response = await ApiService.get('/sujet');
       sujets.value = response;
     } catch (error) {
       handleApiError(error, 'Erreur lors du chargement des sujets');
@@ -352,7 +352,7 @@
   
   async function fetchClasses() {
     try {
-      const response = await ApiService.get('/api/filiere');
+      const response = await ApiService.get('/filiere');
       classes.value = response;
     } catch (error) {
       handleApiError(error, 'Erreur lors du chargement des filières');
@@ -377,7 +377,7 @@
         newSujet.value.filiere = { id: newSujet.value.filiere };
       }
       
-      const response = await ApiService.post('/api/sujet', newSujet.value);
+      const response = await ApiService.post('/sujet', newSujet.value);
       sujets.value.push(response);
       
       // Reset form and close modal
@@ -413,7 +413,7 @@
         editingSujet.value.filiere = { id: editingSujet.value.filiere };
       }
       
-      const response = await ApiService.put(`/api/sujet/${editingSujet.value.id}`, editingSujet.value);
+      const response = await ApiService.put(`/sujet/${editingSujet.value.id}`, editingSujet.value);
       
       // Update local data
       const index = sujets.value.findIndex(s => s.id === editingSujet.value.id);
@@ -449,7 +449,7 @@
   
   async function deleteSujet(sujet) {
     try {
-      await ApiService.delete(`/api/sujet/${sujet.id}`);
+      await ApiService.delete(`/sujet/${sujet.id}`);
       
       // Update local data
       sujets.value = sujets.value.filter(s => s.id !== sujet.id);

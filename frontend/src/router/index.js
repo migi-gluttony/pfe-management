@@ -1,7 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 import AuthService from '../services/AuthService'
+
+// Management views
+import BinomeManagementView from '../views/BinomeManagementView.vue'
+import ComptesManagementView from '../views/ComptesManagementView.vue'
+import SoutenanceManagementView from '../views/SoutenanceManagementView.vue'
+import SujetManagementView from '../views/SujetManagementView.vue'
 
 // Create router instance
 const router = createRouter({
@@ -14,7 +21,6 @@ const router = createRouter({
       component: LoginView,
       meta: { guest: true }
     },
-    
     // Protected routes (authentication required)
     {
       path: '/dashboard',
@@ -23,6 +29,44 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     
+    // Department Head (CHEF_DE_DEPARTEMENT) routes
+    {
+      path: '/management/binomes',
+      name: 'binomeManagement',
+      component: BinomeManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/comptes',
+      name: 'comptesManagement',
+      component: ComptesManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/soutenances',
+      name: 'soutenanceManagement',
+      component: SoutenanceManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/sujets',
+      name: 'sujetManagement',
+      component: SujetManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+
     // Redirect root to dashboard
     {
       path: '/',
@@ -33,7 +77,7 @@ const router = createRouter({
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
-      component: () => import('../views/NotFoundView.vue')
+      component: NotFoundView
     }
   ]
 })
@@ -52,7 +96,14 @@ router.beforeEach((to, from, next) => {
       return;
     }
     
-    // User is authenticated
+    // Check for role requirements
+    if (to.meta.requiresRole && currentUser?.role !== to.meta.requiresRole) {
+      // User doesn't have the required role, redirect to dashboard
+      next({ name: 'dashboard' });
+      return;
+    }
+    
+    // User is authenticated and has the required role (if any)
     next();
   } 
   // Handle routes for guests only

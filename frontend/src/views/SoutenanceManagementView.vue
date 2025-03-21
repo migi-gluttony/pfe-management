@@ -810,3 +810,99 @@
   }
   </script>
   
+<style>
+/* Styles for SoutenanceManagementView.vue */
+
+.soutenance-management {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.header-section {
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  color: var(--primary-color);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.class-dropdown {
+  display: inline-flex;
+  min-width: 200px;
+}
+
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.search-container {
+  flex: 1;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.table-card {
+  margin-bottom: 2rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.p-field {
+  margin-bottom: 0;
+}
+
+.p-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.soutenance-dialog .p-calendar,
+.soutenance-dialog .p-dropdown {
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .soutenance-management {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .action-bar {
+    flex-direction: column;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+</style>
