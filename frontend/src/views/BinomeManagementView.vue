@@ -4,34 +4,41 @@
     <ConfirmDialog />
     
     <div class="header-section">
-      <h1 class="page-title">
-        Gestion des Binômes
+      <div class="title-row">
+        <h1 class="page-title">Gestion des Binômes</h1>
+      </div>
+      <div class="filter-row">
         <Dropdown 
-          v-model="selectedClass" 
-          :options="classes" 
-          optionLabel="filiere" 
+          v-model="selectedFiliere" 
+          :options="filieres" 
+          optionLabel="nom" 
           optionValue="id"
-          placeholder="Sélectionner une classe" 
-          class="class-dropdown" 
+          placeholder="Filtrer par filière" 
+          class="filiere-dropdown"
+          @change="handleFiliereChange" 
         />
-      </h1>
+      </div>
     </div>
     
     <div class="action-bar">
-      <span class="p-input-icon-left search-container">
-        <i class="pi pi-search" />
-        <InputText 
-          v-model="searchQuery" 
-          placeholder="Rechercher un binôme..." 
-          class="search-input"
+      <div class="search-row">
+        <span class="p-input-icon-left search-container">
+          <i class="pi pi-search" />
+          <InputText 
+            v-model="searchQuery" 
+            placeholder="Rechercher un binôme..." 
+            class="search-input"
+          />
+        </span>
+      </div>
+      <div class="button-row">
+        <Button 
+          label="Ajouter un binôme" 
+          icon="pi pi-plus" 
+          class="p-button-primary add-btn"
+          @click="openAddModal" 
         />
-      </span>
-      <Button 
-        label="Ajouter un binôme" 
-        icon="pi pi-plus" 
-        class="p-button-primary add-btn"
-        @click="openAddModal" 
-      />
+      </div>
     </div>
 
     <!-- Data Table with PrimeVue -->
@@ -49,34 +56,31 @@
           currentPageReportTemplate="Montrant {first} à {last} sur {totalRecords} binômes"
           emptyMessage="Aucun binôme trouvé"
         >
-          <Column field="etudiant1" header="Étudiant 1">
+          <Column field="etudiant1.nom" header="Étudiant 1" sortable style="min-width: 12rem">
             <template #body="slotProps">
-              {{ getStudentName(slotProps.data.etudiant1_id) }}
+              {{ getStudentFullName(slotProps.data.etudiant1) }}
             </template>
           </Column>
-          <Column field="etudiant2" header="Étudiant 2">
+          <Column field="etudiant2.nom" header="Étudiant 2" sortable style="min-width: 12rem">
             <template #body="slotProps">
-              {{ getStudentName(slotProps.data.etudiant2_id) }}
+              {{ slotProps.data.etudiant2 ? getStudentFullName(slotProps.data.etudiant2) : '-' }}
             </template>
           </Column>
-          <Column field="encadrant" header="Encadrant">
+          <Column field="encadrant.nom" header="Encadrant" sortable style="min-width: 12rem">
             <template #body="slotProps">
-              {{ getSupervisorName(slotProps.data.encadrant_id) }}
+              {{ getEncadrantFullName(slotProps.data.encadrant) }}
             </template>
           </Column>
-          <Column field="sujet" header="Sujet">
-            <template #body="slotProps">
-              {{ getSubjectTitle(slotProps.data.sujet_id) }}
-            </template>
-          </Column>
-          <Column header="Actions" :exportable="false" style="min-width: 8rem">
+          <Column field="sujet.titre" header="Sujet" sortable style="min-width: 15rem"></Column>
+          <Column field="filiereName" header="Filière" sortable style="min-width: 8rem"></Column>
+          <Column header="Actions" :exportable="false" style="min-width: 10rem">
             <template #body="slotProps">
               <div class="action-buttons">
                 <Button 
                   icon="pi pi-pencil" 
                   class="p-button-rounded p-button-outlined p-button-info mr-2" 
                   @click="openEditModal(slotProps.data)" 
-                  tooltip="Modifier"
+                  tooltip="Changer l'encadrant"
                   tooltipOptions="top"
                 />
                 <Button 
@@ -92,95 +96,74 @@
         </DataTable>
       </template>
     </Card>
-
+    
     <!-- Add Binome Dialog -->
     <Dialog 
       v-model:visible="showAddModal" 
       header="Ajouter un Nouveau Binôme" 
       :modal="true" 
       class="binome-dialog"
-      :style="{ width: '500px' }"
+      :style="{ width: '600px' }"
       :closable="false"
     >
       <div class="field-container">
         <div class="p-field">
-          <label for="etudiant1">Étudiant 1</label>
+          <label for="etudiant1">Étudiant 1 <span class="required">*</span></label>
           <Dropdown 
             id="etudiant1" 
-            v-model="newBinome.etudiant1_id" 
-            :options="etudiants" 
-            optionLabel="nom" 
+            v-model="newBinome.etudiant1Id" 
+            :options="availableStudents" 
+            optionLabel="fullName" 
             optionValue="id"
             placeholder="Sélectionner un étudiant" 
-            class="w-full" 
+            class="w-full"
             :filter="true"
-            filterPlaceholder="Rechercher un étudiant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getStudentName(slotProps.value) }}
-            </template>
-          </Dropdown>
+            required
+          />
         </div>
         
         <div class="p-field">
           <label for="etudiant2">Étudiant 2</label>
           <Dropdown 
             id="etudiant2" 
-            v-model="newBinome.etudiant2_id" 
-            :options="etudiants" 
-            optionLabel="nom" 
+            v-model="newBinome.etudiant2Id" 
+            :options="availableStudents.filter(s => s.id !== newBinome.etudiant1Id)" 
+            optionLabel="fullName" 
             optionValue="id"
             placeholder="Sélectionner un étudiant (optionnel)" 
-            class="w-full" 
+            class="w-full"
             :filter="true"
-            filterPlaceholder="Rechercher un étudiant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getStudentName(slotProps.value) }}
-            </template>
-          </Dropdown>
+            :disabled="!newBinome.etudiant1Id"
+          />
         </div>
         
         <div class="p-field">
-          <label for="encadrant">Encadrant</label>
+          <label for="encadrant">Encadrant <span class="required">*</span></label>
           <Dropdown 
             id="encadrant" 
-            v-model="newBinome.encadrant_id" 
-            :options="enseignants" 
-            optionLabel="nom" 
+            v-model="newBinome.encadrantId" 
+            :options="encadrants" 
+            optionLabel="fullName" 
             optionValue="id"
             placeholder="Sélectionner un encadrant" 
-            class="w-full" 
+            class="w-full"
             :filter="true"
-            filterPlaceholder="Rechercher un encadrant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getSupervisorName(slotProps.value) }}
-            </template>
-          </Dropdown>
+            required
+          />
         </div>
         
         <div class="p-field">
-          <label for="sujet">Sujet</label>
+          <label for="sujet">Sujet <span class="required">*</span></label>
           <Dropdown 
             id="sujet" 
-            v-model="newBinome.sujet_id" 
-            :options="sujets" 
+            v-model="newBinome.sujetId" 
+            :options="availableSujets" 
             optionLabel="titre" 
             optionValue="id"
             placeholder="Sélectionner un sujet" 
-            class="w-full" 
+            class="w-full"
             :filter="true"
-            filterPlaceholder="Rechercher un sujet"
+            required
           />
         </div>
       </div>
@@ -202,94 +185,34 @@
       </template>
     </Dialog>
     
-    <!-- Edit Binome Dialog -->
+    <!-- Edit Binome Dialog (Change Encadrant) -->
     <Dialog 
       v-model:visible="showEditModal" 
-      header="Modifier le Binôme" 
+      header="Changer l'Encadrant du Binôme" 
       :modal="true" 
       class="binome-dialog"
       :style="{ width: '500px' }"
       :closable="false"
     >
       <div v-if="editingBinome" class="field-container">
-        <div class="p-field">
-          <label for="edit-etudiant1">Étudiant 1</label>
-          <Dropdown 
-            id="edit-etudiant1" 
-            v-model="editingBinome.etudiant1_id" 
-            :options="etudiants" 
-            optionLabel="nom" 
-            optionValue="id"
-            placeholder="Sélectionner un étudiant" 
-            class="w-full" 
-            :filter="true"
-            filterPlaceholder="Rechercher un étudiant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getStudentName(slotProps.value) }}
-            </template>
-          </Dropdown>
+        <div class="current-info">
+          <p><strong>Binôme:</strong> {{ getStudentFullName(editingBinome.etudiant1) }} 
+             {{ editingBinome.etudiant2 ? '& ' + getStudentFullName(editingBinome.etudiant2) : '' }}</p>
+          <p><strong>Encadrant actuel:</strong> {{ getEncadrantFullName(editingBinome.encadrant) }}</p>
         </div>
         
         <div class="p-field">
-          <label for="edit-etudiant2">Étudiant 2</label>
+          <label for="new-encadrant">Nouvel Encadrant <span class="required">*</span></label>
           <Dropdown 
-            id="edit-etudiant2" 
-            v-model="editingBinome.etudiant2_id" 
-            :options="etudiants" 
-            optionLabel="nom" 
-            optionValue="id"
-            placeholder="Sélectionner un étudiant (optionnel)" 
-            class="w-full" 
-            :filter="true"
-            filterPlaceholder="Rechercher un étudiant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getStudentName(slotProps.value) }}
-            </template>
-          </Dropdown>
-        </div>
-        
-        <div class="p-field">
-          <label for="edit-encadrant">Encadrant</label>
-          <Dropdown 
-            id="edit-encadrant" 
-            v-model="editingBinome.encadrant_id" 
-            :options="enseignants" 
-            optionLabel="nom" 
+            id="new-encadrant" 
+            v-model="editRequest.encadrantId" 
+            :options="encadrants" 
+            optionLabel="fullName" 
             optionValue="id"
             placeholder="Sélectionner un encadrant" 
-            class="w-full" 
+            class="w-full"
             :filter="true"
-            filterPlaceholder="Rechercher un encadrant"
-          >
-            <template #option="slotProps">
-              {{ slotProps.option.prenom }} {{ slotProps.option.nom }}
-            </template>
-            <template #selectedOption="slotProps">
-              {{ getSupervisorName(slotProps.value) }}
-            </template>
-          </Dropdown>
-        </div>
-        
-        <div class="p-field">
-          <label for="edit-sujet">Sujet</label>
-          <Dropdown 
-            id="edit-sujet" 
-            v-model="editingBinome.sujet_id" 
-            :options="sujets" 
-            optionLabel="titre" 
-            optionValue="id"
-            placeholder="Sélectionner un sujet" 
-            class="w-full" 
-            :filter="true"
-            filterPlaceholder="Rechercher un sujet"
+            required
           />
         </div>
       </div>
@@ -314,30 +237,44 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import ApiService from '@/services/ApiService';
 
-// PrimeVue components are globally registered in main.js
+// Import PrimeVue components
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dialog from 'primevue/dialog';
 
 // Component state
 const binomes = ref([]);
-const enseignants = ref([]);
-const etudiants = ref([]);
-const sujets = ref([]);
-const classes = ref([]);
-const selectedClass = ref(null);
-const newBinome = ref({ 
-  etudiant1_id: null, 
-  etudiant2_id: null, 
-  encadrant_id: null, 
-  sujet_id: null,
-  class_id: null
+const filieres = ref([]);
+const selectedFiliere = ref(null);
+const availableStudents = ref([]);
+const encadrants = ref([]);
+const availableSujets = ref([]);
+
+const newBinome = ref({
+  etudiant1Id: null,
+  etudiant2Id: null,
+  encadrantId: null,
+  sujetId: null
 });
+
 const editingBinome = ref(null);
-const showEditModal = ref(false);
+const editRequest = ref({
+  encadrantId: null
+});
+
 const showAddModal = ref(false);
+const showEditModal = ref(false);
 const loading = ref(false);
 const submitting = ref(false);
 const searchQuery = ref('');
@@ -346,118 +283,80 @@ const searchQuery = ref('');
 const toast = useToast();
 const confirm = useConfirm();
 
+// Process data for dropdowns
+const processedAvailableStudents = computed(() => {
+  return availableStudents.value.map(student => ({
+    ...student,
+    fullName: `${student.nom} ${student.prenom} (${student.cne || 'N/A'})`
+  }));
+});
+
+const processedEncadrants = computed(() => {
+  return encadrants.value.map(encadrant => ({
+    ...encadrant,
+    fullName: `${encadrant.nom} ${encadrant.prenom}`
+  }));
+});
+
 // Computed filtered binomes
 const filteredBinomes = computed(() => {
   const query = searchQuery.value.toLowerCase();
-  let filtered = binomes.value;
-
-  // Filter by selected class
-  if (selectedClass.value) {
-    filtered = filtered.filter(binome => binome.class_id === selectedClass.value);
-  }
-
-  // Filter by search query
-  if (query) {
-    filtered = filtered.filter(binome => {
-      const etudiant1 = getStudentName(binome.etudiant1_id).toLowerCase();
-      const etudiant2 = getStudentName(binome.etudiant2_id).toLowerCase();
-      const encadrant = getSupervisorName(binome.encadrant_id).toLowerCase();
-      const sujet = getSubjectTitle(binome.sujet_id).toLowerCase();
-      
-      return (
-        etudiant1.includes(query) || 
-        etudiant2.includes(query) ||
-        encadrant.includes(query) ||
-        sujet.includes(query)
-      );
-    });
-  }
-
-  return filtered;
+  if (!query) return binomes.value;
+  
+  return binomes.value.filter(binome => 
+    (binome.etudiant1?.nom.toLowerCase().includes(query) || binome.etudiant1?.prenom.toLowerCase().includes(query)) ||
+    (binome.etudiant2?.nom?.toLowerCase().includes(query) || binome.etudiant2?.prenom?.toLowerCase().includes(query)) ||
+    (binome.encadrant?.nom.toLowerCase().includes(query) || binome.encadrant?.prenom.toLowerCase().includes(query)) ||
+    (binome.sujet?.titre.toLowerCase().includes(query)) ||
+    (binome.filiereName?.toLowerCase().includes(query))
+  );
 });
 
 // Fetch data on component mount
 onMounted(async () => {
-  await Promise.all([
-    fetchBinomes(),
-    fetchEnseignants(),
-    fetchEtudiants(),
-    fetchSujets(),
-    fetchClasses()
-  ]);
-  
-  // Set default selected class
-  if (classes.value.length > 0) {
-    selectedClass.value = classes.value[0].id;
-  }
+  await fetchData();
 });
 
+// Helper methods
+function getStudentFullName(student) {
+  if (!student) return '-';
+  return `${student.nom} ${student.prenom}`;
+}
+
+function getEncadrantFullName(encadrant) {
+  if (!encadrant) return '-';
+  return `${encadrant.nom} ${encadrant.prenom}`;
+}
+
 // Methods for fetching data
-async function fetchBinomes() {
+async function fetchData(filiereId = null) {
   loading.value = true;
   try {
-    const response = await ApiService.get('/binomes');
-    binomes.value = response;
+    const endpoint = filiereId 
+      ? `/chef_de_departement/binomes?filiereId=${filiereId}`
+      : '/chef_de_departement/binomes';
+      
+    const response = await ApiService.get(endpoint);
+    
+    binomes.value = response.binomes;
+    filieres.value = response.filieres;
+    availableStudents.value = response.availableStudents;
+    encadrants.value = response.encadrants;
+    availableSujets.value = response.availableSujets;
+    
+    // Set default selected filiere if none selected
+    if (filieres.value.length > 0 && !selectedFiliere.value) {
+      selectedFiliere.value = filieres.value[0].id;
+    }
   } catch (error) {
-    handleApiError(error, 'Erreur lors du chargement des binômes');
+    handleApiError(error, 'Erreur lors du chargement des données');
   } finally {
     loading.value = false;
   }
 }
 
-async function fetchEnseignants() {
-  try {
-    const response = await ApiService.get('/utilisateurs', { role: 'ENCADRANT' });
-    enseignants.value = response;
-  } catch (error) {
-    handleApiError(error, 'Erreur lors du chargement des enseignants');
-  }
-}
-
-async function fetchEtudiants() {
-  try {
-    const response = await ApiService.get('/utilisateurs', { role: 'ETUDIANT' });
-    etudiants.value = response;
-  } catch (error) {
-    handleApiError(error, 'Erreur lors du chargement des étudiants');
-  }
-}
-
-async function fetchSujets() {
-  try {
-    const response = await ApiService.get('/sujets');
-    sujets.value = response;
-  } catch (error) {
-    handleApiError(error, 'Erreur lors du chargement des sujets');
-  }
-}
-
-async function fetchClasses() {
-  try {
-    const response = await ApiService.get('/filieres');
-    classes.value = response;
-  } catch (error) {
-    handleApiError(error, 'Erreur lors du chargement des classes');
-  }
-}
-
-// Helper methods for data display
-function getStudentName(id) {
-  if (!id) return 'N/A';
-  const student = etudiants.value.find(e => e.id === id);
-  return student ? `${student.prenom} ${student.nom}` : 'N/A';
-}
-
-function getSupervisorName(id) {
-  if (!id) return 'N/A';
-  const supervisor = enseignants.value.find(e => e.id === id);
-  return supervisor ? `${supervisor.prenom} ${supervisor.nom}` : 'N/A';
-}
-
-function getSubjectTitle(id) {
-  if (!id) return 'N/A';
-  const subject = sujets.value.find(s => s.id === id);
-  return subject ? subject.titre : 'N/A';
+function handleFiliereChange() {
+  fetchData(selectedFiliere.value);
 }
 
 // CRUD operations
@@ -466,20 +365,11 @@ async function addBinome() {
   
   submitting.value = true;
   try {
-    // Set class_id from selected class
-    newBinome.value.class_id = selectedClass.value;
-    
-    const response = await ApiService.post('/binomes', newBinome.value);
+    const response = await ApiService.post('/chef_de_departement/binomes', newBinome.value);
     binomes.value.push(response);
     
     // Reset form and close modal
-    newBinome.value = { 
-      etudiant1_id: null, 
-      etudiant2_id: null, 
-      encadrant_id: null, 
-      sujet_id: null,
-      class_id: null 
-    };
+    resetNewBinomeForm();
     showAddModal.value = false;
     
     // Show success message
@@ -489,6 +379,9 @@ async function addBinome() {
       detail: 'Le binôme a été ajouté avec succès',
       life: 3000
     });
+    
+    // Refresh data to update available students and subjects
+    await fetchData(selectedFiliere.value);
   } catch (error) {
     handleApiError(error, "Erreur lors de l'ajout du binôme");
   } finally {
@@ -497,11 +390,14 @@ async function addBinome() {
 }
 
 async function saveEditedBinome() {
-  if (!validateBinomeData(editingBinome.value)) return;
+  if (!editRequest.value.encadrantId) {
+    showValidationError("Veuillez sélectionner un encadrant");
+    return;
+  }
   
   submitting.value = true;
   try {
-    const response = await ApiService.put(`/binomes/${editingBinome.value.id}`, editingBinome.value);
+    const response = await ApiService.put(`/chef_de_departement/binomes/${editingBinome.value.id}`, editRequest.value);
     
     // Update local data
     const index = binomes.value.findIndex(b => b.id === editingBinome.value.id);
@@ -514,19 +410,23 @@ async function saveEditedBinome() {
     toast.add({
       severity: 'success',
       summary: 'Binôme mis à jour',
-      detail: 'Le binôme a été modifié avec succès',
+      detail: "L'encadrant du binôme a été modifié avec succès",
       life: 3000
     });
   } catch (error) {
-    handleApiError(error, 'Erreur lors de la modification du binôme');
+    handleApiError(error, "Erreur lors de la modification de l'encadrant");
   } finally {
     submitting.value = false;
   }
 }
 
 function confirmDelete(binome) {
+  const studentNames = binome.etudiant2 
+    ? `${getStudentFullName(binome.etudiant1)} et ${getStudentFullName(binome.etudiant2)}`
+    : getStudentFullName(binome.etudiant1);
+    
   confirm.require({
-    message: `Êtes-vous sûr de vouloir supprimer le binôme de ${getStudentName(binome.etudiant1_id)} ${binome.etudiant2_id ? 'et ' + getStudentName(binome.etudiant2_id) : ''}?`,
+    message: `Êtes-vous sûr de vouloir supprimer le binôme de ${studentNames}?`,
     header: 'Confirmation de suppression',
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
@@ -537,7 +437,7 @@ function confirmDelete(binome) {
 
 async function deleteBinome(binome) {
   try {
-    await ApiService.delete(`/binomes/${binome.id}`);
+    await ApiService.delete(`/chef_de_departement/binomes/${binome.id}`);
     
     // Update local data
     binomes.value = binomes.value.filter(b => b.id !== binome.id);
@@ -548,6 +448,9 @@ async function deleteBinome(binome) {
       detail: 'Le binôme a été supprimé avec succès',
       life: 3000
     });
+    
+    // Refresh data to update available students
+    await fetchData(selectedFiliere.value);
   } catch (error) {
     handleApiError(error, 'Erreur lors de la suppression du binôme');
   }
@@ -555,39 +458,43 @@ async function deleteBinome(binome) {
 
 // UI control methods
 function openAddModal() {
-  newBinome.value = { 
-    etudiant1_id: null, 
-    etudiant2_id: null, 
-    encadrant_id: null, 
-    sujet_id: null,
-    class_id: selectedClass.value
-  };
+  resetNewBinomeForm();
   showAddModal.value = true;
 }
 
 function openEditModal(binome) {
   editingBinome.value = { ...binome };
+  editRequest.value.encadrantId = binome.encadrant.id;
   showEditModal.value = true;
 }
 
 function closeModals() {
-  showEditModal.value = false;
   showAddModal.value = false;
+  showEditModal.value = false;
+}
+
+function resetNewBinomeForm() {
+  newBinome.value = {
+    etudiant1Id: null,
+    etudiant2Id: null,
+    encadrantId: null,
+    sujetId: null
+  };
 }
 
 // Validation
 function validateBinomeData(binome) {
-  if (!binome.etudiant1_id) {
+  if (!binome.etudiant1Id) {
     showValidationError("L'étudiant 1 est obligatoire");
     return false;
   }
   
-  if (!binome.encadrant_id) {
+  if (!binome.encadrantId) {
     showValidationError("L'encadrant est obligatoire");
     return false;
   }
   
-  if (!binome.sujet_id) {
+  if (!binome.sujetId) {
     showValidationError("Le sujet est obligatoire");
     return false;
   }
@@ -634,34 +541,47 @@ function showValidationError(message) {
   margin-bottom: 2rem;
 }
 
+.title-row {
+  margin-bottom: 1rem;
+}
+
 .page-title {
   color: var(--primary-color);
   font-size: 2rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin: 0;
 }
 
-.class-dropdown {
-  display: inline-flex;
-  min-width: 200px;
+.filiere-dropdown {
+  min-width: 250px;
 }
 
 .action-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 1.5rem;
-  gap: 1rem;
+}
+
+.search-row {
+  width: 100%;
+  margin-bottom: 0.75rem;
 }
 
 .search-container {
-  flex: 1;
+  width: 100%;
+  display: block;
 }
 
 .search-input {
   width: 100%;
+}
+
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-btn {
+  min-width: 150px;
 }
 
 .table-card {
@@ -690,24 +610,43 @@ function showValidationError(message) {
   font-weight: 500;
 }
 
+.required {
+  color: red;
+}
+
+.current-info {
+  background-color: var(--surface-ground);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.current-info p {
+  margin: 0.5rem 0;
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
   .binome-management {
     padding: 1rem;
   }
   
-  .page-title {
+  .title-row, .filter-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
   }
   
-  .action-bar {
-    flex-direction: column;
+  .filiere-dropdown {
+    width: 100%;
+    margin-top: 0.5rem;
   }
   
-  .action-buttons {
-    flex-direction: column;
+  .button-row {
+    justify-content: center;
+  }
+  
+  .add-btn {
+    width: 100%;
   }
 }
 </style>

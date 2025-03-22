@@ -9,6 +9,9 @@ import BinomeManagementView from '../views/BinomeManagementView.vue'
 import ComptesManagementView from '../views/ComptesManagementView.vue'
 import SoutenanceManagementView from '../views/SoutenanceManagementView.vue'
 import SujetManagementView from '../views/SujetManagementView.vue'
+import SujetSuggestionsView from '../views/SujetSuggestionsView.vue'
+
+
 
 // Create router instance
 const router = createRouter({
@@ -66,7 +69,15 @@ const router = createRouter({
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
     },
-
+{
+      path: '/management/sujet-suggestions',
+      name: 'sujetSuggestions',
+      component: SujetSuggestionsView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
     // Redirect root to dashboard
     {
       path: '/',
