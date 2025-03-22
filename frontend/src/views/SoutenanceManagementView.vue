@@ -1,818 +1,803 @@
 <template>
-    <div class="soutenance-management">
-      <Toast />
-      <ConfirmDialog />
-      
-      <div class="header-section">
-        <h1 class="page-title">
-          Gestion des Soutenances
-          <Dropdown 
-            v-model="selectedClass" 
-            :options="classes" 
-            optionLabel="nom" 
-            optionValue="id"
-            placeholder="Sélectionner une filière" 
-            class="class-dropdown" 
-          />
-        </h1>
+  <div class="soutenance-management">
+    <Toast />
+    <ConfirmDialog />
+    
+    <div class="header-section">
+      <div class="title-row">
+        <h1 class="page-title">Gestion des Soutenances</h1>
       </div>
-      
-      <div class="action-bar">
+      <div class="filter-row">
+        <Dropdown 
+          v-model="selectedFiliere" 
+          :options="filieres" 
+          optionLabel="nom" 
+          optionValue="id"
+          placeholder="Sélectionner une filière" 
+          class="filiere-dropdown"
+          @change="handleFiliereChange" 
+        />
+      </div>
+    </div>
+    
+    <div class="action-bar">
+      <div class="search-row">
         <span class="p-input-icon-left search-container">
           <i class="pi pi-search" />
           <InputText 
             v-model="searchQuery" 
-            placeholder="Rechercher une soutenance..." 
+            placeholder="Rechercher un binôme..." 
             class="search-input"
           />
         </span>
-        <Button 
-          label="Ajouter une soutenance" 
-          icon="pi pi-plus" 
-          class="p-button-primary add-btn"
-          @click="openAddModal" 
-        />
       </div>
-  
-      <!-- Data Table with PrimeVue -->
-      <Card class="table-card">
-        <template #content>
-          <DataTable 
-            :value="filteredSoutenances" 
-            :loading="loading" 
-            responsiveLayout="scroll"
-            stripedRows 
-            :paginator="filteredSoutenances.length > 10" 
-            :rows="10" 
-            paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-            :rowsPerPageOptions="[10, 20, 50]"
-            currentPageReportTemplate="Montrant {first} à {last} sur {totalRecords} soutenances"
-            emptyMessage="Aucune soutenance trouvée"
-          >
-            <Column field="date" header="Date" sortable style="min-width: 10rem">
-              <template #body="slotProps">
-                {{ formatDate(slotProps.data.date) }}
-              </template>
-            </Column>
-            <Column field="heure" header="Heure" sortable style="min-width: 8rem"></Column>
-            <Column field="salle.nom" header="Salle" sortable style="min-width: 8rem"></Column>
-            <Column header="Binôme" style="min-width: 12rem">
-              <template #body="slotProps">
-                {{ getBinomeLabels(slotProps.data.binome) }}
-              </template>
-            </Column>
-            <Column field="jury1.nom" header="Jury 1" sortable style="min-width: 10rem">
-              <template #body="slotProps">
-                {{ getJuryName(slotProps.data.jury1) }}
-              </template>
-            </Column>
-            <Column field="jury2.nom" header="Jury 2" sortable style="min-width: 10rem">
-              <template #body="slotProps">
-                {{ getJuryName(slotProps.data.jury2) }}
-              </template>
-            </Column>
-            <Column header="Actions" :exportable="false" style="min-width: 8rem">
-              <template #body="slotProps">
-                <div class="action-buttons">
-                  <Button 
-                    icon="pi pi-pencil" 
-                    class="p-button-rounded p-button-outlined p-button-info mr-2" 
-                    @click="openEditModal(slotProps.data)" 
-                    tooltip="Modifier"
-                    tooltipOptions="top"
-                  />
-                  <Button 
-                    icon="pi pi-trash" 
-                    class="p-button-rounded p-button-outlined p-button-danger" 
-                    @click="confirmDelete(slotProps.data)" 
-                    tooltip="Supprimer"
-                    tooltipOptions="top"
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
-  
-      <!-- Add Soutenance Dialog -->
-      <Dialog 
-        v-model:visible="showAddModal" 
-        header="Ajouter une Nouvelle Soutenance" 
-        :modal="true" 
-        class="soutenance-dialog"
-        :style="{ width: '600px' }"
-        :closable="false"
-      >
-        <div class="field-container">
-          <div class="p-field">
-            <label for="binome">Binôme</label>
-            <Dropdown 
-              id="binome" 
-              v-model="newSoutenance.binome.id" 
-              :options="binomes" 
-              optionLabel="label" 
-              optionValue="id"
-              placeholder="Sélectionner un binôme" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un binôme"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="date">Date</label>
-            <Calendar 
-              id="date" 
-              v-model="newSoutenance.date" 
-              dateFormat="dd/mm/yy"
-              class="w-full" 
-              placeholder="Date de soutenance"
-              required
-              :minDate="today"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="heure">Heure</label>
-            <Calendar 
-              id="heure" 
-              v-model="newSoutenance.heure" 
-              timeOnly 
-              hourFormat="24" 
-              class="w-full" 
-              placeholder="Heure de soutenance"
-              required
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="salle">Salle</label>
-            <Dropdown 
-              id="salle" 
-              v-model="newSoutenance.salle.id" 
-              :options="salles" 
-              optionLabel="nom" 
-              optionValue="id"
-              placeholder="Sélectionner une salle" 
-              class="w-full"
-              required
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="jury1">Jury 1</label>
-            <Dropdown 
-              id="jury1" 
-              v-model="newSoutenance.jury1.id" 
-              :options="jurys" 
-              optionLabel="fullName" 
-              optionValue="id"
-              placeholder="Sélectionner le premier membre du jury" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un membre du jury"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="jury2">Jury 2</label>
-            <Dropdown 
-              id="jury2" 
-              v-model="newSoutenance.jury2.id" 
-              :options="jurys" 
-              optionLabel="fullName" 
-              optionValue="id"
-              placeholder="Sélectionner le second membre du jury" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un membre du jury"
-            />
-          </div>
-        </div>
-        
-        <template #footer>
-          <Button 
-            label="Annuler" 
-            icon="pi pi-times" 
-            class="p-button-text" 
-            @click="closeModals" 
-          />
-          <Button 
-            label="Ajouter" 
-            icon="pi pi-check" 
-            class="p-button-primary" 
-            @click="addSoutenance" 
-            :loading="submitting"
-          />
-        </template>
-      </Dialog>
-      
-      <!-- Edit Soutenance Dialog -->
-      <Dialog 
-        v-model:visible="showEditModal" 
-        header="Modifier la Soutenance" 
-        :modal="true" 
-        class="soutenance-dialog"
-        :style="{ width: '600px' }"
-        :closable="false"
-      >
-        <div v-if="editingSoutenance" class="field-container">
-          <div class="p-field">
-            <label for="edit-binome">Binôme</label>
-            <Dropdown 
-              id="edit-binome" 
-              v-model="editingSoutenance.binome.id" 
-              :options="binomes" 
-              optionLabel="label" 
-              optionValue="id"
-              placeholder="Sélectionner un binôme" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un binôme"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="edit-date">Date</label>
-            <Calendar 
-              id="edit-date" 
-              v-model="editingSoutenance.date" 
-              dateFormat="dd/mm/yy"
-              class="w-full" 
-              placeholder="Date de soutenance"
-              required
-              :minDate="today"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="edit-heure">Heure</label>
-            <Calendar 
-              id="edit-heure" 
-              v-model="editingSoutenance.heure" 
-              timeOnly 
-              hourFormat="24" 
-              class="w-full" 
-              placeholder="Heure de soutenance"
-              required
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="edit-salle">Salle</label>
-            <Dropdown 
-              id="edit-salle" 
-              v-model="editingSoutenance.salle.id" 
-              :options="salles" 
-              optionLabel="nom" 
-              optionValue="id"
-              placeholder="Sélectionner une salle" 
-              class="w-full"
-              required
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="edit-jury1">Jury 1</label>
-            <Dropdown 
-              id="edit-jury1" 
-              v-model="editingSoutenance.jury1.id" 
-              :options="jurys" 
-              optionLabel="fullName" 
-              optionValue="id"
-              placeholder="Sélectionner le premier membre du jury" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un membre du jury"
-            />
-          </div>
-          
-          <div class="p-field">
-            <label for="edit-jury2">Jury 2</label>
-            <Dropdown 
-              id="edit-jury2" 
-              v-model="editingSoutenance.jury2.id" 
-              :options="jurys" 
-              optionLabel="fullName" 
-              optionValue="id"
-              placeholder="Sélectionner le second membre du jury" 
-              class="w-full"
-              required
-              :filter="true"
-              filterPlaceholder="Rechercher un membre du jury"
-            />
-          </div>
-        </div>
-        
-        <template #footer>
-          <Button 
-            label="Annuler" 
-            icon="pi pi-times" 
-            class="p-button-text" 
-            @click="closeModals" 
-          />
-          <Button 
-            label="Sauvegarder" 
-            icon="pi pi-check" 
-            class="p-button-primary" 
-            @click="saveEditedSoutenance" 
-            :loading="submitting"
-          />
-        </template>
-      </Dialog>
     </div>
-  </template>
+
+    <!-- Binomes Table with Soutenance Status -->
+    <Card class="table-card">
+      <template #content>
+        <DataTable 
+          :value="filteredBinomes" 
+          :loading="loading" 
+          responsiveLayout="scroll"
+          stripedRows 
+          :paginator="filteredBinomes.length > 10" 
+          :rows="10" 
+          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          :rowsPerPageOptions="[10, 20, 50]"
+          currentPageReportTemplate="Montrant {first} à {last} sur {totalRecords} binômes"
+          emptyMessage="Aucun binôme trouvé"
+        >
+          <Column field="etudiant1" header="Étudiant 1" sortable style="min-width: 12rem">
+            <template #body="slotProps">
+              {{ getStudentName(slotProps.data.etudiant1) }}
+            </template>
+          </Column>
+          <Column field="etudiant2" header="Étudiant 2" sortable style="min-width: 12rem">
+            <template #body="slotProps">
+              {{ slotProps.data.etudiant2 ? getStudentName(slotProps.data.etudiant2) : '-' }}
+            </template>
+          </Column>
+          <Column field="encadrant" header="Encadrant" sortable style="min-width: 12rem">
+            <template #body="slotProps">
+              {{ getEncadrantName(slotProps.data.encadrant) }}
+            </template>
+          </Column>
+          <Column field="sujet.titre" header="Sujet" sortable style="min-width: 12rem"></Column>
+          <Column field="soutenance" header="Status" sortable style="min-width: 10rem">
+            <template #body="slotProps">
+              <Tag v-if="slotProps.data.soutenance" severity="success" value="Programmée"></Tag>
+              <Tag v-else severity="warning" value="Non programmée"></Tag>
+            </template>
+          </Column>
+          <Column field="soutenance" header="Date & Heure" sortable style="min-width: 12rem">
+            <template #body="slotProps">
+              <template v-if="slotProps.data.soutenance">
+                {{ formatDate(slotProps.data.soutenance.date) }} à {{ slotProps.data.soutenance.heure }}
+              </template>
+              <span v-else>-</span>
+            </template>
+          </Column>
+          <Column field="soutenance" header="Salle & Jury" sortable style="min-width: 15rem">
+            <template #body="slotProps">
+              <template v-if="slotProps.data.soutenance">
+                Salle: {{ slotProps.data.soutenance.salle.nom }} <br>
+                Jury: {{ getJuryName(slotProps.data.soutenance.jury1) }}, {{ getJuryName(slotProps.data.soutenance.jury2) }}
+              </template>
+              <span v-else>-</span>
+            </template>
+          </Column>
+          <Column header="Actions" :exportable="false" style="min-width: 8rem">
+            <template #body="slotProps">
+              <div class="action-buttons">
+                <Button 
+                  v-if="slotProps.data.soutenance"
+                  icon="pi pi-pencil" 
+                  class="p-button-rounded p-button-outlined p-button-info mr-2" 
+                  @click="openEditModal(slotProps.data)" 
+                  tooltip="Modifier"
+                  tooltipOptions="top"
+                />
+                <Button 
+                  v-else
+                  icon="pi pi-calendar-plus" 
+                  class="p-button-rounded p-button-outlined p-button-success mr-2" 
+                  @click="openScheduleModal(slotProps.data)" 
+                  tooltip="Programmer"
+                  tooltipOptions="top"
+                />
+                <Button 
+                  v-if="slotProps.data.soutenance"
+                  icon="pi pi-trash" 
+                  class="p-button-rounded p-button-outlined p-button-danger" 
+                  @click="confirmCancelSoutenance(slotProps.data)" 
+                  tooltip="Annuler"
+                  tooltipOptions="top"
+                />
+              </div>
+            </template>
+          </Column>
+        </DataTable>
+      </template>
+    </Card>
   
-  <script setup>
-  import { ref, onMounted, computed } from 'vue';
-  import { useToast } from 'primevue/usetoast';
-  import { useConfirm } from 'primevue/useconfirm';
-  import ApiService from '@/services/ApiService';
+    <!-- Schedule/Edit Soutenance Dialog -->
+    <Dialog 
+      v-model:visible="showSoutenanceModal" 
+      :header="currentBinome?.soutenance ? 'Modifier la Soutenance' : 'Programmer une Soutenance'" 
+      :modal="true" 
+      class="soutenance-dialog"
+      :style="{ width: '600px' }"
+      :closable="false"
+    >
+      <div v-if="currentBinome" class="field-container">
+        <div class="binome-info">
+          <h3>Binôme</h3>
+          <p><strong>Étudiant 1:</strong> {{ getStudentName(currentBinome.etudiant1) }}</p>
+          <p v-if="currentBinome.etudiant2"><strong>Étudiant 2:</strong> {{ getStudentName(currentBinome.etudiant2) }}</p>
+          <p><strong>Encadrant:</strong> {{ getEncadrantName(currentBinome.encadrant) }}</p>
+          <p><strong>Sujet:</strong> {{ currentBinome.sujet.titre }}</p>
+        </div>
+        
+        <div class="p-field">
+          <label for="date">Date <span class="required">*</span></label>
+          <Calendar 
+            id="date" 
+            v-model="soutenanceForm.date" 
+            dateFormat="dd/mm/yy"
+            class="w-full" 
+            placeholder="Date de soutenance"
+            required
+            :minDate="today"
+            @date-select="checkForConflicts"
+          />
+        </div>
+        
+        <div class="p-field">
+          <label for="heure">Heure <span class="required">*</span></label>
+          <Calendar 
+            id="heure" 
+            v-model="soutenanceForm.heure" 
+            timeOnly 
+            hourFormat="24" 
+            class="w-full" 
+            placeholder="Heure de soutenance"
+            required
+            @date-select="checkForConflicts"
+          />
+        </div>
+        
+        <div class="p-field">
+          <label for="salle">Salle <span class="required">*</span></label>
+          <Dropdown 
+            id="salle" 
+            v-model="soutenanceForm.salleId" 
+            :options="availableSalles" 
+            optionLabel="nom" 
+            optionValue="id"
+            placeholder="Sélectionner une salle" 
+            class="w-full"
+            required
+            @change="checkForConflicts"
+          />
+          <small v-if="conflicts.salle" class="p-error">{{ conflicts.salle }}</small>
+        </div>
+        
+        <div class="p-field">
+          <label for="jury1">Jury 1 <span class="required">*</span></label>
+          <Dropdown 
+            id="jury1" 
+            v-model="soutenanceForm.jury1Id" 
+            :options="jurys" 
+            optionLabel="fullName" 
+            optionValue="id"
+            placeholder="Sélectionner le premier membre du jury" 
+            class="w-full"
+            required
+            :filter="true"
+            filterPlaceholder="Rechercher un membre du jury"
+            @change="checkForConflicts"
+          />
+          <small v-if="conflicts.jury1" class="p-error">{{ conflicts.jury1 }}</small>
+        </div>
+        
+        <div class="p-field">
+          <label for="jury2">Jury 2 <span class="required">*</span></label>
+          <Dropdown 
+            id="jury2" 
+            v-model="soutenanceForm.jury2Id" 
+            :options="jurys.filter(j => j.id !== soutenanceForm.jury1Id)" 
+            optionLabel="fullName" 
+            optionValue="id"
+            placeholder="Sélectionner le second membre du jury" 
+            class="w-full"
+            required
+            :filter="true"
+            filterPlaceholder="Rechercher un membre du jury"
+            @change="checkForConflicts"
+          />
+          <small v-if="conflicts.jury2" class="p-error">{{ conflicts.jury2 }}</small>
+        </div>
+      </div>
+      
+      <template #footer>
+        <Button 
+          label="Annuler" 
+          icon="pi pi-times" 
+          class="p-button-text" 
+          @click="closeSoutenanceModal" 
+        />
+        <Button 
+          label="Enregistrer" 
+          icon="pi pi-check" 
+          class="p-button-primary" 
+          @click="saveSoutenance" 
+          :loading="submitting"
+          :disabled="hasConflicts"
+        />
+      </template>
+    </Dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed, watch } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import ApiService from '@/services/ApiService';
+
+// Import PrimeVue components
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
+import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+import Card from 'primevue/card';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dialog from 'primevue/dialog';
+import Calendar from 'primevue/calendar';
+import Tag from 'primevue/tag';
+
+// Component state
+const binomes = ref([]);
+const soutenances = ref([]);
+const filieres = ref([]);
+const jurys = ref([]);
+const salles = ref([]);
+const selectedFiliere = ref(null);
+const today = ref(new Date());
+const loading = ref(false);
+const submitting = ref(false);
+const searchQuery = ref('');
+
+// Current binome and soutenance state
+const currentBinome = ref(null);
+const showSoutenanceModal = ref(false);
+
+// Form state
+const soutenanceForm = ref({
+  id: null,
+  date: null,
+  heure: null,
+  salleId: null,
+  jury1Id: null,
+  jury2Id: null
+});
+
+// Conflict tracking
+const conflicts = ref({
+  salle: null,
+  jury1: null,
+  jury2: null
+});
+
+// Services
+const toast = useToast();
+const confirm = useConfirm();
+
+// Computed properties
+const filteredBinomes = computed(() => {
+  if (!binomes.value.length) return [];
   
-  // Component state
-  const soutenances = ref([]);
-  const binomes = ref([]);
-  const jurys = ref([]);
-  const salles = ref([]);
-  const classes = ref([]);
-  const selectedClass = ref(null);
-  const today = ref(new Date());
+  let filtered = binomes.value;
   
-  const newSoutenance = ref({
-    binome: { id: null },
-    date: null,
-    heure: null,
-    salle: { id: null },
-    jury1: { id: null },
-    jury2: { id: null }
-  });
+  // Filter by selected filiere
+  if (selectedFiliere.value) {
+    filtered = filtered.filter(binome => {
+      return binome.filiereId === selectedFiliere.value;
+    });
+  }
   
-  const editingSoutenance = ref(null);
-  const showEditModal = ref(false);
-  const showAddModal = ref(false);
-  const loading = ref(false);
-  const submitting = ref(false);
-  const searchQuery = ref('');
-  
-  // Services
-  const toast = useToast();
-  const confirm = useConfirm();
-  
-  // Computed filtered soutenances
-  const filteredSoutenances = computed(() => {
+  // Filter by search query
+  if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    let filtered = soutenances.value;
-  
-    // Filter by selected class
-    if (selectedClass.value) {
-      filtered = filtered.filter(soutenance => {
-        const binomeMatch = binomes.value.find(b => b.id === soutenance.binome?.id);
-        return binomeMatch && binomeMatch.classId === selectedClass.value;
-      });
-    }
-  
-    // Filter by search query
-    if (query) {
-      filtered = filtered.filter(soutenance => {
-        const binomeLabel = getBinomeLabels(soutenance.binome).toLowerCase();
-        const jury1Name = getJuryName(soutenance.jury1).toLowerCase();
-        const jury2Name = getJuryName(soutenance.jury2).toLowerCase();
-        const salleNom = soutenance.salle?.nom.toLowerCase() || '';
-        const dateStr = formatDate(soutenance.date).toLowerCase();
-        
-        return (
-          binomeLabel.includes(query) || 
-          jury1Name.includes(query) ||
-          jury2Name.includes(query) ||
-          salleNom.includes(query) ||
-          dateStr.includes(query) ||
-          soutenance.heure.toLowerCase().includes(query)
-        );
-      });
-    }
-  
-    return filtered;
-  });
-  
-  // Fetch data on component mount
-  onMounted(async () => {
-    await Promise.all([
-      fetchSoutenances(),
-      fetchBinomes(),
-      fetchJurys(),
-      fetchSalles(),
-      fetchClasses()
-    ]);
-    
-    // Set default selected class
-    if (classes.value.length > 0) {
-      selectedClass.value = classes.value[0].id;
-    }
-  });
-  
-  // Methods for fetching data
-  async function fetchSoutenances() {
-    loading.value = true;
-    try {
-      const response = await ApiService.get('/api/soutenance');
-      soutenances.value = response;
-    } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement des soutenances');
-    } finally {
-      loading.value = false;
-    }
+    filtered = filtered.filter(binome => {
+      return (
+        (binome.etudiant1.nom.toLowerCase().includes(query) || binome.etudiant1.prenom.toLowerCase().includes(query)) ||
+        (binome.etudiant2 && (binome.etudiant2.nom.toLowerCase().includes(query) || binome.etudiant2.prenom.toLowerCase().includes(query))) ||
+        (binome.encadrant.nom.toLowerCase().includes(query) || binome.encadrant.prenom.toLowerCase().includes(query)) ||
+        (binome.sujet.titre.toLowerCase().includes(query))
+      );
+    });
   }
   
-  async function fetchBinomes() {
-    try {
-      const response = await ApiService.get('/api/binome');
+  return filtered;
+});
+
+const availableSalles = computed(() => {
+  return salles.value;
+});
+
+const hasConflicts = computed(() => {
+  return conflicts.value.salle || conflicts.value.jury1 || conflicts.value.jury2;
+});
+
+// Fetch data on component mount
+onMounted(async () => {
+  await Promise.all([
+    fetchBinomes(),
+    fetchSoutenances(),
+    fetchFilieres(),
+    fetchJurys(),
+    fetchSalles()
+  ]);
+  
+  // Set default selected filiere
+  if (filieres.value.length > 0) {
+    selectedFiliere.value = filieres.value[0].id;
+  }
+  
+  // Associate soutenances with binomes
+  associateSoutenancesWithBinomes();
+});
+
+// Data loading functions
+async function fetchBinomes() {
+  loading.value = true;
+  try {
+    const response = await ApiService.get('/binome');
+    
+    // Process binomes to add filiere info
+    binomes.value = await Promise.all(response.map(async (binome) => {
+      // Find etudiant's filiere
+      let filiereId = null;
+      let filiereName = null;
       
-      // Process binomes to add labels and filiere info
-      binomes.value = await Promise.all(response.map(async (binome) => {
-        const etudiant1 = await getUtilisateur(binome.etudiant1?.id);
-        const etudiant2 = await getUtilisateur(binome.etudiant2?.id);
-        
-        let label = etudiant1 ? `${etudiant1.prenom} ${etudiant1.nom}` : 'N/A';
-        if (etudiant2) {
-          label += ` & ${etudiant2.prenom} ${etudiant2.nom}`;
+      try {
+        const etudiantResponse = await ApiService.get(`/etudiant/utilisateur/${binome.etudiant1.id}`);
+        if (etudiantResponse && etudiantResponse.filiere) {
+          filiereId = etudiantResponse.filiere.id;
+          filiereName = etudiantResponse.filiere.nom;
         }
-        
-        // Find class ID from etudiant entry
-        let classId = null;
-        if (etudiant1) {
-          const etudiantInfo = await getEtudiant(etudiant1.id);
-          if (etudiantInfo && etudiantInfo.filiere) {
-            classId = etudiantInfo.filiere.id;
-          }
-        }
-        
-        return {
-          ...binome,
-          label,
-          classId
-        };
-      }));
-    } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement des binômes');
-    }
-  }
-  
-  async function fetchJurys() {
-    try {
-      const response = await ApiService.get('/api/utilisateurs', { role: 'JURY' });
-      jurys.value = response.map(jury => ({
-        ...jury,
-        fullName: `${jury.prenom} ${jury.nom}`
-      }));
-    } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement des jurys');
-    }
-  }
-  
-  async function fetchSalles() {
-    try {
-      const response = await ApiService.get('/api/salle');
-      salles.value = response;
-    } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement des salles');
-    }
-  }
-  
-  async function fetchClasses() {
-    try {
-      const response = await ApiService.get('/api/filiere');
-      classes.value = response;
-    } catch (error) {
-      handleApiError(error, 'Erreur lors du chargement des filières');
-    }
-  }
-  
-  async function getUtilisateur(id) {
-    if (!id) return null;
-    try {
-      return await ApiService.get(`/api/utilisateurs/${id}`);
-    } catch (error) {
-      console.error(`Erreur lors du chargement de l'utilisateur ${id}:`, error);
-      return null;
-    }
-  }
-  
-  async function getEtudiant(id) {
-    if (!id) return null;
-    try {
-      return await ApiService.get(`/api/etudiant/${id}`);
-    } catch (error) {
-      console.error(`Erreur lors du chargement de l'étudiant ${id}:`, error);
-      return null;
-    }
-  }
-  
-  // Helper methods for data display
-  function getBinomeLabels(binome) {
-    if (!binome) return 'N/A';
-    
-    const binomeInfo = binomes.value.find(b => b.id === binome.id);
-    return binomeInfo ? binomeInfo.label : 'N/A';
-  }
-  
-  function getJuryName(jury) {
-    if (!jury) return 'N/A';
-    return `${jury.prenom} ${jury.nom}`;
-  }
-  
-  function formatDate(date) {
-    if (!date) return 'N/A';
-    
-    // If it's already a string in a date format, return it formatted
-    if (typeof date === 'string') {
-      return new Date(date).toLocaleDateString('fr-FR');
-    }
-    
-    // If it's a Date object
-    if (date instanceof Date) {
-      return date.toLocaleDateString('fr-FR');
-    }
-    
-    return 'N/A';
-  }
-  
-  // Format time from ISO or Date object to HH:MM
-  function formatTime(time) {
-    if (!time) return '';
-    
-    if (time instanceof Date) {
-      return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // Handle string time formats
-    if (typeof time === 'string') {
-      // If it's an ISO time string with date
-      if (time.includes('T')) {
-        return new Date(time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch (error) {
+        console.error("Error fetching etudiant info:", error);
       }
       
-      // If it's already in HH:MM format
-      if (time.includes(':')) {
-        return time;
+      return {
+        ...binome,
+        filiereId,
+        filiereName,
+        soutenance: null // Will be populated later
+      };
+    }));
+  } catch (error) {
+    handleApiError(error, 'Erreur lors du chargement des binômes');
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function fetchSoutenances() {
+  try {
+    const response = await ApiService.get('/soutenance');
+    soutenances.value = response;
+  } catch (error) {
+    handleApiError(error, 'Erreur lors du chargement des soutenances');
+  }
+}
+
+async function fetchFilieres() {
+  try {
+    const response = await ApiService.get('/filiere');
+    filieres.value = response;
+  } catch (error) {
+    handleApiError(error, 'Erreur lors du chargement des filières');
+  }
+}
+
+async function fetchJurys() {
+  try {
+    const response = await ApiService.get('/utilisateurs', { role: 'JURY' });
+    jurys.value = response.map(jury => ({
+      ...jury,
+      fullName: `${jury.prenom} ${jury.nom}`
+    }));
+  } catch (error) {
+    handleApiError(error, 'Erreur lors du chargement des jurys');
+  }
+}
+
+async function fetchSalles() {
+  try {
+    const response = await ApiService.get('/salle');
+    salles.value = response;
+  } catch (error) {
+    handleApiError(error, 'Erreur lors du chargement des salles');
+  }
+}
+
+// Associate soutenances with binomes
+function associateSoutenancesWithBinomes() {
+  if (!binomes.value.length || !soutenances.value.length) return;
+  
+  binomes.value.forEach(binome => {
+    const matchingSoutenance = soutenances.value.find(s => s.binome.id === binome.id);
+    if (matchingSoutenance) {
+      binome.soutenance = matchingSoutenance;
+    }
+  });
+}
+
+// Event handlers
+function handleFiliereChange() {
+  // Nothing specific needed here as filteredBinomes already uses selectedFiliere
+}
+
+// Helper methods
+function getStudentName(student) {
+  if (!student) return 'N/A';
+  return `${student.prenom} ${student.nom}`;
+}
+
+function getEncadrantName(encadrant) {
+  if (!encadrant) return 'N/A';
+  return `${encadrant.prenom} ${encadrant.nom}`;
+}
+
+function getJuryName(jury) {
+  if (!jury) return 'N/A';
+  return `${jury.prenom} ${jury.nom}`;
+}
+
+function formatDate(date) {
+  if (!date) return 'N/A';
+  
+  // If it's already a string in a date format, return it formatted
+  if (typeof date === 'string') {
+    return new Date(date).toLocaleDateString('fr-FR');
+  }
+  
+  // If it's a Date object
+  if (date instanceof Date) {
+    return date.toLocaleDateString('fr-FR');
+  }
+  
+  return 'N/A';
+}
+
+// Format time from ISO or Date object to HH:MM
+function formatTime(time) {
+  if (!time) return '';
+  
+  if (time instanceof Date) {
+    return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  // Handle string time formats
+  if (typeof time === 'string') {
+    // If it's an ISO time string with date
+    if (time.includes('T')) {
+      return new Date(time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // If it's already in HH:MM format
+    if (time.includes(':')) {
+      return time;
+    }
+  }
+  
+  return '';
+}
+
+// Conflict checking
+function checkForConflicts() {
+  resetConflicts();
+  
+  if (!soutenanceForm.value.date || !soutenanceForm.value.heure) {
+    return;
+  }
+  
+  const formDate = soutenanceForm.value.date;
+  const formHeure = soutenanceForm.value.heure;
+  
+  // Format date and time for comparison
+  const selectedDate = formatDateForApi(formDate);
+  const selectedTime = formatTimeForApi(formHeure);
+  
+  // Check for conflicts with existing soutenances
+  soutenances.value.forEach(soutenance => {
+    // Skip the current soutenance being edited
+    if (soutenanceForm.value.id && soutenance.id === soutenanceForm.value.id) {
+      return;
+    }
+    
+    const soutenanceDate = typeof soutenance.date === 'string' ? soutenance.date : formatDateForApi(soutenance.date);
+    const soutenanceTime = typeof soutenance.heure === 'string' ? soutenance.heure : formatTimeForApi(soutenance.heure);
+    
+    // Only check if dates match
+    if (soutenanceDate === selectedDate && soutenanceTime === selectedTime) {
+      // Check salle conflict
+      if (soutenanceForm.value.salleId && soutenance.salle.id === soutenanceForm.value.salleId) {
+        conflicts.value.salle = `La salle est déjà réservée à cette date et heure pour une autre soutenance`;
+      }
+      
+      // Check jury1 conflict
+      if (soutenanceForm.value.jury1Id && 
+          (soutenance.jury1.id === soutenanceForm.value.jury1Id || soutenance.jury2.id === soutenanceForm.value.jury1Id)) {
+        conflicts.value.jury1 = `Ce membre du jury est déjà assigné à une autre soutenance à cette date et heure`;
+      }
+      
+      // Check jury2 conflict
+      if (soutenanceForm.value.jury2Id && 
+          (soutenance.jury1.id === soutenanceForm.value.jury2Id || soutenance.jury2.id === soutenanceForm.value.jury2Id)) {
+        conflicts.value.jury2 = `Ce membre du jury est déjà assigné à une autre soutenance à cette date et heure`;
       }
     }
-    
-    return '';
+  });
+  
+  // Check if jury1 and jury2 are the same
+  if (soutenanceForm.value.jury1Id && 
+      soutenanceForm.value.jury2Id && 
+      soutenanceForm.value.jury1Id === soutenanceForm.value.jury2Id) {
+    conflicts.value.jury2 = `Les deux membres du jury doivent être différents`;
+  }
+}
+
+function resetConflicts() {
+  conflicts.value = {
+    salle: null,
+    jury1: null,
+    jury2: null
+  };
+}
+
+// Modal functions
+function openScheduleModal(binome) {
+  currentBinome.value = binome;
+  
+  // Reset form
+  soutenanceForm.value = {
+    id: null,
+    date: new Date(),
+    heure: new Date(),
+    salleId: null,
+    jury1Id: null,
+    jury2Id: null
+  };
+  
+  resetConflicts();
+  showSoutenanceModal.value = true;
+}
+
+function openEditModal(binome) {
+  currentBinome.value = binome;
+  const soutenance = binome.soutenance;
+  
+  // Convert string date/time to Date objects if needed
+  let dateObj = soutenance.date;
+  if (typeof soutenance.date === 'string') {
+    dateObj = new Date(soutenance.date);
   }
   
-  // CRUD operations
-  async function addSoutenance() {
-    if (!validateSoutenanceData(newSoutenance.value)) return;
-    
-    submitting.value = true;
-    try {
-      // Prepare date and time in proper format
-      const formattedDate = formatDateForApi(newSoutenance.value.date);
-      const formattedTime = formatTimeForApi(newSoutenance.value.heure);
-      
-      // Create request body
-      const soutenanceData = {
-        date: formattedDate,
-        heure: formattedTime,
-        salle: { id: newSoutenance.value.salle.id },
-        binome: { id: newSoutenance.value.binome.id },
-        jury1: { id: newSoutenance.value.jury1.id },
-        jury2: { id: newSoutenance.value.jury2.id }
-      };
-      
-      const response = await ApiService.post('/api/soutenance', soutenanceData);
-      soutenances.value.push(response);
-      
-      // Reset form and close modal
-      resetNewSoutenance();
-      showAddModal.value = false;
-      
-      // Show success message
-      toast.add({
-        severity: 'success',
-        summary: 'Soutenance ajoutée',
-        detail: 'La soutenance a été ajoutée avec succès',
-        life: 3000
-      });
-    } catch (error) {
-      handleApiError(error, "Erreur lors de l'ajout de la soutenance");
-    } finally {
-      submitting.value = false;
-    }
+  let timeObj = soutenance.heure;
+  if (typeof soutenance.heure === 'string') {
+    const [hours, minutes] = soutenance.heure.split(':');
+    timeObj = new Date();
+    timeObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
   }
   
-  async function saveEditedSoutenance() {
-    if (!validateSoutenanceData(editingSoutenance.value)) return;
+  // Populate form
+  soutenanceForm.value = {
+    id: soutenance.id,
+    date: dateObj,
+    heure: timeObj,
+    salleId: soutenance.salle.id,
+    jury1Id: soutenance.jury1.id,
+    jury2Id: soutenance.jury2.id
+  };
+  
+  resetConflicts();
+  showSoutenanceModal.value = true;
+}
+
+function closeSoutenanceModal() {
+  showSoutenanceModal.value = false;
+  currentBinome.value = null;
+  resetConflicts();
+}
+
+// CRUD operations
+async function saveSoutenance() {
+  if (!validateSoutenanceForm()) return;
+  
+  submitting.value = true;
+  try {
+    // Prepare data
+    const formattedDate = formatDateForApi(soutenanceForm.value.date);
+    const formattedTime = formatTimeForApi(soutenanceForm.value.heure);
     
-    submitting.value = true;
-    try {
-      // Prepare date and time in proper format
-      const formattedDate = formatDateForApi(editingSoutenance.value.date);
-      const formattedTime = formatTimeForApi(editingSoutenance.value.heure);
+    const soutenanceData = {
+      date: formattedDate,
+      heure: formattedTime,
+      salle: { id: soutenanceForm.value.salleId },
+      binome: { id: currentBinome.value.id },
+      jury1: { id: soutenanceForm.value.jury1Id },
+      jury2: { id: soutenanceForm.value.jury2Id }
+    };
+    
+    let response;
+    if (soutenanceForm.value.id) {
+      // Update existing soutenance
+      soutenanceData.id = soutenanceForm.value.id;
+      response = await ApiService.put(`/api/soutenance/${soutenanceForm.value.id}`, soutenanceData);
       
-      // Create request body
-      const soutenanceData = {
-        id: editingSoutenance.value.id,
-        date: formattedDate,
-        heure: formattedTime,
-        salle: { id: editingSoutenance.value.salle.id },
-        binome: { id: editingSoutenance.value.binome.id },
-        jury1: { id: editingSoutenance.value.jury1.id },
-        jury2: { id: editingSoutenance.value.jury2.id }
-      };
-      
-      const response = await ApiService.put(`/api/soutenance/${editingSoutenance.value.id}`, soutenanceData);
-      
-      // Update local data
-      const index = soutenances.value.findIndex(s => s.id === editingSoutenance.value.id);
+      // Update in local collections
+      const index = soutenances.value.findIndex(s => s.id === soutenanceForm.value.id);
       if (index !== -1) {
         soutenances.value[index] = response;
       }
       
-      showEditModal.value = false;
+      toast.add({
+        severity: 'success',
+        summary: 'Soutenance modifiée',
+        detail: 'La soutenance a été mise à jour avec succès',
+        life: 3000
+      });
+    } else {
+      // Create new soutenance
+      response = await ApiService.post('/api/soutenance', soutenanceData);
+      soutenances.value.push(response);
       
       toast.add({
         severity: 'success',
-        summary: 'Soutenance mise à jour',
-        detail: 'La soutenance a été modifiée avec succès',
+        summary: 'Soutenance programmée',
+        detail: 'La soutenance a été programmée avec succès',
         life: 3000
       });
-    } catch (error) {
-      handleApiError(error, 'Erreur lors de la modification de la soutenance');
-    } finally {
-      submitting.value = false;
     }
+    
+    // Update the binome's soutenance
+    if (currentBinome.value) {
+      currentBinome.value.soutenance = response;
+    }
+    
+    // Close the modal
+    closeSoutenanceModal();
+  } catch (error) {
+    handleApiError(error, 'Erreur lors de l\'enregistrement de la soutenance');
+  } finally {
+    submitting.value = false;
   }
-  
-  function confirmDelete(soutenance) {
-    confirm.require({
-      message: `Êtes-vous sûr de vouloir supprimer la soutenance du binôme ${getBinomeLabels(soutenance.binome)}?`,
-      header: 'Confirmation de suppression',
-      icon: 'pi pi-exclamation-triangle',
-      acceptClass: 'p-button-danger',
-      accept: () => deleteSoutenance(soutenance),
-      reject: () => {/* do nothing */}
-    });
-  }
-  
-  async function deleteSoutenance(soutenance) {
-    try {
-      await ApiService.delete(`/api/soutenance/${soutenance.id}`);
-      
-      // Update local data
-      soutenances.value = soutenances.value.filter(s => s.id !== soutenance.id);
-      
-      toast.add({
-        severity: 'success',
-        summary: 'Soutenance supprimée',
-        detail: 'La soutenance a été supprimée avec succès',
-        life: 3000
-      });
-    } catch (error) {
-      handleApiError(error, 'Erreur lors de la suppression de la soutenance');
-    }
-  }
-  
-  // UI control methods
-  function openAddModal() {
-    resetNewSoutenance();
-    showAddModal.value = true;
-  }
-  
-  function openEditModal(soutenance) {
-    // Create a deep copy to avoid modifying the original object
-    editingSoutenance.value = JSON.parse(JSON.stringify(soutenance));
-    
-    // Convert date string to Date object if needed
-    if (typeof editingSoutenance.value.date === 'string') {
-      editingSoutenance.value.date = new Date(editingSoutenance.value.date);
-    }
-    
-    // Convert time string to Date object if needed
-    if (typeof editingSoutenance.value.heure === 'string') {
-      const [hours, minutes] = editingSoutenance.value.heure.split(':');
-      const timeDate = new Date();
-      timeDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0);
-      editingSoutenance.value.heure = timeDate;
-    }
-    
-    showEditModal.value = true;
-  }
-  
-  function closeModals() {
-    showEditModal.value = false;
-    showAddModal.value = false;
-  }
-  
-  function resetNewSoutenance() {
-    newSoutenance.value = {
-      binome: { id: null },
-      date: null,
-      heure: null,
-      salle: { id: null },
-      jury1: { id: null },
-      jury2: { id: null }
-    };
-  }
-  
-  // Format date to YYYY-MM-DD for API
-  function formatDateForApi(date) {
-    if (!date) return null;
-    
-    if (date instanceof Date) {
-      return date.toISOString().split('T')[0];
-    }
-    
-    return date;
-  }
-  
-  // Format time to HH:MM for API
-  function formatTimeForApi(time) {
-    if (!time) return null;
-    
-    if (time instanceof Date) {
-      return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    return time;
-  }
-  
-  // Validation
-  function validateSoutenanceData(soutenance) {
-    if (!soutenance.binome || !soutenance.binome.id) {
-      showValidationError('Le binôme est obligatoire');
-      return false;
-    }
-    
-    if (!soutenance.date) {
-      showValidationError('La date est obligatoire');
-      return false;
-    }
-    
-    if (!soutenance.heure) {
-      showValidationError('L\'heure est obligatoire');
-      return false;
-    }
-    
-    if (!soutenance.salle || !soutenance.salle.id) {
-      showValidationError('La salle est obligatoire');
-      return false;
-    }
-    
-    if (!soutenance.jury1 || !soutenance.jury1.id) {
-      showValidationError('Le premier membre du jury est obligatoire');
-      return false;
-    }
-    
-    if (!soutenance.jury2 || !soutenance.jury2.id) {
-      showValidationError('Le second membre du jury est obligatoire');
-      return false;
-    }
-    
-    if (soutenance.jury1.id === soutenance.jury2.id) {
-      showValidationError('Les deux membres du jury doivent être différents');
-      return false;
-    }
-    
-    return true;
-  }
-  
-  // Error handling
-  function handleApiError(error, defaultMessage) {
-    console.error(defaultMessage, error);
-    
-    let errorMessage = defaultMessage;
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
-    }
-    
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: errorMessage,
-      life: 5000
-    });
-  }
-  
-  function showValidationError(message) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Validation',
-      detail: message,
-      life: 5000
-    });
-  }
-  </script>
-  
-<style>
-/* Styles for SoutenanceManagementView.vue */
+}
 
+function confirmCancelSoutenance(binome) {
+  confirm.require({
+    message: `Êtes-vous sûr de vouloir annuler la soutenance du binôme ${getStudentName(binome.etudiant1)}${binome.etudiant2 ? ` et ${getStudentName(binome.etudiant2)}` : ''}?`,
+    header: 'Confirmation d\'annulation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => cancelSoutenance(binome),
+    reject: () => {/* do nothing */}
+  });
+}
+
+async function cancelSoutenance(binome) {
+  if (!binome.soutenance) return;
+  
+  try {
+    await ApiService.delete(`/api/soutenance/${binome.soutenance.id}`);
+    
+    // Update local data
+    soutenances.value = soutenances.value.filter(s => s.id !== binome.soutenance.id);
+    binome.soutenance = null;
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Soutenance annulée',
+      detail: 'La soutenance a été annulée avec succès',
+      life: 3000
+    });
+  } catch (error) {
+    handleApiError(error, 'Erreur lors de l\'annulation de la soutenance');
+  }
+}
+
+// Validation and formatting helpers
+function validateSoutenanceForm() {
+  if (hasConflicts) {
+    showValidationError('Il y a des conflits de programmation. Veuillez les résoudre avant de continuer.');
+    return false;
+  }
+  
+  if (!soutenanceForm.value.date) {
+    showValidationError('La date est obligatoire');
+    return false;
+  }
+  
+  if (!soutenanceForm.value.heure) {
+    showValidationError('L\'heure est obligatoire');
+    return false;
+  }
+  
+  if (!soutenanceForm.value.salleId) {
+    showValidationError('La salle est obligatoire');
+    return false;
+  }
+  
+  if (!soutenanceForm.value.jury1Id) {
+    showValidationError('Le premier membre du jury est obligatoire');
+    return false;
+  }
+  
+  if (!soutenanceForm.value.jury2Id) {
+    showValidationError('Le second membre du jury est obligatoire');
+    return false;
+  }
+  
+  return true;
+}
+
+// Format date to YYYY-MM-DD for API
+function formatDateForApi(date) {
+  if (!date) return null;
+  
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  return date;
+}
+
+// Format time to HH:MM for API
+function formatTimeForApi(time) {
+  if (!time) return null;
+  
+  if (time instanceof Date) {
+    return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  return time;
+}
+
+// Error handling
+function showValidationError(message) {
+  toast.add({
+    severity: 'warn',
+    summary: 'Validation',
+    detail: message,
+    life: 5000
+  });
+}
+
+function handleApiError(error, defaultMessage) {
+  console.error(defaultMessage, error);
+  
+  let errorMessage = defaultMessage;
+  if (error.response && error.response.data && error.response.data.message) {
+    errorMessage = error.response.data.message;
+  }
+  
+  toast.add({
+    severity: 'error',
+    summary: 'Erreur',
+    detail: errorMessage,
+    life: 5000
+  });
+}
+</script>
+
+<style scoped>
 .soutenance-management {
   max-width: 1200px;
   margin: 0 auto;
@@ -824,30 +809,38 @@
   margin-bottom: 2rem;
 }
 
+.title-row {
+  margin-bottom: 1rem;
+}
+
 .page-title {
   color: var(--primary-color);
   font-size: 2rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin: 0;
 }
 
-.class-dropdown {
-  display: inline-flex;
-  min-width: 200px;
+.filter-row {
+  display: flex;
+}
+
+.filiere-dropdown {
+  min-width: 250px;
 }
 
 .action-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   margin-bottom: 1.5rem;
-  gap: 1rem;
+}
+
+.search-row {
+  width: 100%;
+  margin-bottom: 0.75rem;
 }
 
 .search-container {
-  flex: 1;
+  width: 100%;
+  display: block;
 }
 
 .search-input {
@@ -880,9 +873,31 @@
   font-weight: 500;
 }
 
-.soutenance-dialog .p-calendar,
-.soutenance-dialog .p-dropdown {
-  width: 100%;
+.required {
+  color: red;
+}
+
+.binome-info {
+  background-color: var(--surface-ground);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.binome-info h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+}
+
+.binome-info p {
+  margin: 0.3rem 0;
+}
+
+.p-error {
+  display: block;
+  margin-top: 0.25rem;
 }
 
 /* Responsive adjustments */
@@ -891,18 +906,16 @@
     padding: 1rem;
   }
   
-  .page-title {
+  .title-row, .filter-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
   }
   
-  .action-bar {
-    flex-direction: column;
+  .filiere-dropdown {
+    width: 100%;
   }
   
   .action-buttons {
-    flex-direction: column;
+    flex-direction: row;
   }
 }
 </style>
