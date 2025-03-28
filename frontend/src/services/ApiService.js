@@ -3,7 +3,7 @@ import router from '../router';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:8686/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
