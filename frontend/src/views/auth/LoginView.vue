@@ -14,7 +14,7 @@
               :class="{ 'p-invalid': validationErrors.email }" 
               aria-describedby="email-error"
               placeholder="Entrez votre adresse e-mail"
-              required
+              required    
             />
             <small id="email-error" class="p-error">{{ validationErrors.email }}</small>
           </div>
@@ -62,7 +62,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
-import AuthService from '../services/AuthService';
+import AuthService from '@/services/AuthService';
 
 const router = useRouter();
 const toast = useToast();

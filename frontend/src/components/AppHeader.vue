@@ -97,7 +97,8 @@ const navigateToLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 68px;
+  height: 60px;
+  width: 50px;
 }
 
 .logo-placeholder img {
