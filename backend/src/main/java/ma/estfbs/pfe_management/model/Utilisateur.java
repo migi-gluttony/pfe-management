@@ -26,23 +26,23 @@ public class Utilisateur implements UserDetails {
 
     @Column(nullable = false)
     private String nom;
-    
+
     @Column(nullable = false)
     private String prenom;
-    
+
     @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(unique = true)
     private String cni;
-    
+
     @Column(unique = true)
     private String cne;
-    
+
     @Column(name = "date_naissance")
     @Temporal(TemporalType.DATE)
     private Date dateNaissance;
-    
+
     @Column(name = "mot_de_passe", nullable = false)
     private String motDePasse;
 
@@ -50,41 +50,41 @@ public class Utilisateur implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
-    // // Bidirectional relationships
-    // @OneToOne(mappedBy = "utilisateur", cascade = CascadeType.ALL)
-    // private Etudiant etudiant;
-    
-    // @OneToMany(mappedBy = "etudiant1")
-    // private List<Binome> binomesAsPrimary;
-    
-    // @OneToMany(mappedBy = "etudiant2")
-    // private List<Binome> binomesAsSecondary;
-    
-    // @OneToMany(mappedBy = "encadrant")
-    // private List<Binome> binomesAsEncadrant;
-    
-    // @OneToMany(mappedBy = "jury1")
-    // private List<Soutenance> soutenancesAsJury1;
-    
-    // @OneToMany(mappedBy = "jury2")
-    // private List<Soutenance> soutenancesAsJury2;
-    
-    // @OneToMany(mappedBy = "jury")
-    // private List<NoteSoutenance> notesSoutenance;
-    
-    // @OneToMany(mappedBy = "etudiant")
-    // private List<NoteFinale> notesFinales;
-    
-    // @OneToMany(mappedBy = "demandeur")
-    // private List<DemandeBinome> demandesEnvoyees;
-    
-    // @OneToMany(mappedBy = "demande")
-    // private List<DemandeBinome> demandesRecues;
-
     // Enum for role type
     public enum Role {
         ETUDIANT, CHEF_DE_DEPARTEMENT, ENCADRANT, JURY
     }
+
+    // Bidirectional relationships
+    @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)
+    private List<Etudiant> etudiants;
+
+    @OneToMany(mappedBy = "etudiant1")
+    private List<Binome> binomesAsPrimary;
+
+    @OneToMany(mappedBy = "etudiant2")
+    private List<Binome> binomesAsSecondary;
+
+    @OneToMany(mappedBy = "encadrant")
+    private List<Binome> binomesAsEncadrant;
+
+    @OneToMany(mappedBy = "jury1")
+    private List<Soutenance> soutenancesAsJury1;
+
+    @OneToMany(mappedBy = "jury2")
+    private List<Soutenance> soutenancesAsJury2;
+
+    @OneToMany(mappedBy = "jury")
+    private List<NoteSoutenance> notesSoutenance;
+
+    @OneToMany(mappedBy = "etudiant")
+    private List<NoteFinale> notesFinales;
+
+    @OneToMany(mappedBy = "demandeur")
+    private List<DemandeBinome> demandesEnvoyees;
+
+    @OneToMany(mappedBy = "demande")
+    private List<DemandeBinome> demandesRecues;
 
     // UserDetails implementation
     @Override
