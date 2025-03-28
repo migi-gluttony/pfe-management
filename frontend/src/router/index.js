@@ -3,6 +3,8 @@ import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import AuthService from '../services/AuthService'
+import PasswordResetRequestView from '../views/PasswordResetRequestView.vue'
+import PasswordResetConfirmView from '../views/PasswordResetConfirmView.vue'
 
 // // Management views
 // import BinomeManagementView from '../views/BinomeManagementView.vue'
@@ -23,6 +25,18 @@ const router = createRouter({
       name: 'login',
       component: LoginView,
       meta: { guest: true }
+    },
+    {
+      path: '/reset-password',
+      name: 'resetPassword',
+      component: PasswordResetRequestView,
+      meta: { guest: true }
+    },
+    {
+      path: '/reset-password-confirm',
+      name: 'resetPasswordConfirm',
+      component: PasswordResetConfirmView,
+      meta: { requiresAuth: true }
     },
     // Protected routes (authentication required)
     {

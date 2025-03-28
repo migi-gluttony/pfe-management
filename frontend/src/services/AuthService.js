@@ -34,9 +34,7 @@ export default {
       return {
         email: payload.sub,
         role: payload.role,
-        userId: payload.userId,
-        nom: payload.nom,          
-        prenom: payload.prenom     
+        userId: payload.userId
       };
     } catch (e) {
       console.error('Error parsing token:', e);
@@ -47,12 +45,13 @@ export default {
   /**
    * Login a user with email and password
    * @param {string} email - User's email
-   * @param {string} password - User's password
+   * @param {string} motDePasse - User's password
    * @param {boolean} rememberMe - Whether to remember the user
    * @returns {Promise} - Promise with authentication response
    */
   async login(email, motDePasse, rememberMe = false) {
     try {
+      // Match the field names expected by the backend (LoginRequest.java)
       const data = await ApiService.post('/auth/login', { 
         email,
         motDePasse
@@ -100,7 +99,7 @@ export default {
   },
 
   /**
-   * Request password reset
+   * Request password reset (first step)
    * @param {Object} resetData - Password reset data (email, cni/cne, dateNaissance)
    * @returns {Promise} - Promise with request response
    */
@@ -114,7 +113,7 @@ export default {
   },
 
   /**
-   * Reset password with token and new password
+   * Confirm password reset with token and new password (second step)
    * @param {string} token - Reset password token
    * @param {string} newPassword - New password
    * @returns {Promise} - Promise with reset response
