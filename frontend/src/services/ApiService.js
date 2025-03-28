@@ -3,7 +3,7 @@ import router from '../router';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: 'http://localhost:8686/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -42,11 +42,11 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      
+
       // Redirect to login
       router.push('/login');
     }
-    
+
     return Promise.reject(error.response?.data || error);
   }
 );
@@ -100,20 +100,6 @@ const ApiService = {
     }
   },
 
-  /**
-   * Make a PATCH request
-   * @param {string} endpoint - API endpoint
-   * @param {object} data - Request payload
-   * @returns {Promise} - Promise with response data
-   */
-  async patch(endpoint, data = {}) {
-    try {
-      return await api.patch(endpoint, data);
-    } catch (error) {
-      console.error(`PATCH ${endpoint} error:`, error);
-      throw error;
-    }
-  },
 
   /**
    * Make a DELETE request
@@ -129,9 +115,6 @@ const ApiService = {
     }
   },
 
-
-
-  
   /**
    * Upload files
    * @param {string} endpoint - API endpoint
@@ -146,7 +129,7 @@ const ApiService = {
           'Content-Type': 'multipart/form-data',
         },
       };
-      
+
       if (progressCallback) {
         config.onUploadProgress = (progressEvent) => {
           const percentCompleted = Math.round(
@@ -155,7 +138,7 @@ const ApiService = {
           progressCallback(percentCompleted);
         };
       }
-      
+
       return await api.post(endpoint, formData, config);
     } catch (error) {
       console.error(`UPLOAD to ${endpoint} error:`, error);

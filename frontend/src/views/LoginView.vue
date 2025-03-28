@@ -1,11 +1,11 @@
 <template>
-  <div class="container">
+  <div class="login-container">
     <div class="component-card login-form">
-      <h1 class="text-center">Login</h1>
+      <h1 class="text-center">Connexion</h1>
       <div class="form-wrapper">
         <form @submit.prevent="handleLogin">
           <div class="form-group mb-3">
-            <label for="email">Email</label>
+            <label for="email">Adresse e-mail</label>
             <InputText 
               id="email" 
               v-model="email" 
@@ -13,8 +13,7 @@
               class="w-full"
               :class="{ 'p-invalid': validationErrors.email }" 
               aria-describedby="email-error"
-              placeholder="Enter your email"
-
+              placeholder="Entrez votre adresse e-mail"
               required
             />
             <small id="email-error" class="p-error">{{ validationErrors.email }}</small>
@@ -22,7 +21,7 @@
 
           <div class="form-group mb-3">
             <div class="flex justify-content-between">
-              <label for="password">Password</label>
+              <label for="password">Mot de passe</label>
             </div>
             <Password 
               id="password" 
@@ -32,20 +31,18 @@
               class="w-full" 
               :class="{ 'p-invalid': validationErrors.password }"
               aria-describedby="password-error"
-              placeholder="Enter your password"
-              value="password123"
+              placeholder="Entrez votre mot de passe"
               required
             />
             <small id="password-error" class="p-error">{{ validationErrors.password }}</small>
             <div class="flex justify-content-between">
-              <router-link to="/reset-password" class="forgot-password mt-4">Forgot password?</router-link>
+              <router-link to="/reset-password" class="forgot-password mt-4">Mot de passe oublié ?</router-link>
             </div>
           </div>
 
-
           <Button 
             type="submit" 
-            label="Sign In" 
+            label="Se connecter" 
             icon="pi pi-sign-in" 
             class="w-full p-button-text p-button-rounded" 
             :loading="loading"
@@ -95,16 +92,16 @@ const validateForm = () => {
 
   // Email validation
   if (!email.value) {
-    validationErrors.value.email = 'Email is required';
+    validationErrors.value.email = 'L\'adresse e-mail est requise';
     isValid = false;
   } else if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-    validationErrors.value.email = 'Please enter a valid email address';
+    validationErrors.value.email = 'Veuillez entrer une adresse e-mail valide';
     isValid = false;
   }
 
   // Password validation
   if (!password.value) {
-    validationErrors.value.password = 'Password is required';
+    validationErrors.value.password = 'Le mot de passe est requis';
     isValid = false;
   }
 
@@ -126,8 +123,8 @@ const handleLogin = async () => {
     // Show success message
     toast.add({
       severity: 'success',
-      summary: 'Logged In',
-      detail: 'You have successfully logged in',
+      summary: 'Connecté',
+      detail: 'Vous êtes maintenant connecté',
       life: 3000
     });
     
@@ -141,12 +138,12 @@ const handleLogin = async () => {
     if (error.message) {
       errorMessage.value = error.message;
     } else {
-      errorMessage.value = 'An unexpected error occurred. Please try again.';
+      errorMessage.value = 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
     }
     
     toast.add({
       severity: 'error',
-      summary: 'Login Failed',
+      summary: 'Échec de connexion',
       detail: errorMessage.value,
       life: 5000
     });
@@ -157,13 +154,28 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  padding: 1rem;
+}
+
 .login-form {
   max-width: 480px;
-  margin: 2rem auto;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .form-wrapper {
-  padding: 1rem 0;
+  padding: 1.5rem 1rem;
 }
 
 .form-group {

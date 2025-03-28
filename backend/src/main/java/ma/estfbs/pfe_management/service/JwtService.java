@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-
 import ma.estfbs.pfe_management.model.Utilisateur;
 
 @Service
@@ -32,11 +31,11 @@ public class JwtService {
   public String extractUsername(String token) {
     return extractClaim(token, Claims::getSubject);
   }
-  
+
   public Long extractUserId(String token) {
     return extractClaim(token, claims -> claims.get("userId", Long.class));
   }
-  
+
   public String extractUserRole(String token) {
     return extractClaim(token, claims -> claims.get("role", String.class));
   }
@@ -52,49 +51,49 @@ public class JwtService {
       Utilisateur user = (Utilisateur) userDetails;
       claims.put("userId", user.getId());
       claims.put("role", user.getRole().name());
+      claims.put("nom", user.getNom());
+      claims.put("prenom", user.getPrenom());
     }
     return generateToken(claims, userDetails);
   }
 
   public String generateToken(
       Map<String, Object> extraClaims,
-      UserDetails userDetails
-  ) {
+      UserDetails userDetails) {
     return buildToken(extraClaims, userDetails, jwtExpiration);
   }
 
   public String generateRefreshToken(
-      UserDetails userDetails
-  ) {
+      UserDetails userDetails) {
     return buildToken(new HashMap<>(), userDetails, refreshExpiration);
   }
 
   private String buildToken(
-          Map<String, Object> extraClaims,
-          UserDetails userDetails,
-          long expiration
-  ) {
+      Map<String, Object> extraClaims,
+      UserDetails userDetails,
+      long expiration) {
     return Jwts
-            .builder()
-            .setClaims(extraClaims)
-            .setSubject(userDetails.getUsername())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + expiration))
-            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-            .compact();
+        .builder()
+        .setClaims(extraClaims)
+        .setSubject(userDetails.getUsername())
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(new Date(System.currentTimeMillis() + expiration))
+        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .compact();
   }
 
   /**
-   * Generates a token specifically for password reset with a short expiration time
+   * Generates a token specifically for password reset with a short expiration
+   * time
    */
   public String generatePasswordResetToken(String email) {
     return Jwts
-            .builder()
-            .setSubject(email)
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + 900000)) // 15 minutes
-            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
-            .compact();
+        .builder()
+        .setSubject(email)
+        .setIssuedAt(new Date(System.currentTimeMillis()))
+        .setExpiration(new Date(System.currentTimeMillis() + 900000)) // 15 minutes
+        .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+        .compact();
   }
 
   public boolean isTokenValid(String token, UserDetails userDetails) {

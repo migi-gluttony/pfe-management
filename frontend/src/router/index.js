@@ -4,13 +4,13 @@ import DashboardView from '../views/DashboardView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import AuthService from '../services/AuthService'
 
-// Management views
-import BinomeManagementView from '../views/BinomeManagementView.vue'
-import ComptesManagementView from '../views/ComptesManagementView.vue'
-import SoutenanceManagementView from '../views/SoutenanceManagementView.vue'
-import SujetManagementView from '../views/SujetManagementView.vue'
-import SujetSuggestionsView from '../views/SujetSuggestionsView.vue'
-import NotesManagementView from '../views/NotesManagementView.vue'
+// // Management views
+// import BinomeManagementView from '../views/BinomeManagementView.vue'
+// import ComptesManagementView from '../views/ComptesManagementView.vue'
+// import SoutenanceManagementView from '../views/SoutenanceManagementView.vue'
+// import SujetManagementView from '../views/SujetManagementView.vue'
+// import SujetSuggestionsView from '../views/SujetSuggestionsView.vue'
+// import NotesManagementView from '../views/NotesManagementView.vue'
 
 
 // Create router instance
@@ -32,60 +32,60 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     
-    // Department Head (CHEF_DE_DEPARTEMENT) routes
-    {
-      path: '/management/binomes',
-      name: 'binomeManagement',
-      component: BinomeManagementView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },
-    {
-      path: '/management/comptes',
-      name: 'comptesManagement',
-      component: ComptesManagementView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },
-    {
-      path: '/management/soutenances',
-      name: 'soutenanceManagement',
-      component: SoutenanceManagementView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },
-    {
-      path: '/management/sujets',
-      name: 'sujetManagement',
-      component: SujetManagementView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },
-    {
-      path: '/management/sujet-suggestions',
-      name: 'sujetSuggestions',
-      component: SujetSuggestionsView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },{
-      path: '/management/notes-management',
-      name: 'notesManagement',
-      component: NotesManagementView,
-      meta: { 
-        requiresAuth: true,
-        requiresRole: 'CHEF_DE_DEPARTEMENT'
-      }
-    },
+    // // Department Head (CHEF_DE_DEPARTEMENT) routes
+    // {
+    //   path: '/management/binomes',
+    //   name: 'binomeManagement',
+    //   component: BinomeManagementView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },
+    // {
+    //   path: '/management/comptes',
+    //   name: 'comptesManagement',
+    //   component: ComptesManagementView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },
+    // {
+    //   path: '/management/soutenances',
+    //   name: 'soutenanceManagement',
+    //   component: SoutenanceManagementView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },
+    // {
+    //   path: '/management/sujets',
+    //   name: 'sujetManagement',
+    //   component: SujetManagementView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },
+    // {
+    //   path: '/management/sujet-suggestions',
+    //   name: 'sujetSuggestions',
+    //   component: SujetSuggestionsView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },{
+    //   path: '/management/notes-management',
+    //   name: 'notesManagement',
+    //   component: NotesManagementView,
+    //   meta: { 
+    //     requiresAuth: true,
+    //     requiresRole: 'CHEF_DE_DEPARTEMENT'
+    //   }
+    // },
     // Redirect root to dashboard
     {
       path: '/',

@@ -34,7 +34,9 @@ export default {
       return {
         email: payload.sub,
         role: payload.role,
-        userId: payload.userId
+        userId: payload.userId,
+        nom: payload.nom,          
+        prenom: payload.prenom     
       };
     } catch (e) {
       console.error('Error parsing token:', e);
@@ -49,12 +51,11 @@ export default {
    * @param {boolean} rememberMe - Whether to remember the user
    * @returns {Promise} - Promise with authentication response
    */
-  async login(email, password, rememberMe = false) {
+  async login(email, motDePasse, rememberMe = false) {
     try {
-      // Match the field names expected by the backend (LoginRequest.java)
       const data = await ApiService.post('/auth/login', { 
         email,
-        password
+        motDePasse
       });
 
       // Store token in localStorage/sessionStorage based on remember me option
@@ -96,9 +97,6 @@ export default {
     
     // Dispatch event when authentication state changes
     window.dispatchEvent(new CustomEvent('auth-state-changed'));
-    
-    // Optionally, you can call a logout endpoint to invalidate the token on the server
-    // ApiService.post('/auth/logout').catch(err => console.error('Logout error:', err));
   },
 
   /**

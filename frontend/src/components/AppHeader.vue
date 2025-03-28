@@ -1,7 +1,6 @@
 <template>
   <header v-if="!isAuthenticated" class="app-header">
     <div class="logo-section">
-      <!-- Logo section with background color that matches the sidebar width -->
       <div class="logo-container">
         <!-- Primary Logo -->
         <div class="logo-placeholder primary-logo">
@@ -89,7 +88,7 @@ const navigateToLogin = () => {
 .logo-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-around;
   padding: 0 1rem;
   width: 100%;
 }
@@ -98,12 +97,10 @@ const navigateToLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px;
-  width: 50px;
+  height: 68px;
 }
 
 .logo-placeholder img {
-  max-width: 100%;
   max-height: 100%;
   object-fit: contain;
   filter: brightness(0) invert(1); 
