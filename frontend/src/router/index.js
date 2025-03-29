@@ -5,6 +5,7 @@ import NotFoundView from '../views/NotFoundView.vue'
 import AuthService from '../services/AuthService'
 import PasswordResetRequestView from '@/views/auth/PasswordResetRequestView.vue'
 import PasswordResetConfirmView from '@/views/auth/PasswordResetConfirmView.vue'
+import ComptesManagementView from '@/views/chefDeDepartement/ComptesManagementView.vue'
 
 // Create router instance
 const router = createRouter({
@@ -36,7 +37,16 @@ const router = createRouter({
       component: DashboardView,
       meta: { requiresAuth: true }
     },
-    
+    // CHEF_DE_DEPARTEMENT routes
+    {
+      path: '/management/comptes',
+      name: 'comptesManagement',
+      component: ComptesManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
     // Redirect root to dashboard
     {
       path: '/',
