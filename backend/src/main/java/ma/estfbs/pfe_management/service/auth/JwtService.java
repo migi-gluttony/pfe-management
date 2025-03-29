@@ -1,4 +1,4 @@
-package ma.estfbs.pfe_management.service;
+package ma.estfbs.pfe_management.service.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

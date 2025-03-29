@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 import ma.estfbs.pfe_management.dto.auth.*;
-import ma.estfbs.pfe_management.service.AuthenticationService;
+import ma.estfbs.pfe_management.service.auth.AuthenticationService;
 
 
 @RestController
