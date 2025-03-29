@@ -5,13 +5,11 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import ma.estfbs.pfe_management.model.AnneeScolaire;
 import ma.estfbs.pfe_management.model.Binome;
 import ma.estfbs.pfe_management.model.ProposerSujets;
 import ma.estfbs.pfe_management.model.ProposerSujets.Status;
 
-@RepositoryRestResource(path = "proposer-sujets")
 public interface ProposerSujetsRepository extends JpaRepository<ProposerSujets, Long> {
     List<ProposerSujets> findByBinomeProposerPar(Binome binome);
     List<ProposerSujets> findByBinomeProposerParAndAnneeScolaire(Binome binome, AnneeScolaire anneeScolaire);

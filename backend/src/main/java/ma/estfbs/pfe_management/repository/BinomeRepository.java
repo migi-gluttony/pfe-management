@@ -4,13 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import ma.estfbs.pfe_management.model.AnneeScolaire;
 import ma.estfbs.pfe_management.model.Binome;
 import ma.estfbs.pfe_management.model.Sujet;
 import ma.estfbs.pfe_management.model.Utilisateur;
 
-@RepositoryRestResource(path = "binome")
 public interface BinomeRepository extends JpaRepository<Binome, Long> {
     List<Binome> findByEtudiant1(Utilisateur etudiant);
     List<Binome> findByEtudiant2(Utilisateur etudiant);

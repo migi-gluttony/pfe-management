@@ -4,12 +4,10 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import ma.estfbs.pfe_management.model.AnneeScolaire;
 import ma.estfbs.pfe_management.model.Filiere;
 import ma.estfbs.pfe_management.model.Sujet;
 
-@RepositoryRestResource(path = "sujet")
 public interface SujetRepository extends JpaRepository<Sujet, Long> {
     List<Sujet> findByFiliere(Filiere filiere);
     List<Sujet> findByThemeContainingIgnoreCase(String theme);

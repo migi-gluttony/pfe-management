@@ -8,14 +8,12 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import ma.estfbs.pfe_management.model.AnneeScolaire;
 import ma.estfbs.pfe_management.model.Binome;
 import ma.estfbs.pfe_management.model.Salle;
 import ma.estfbs.pfe_management.model.Soutenance;
 import ma.estfbs.pfe_management.model.Utilisateur;
 
-@RepositoryRestResource(path = "soutenance")
 public interface SoutenanceRepository extends JpaRepository<Soutenance, Long> {
     Optional<Soutenance> findByBinome(Binome binome);
     Optional<Soutenance> findByBinomeId(Long binomeId);
