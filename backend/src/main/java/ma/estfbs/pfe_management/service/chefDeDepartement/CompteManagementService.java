@@ -4,7 +4,6 @@ import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,9 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
-
+import ma.estfbs.pfe_management.dto.FiliereDTO;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
-import ma.estfbs.pfe_management.dto.chefDeDepartement.FiliereDTO;
 import ma.estfbs.pfe_management.model.AnneeScolaire;
 import ma.estfbs.pfe_management.model.Etudiant;
 import ma.estfbs.pfe_management.model.Filiere;
@@ -98,7 +96,6 @@ public class CompteManagementService {
             etudiant = createEtudiant(utilisateur, request.getFiliereId());
         }
 
-        // In a real application, send the password via secure channel
         logGeneratedCredentials(email, password);
 
         return mapToCompteDTO(utilisateur, etudiant);
@@ -372,8 +369,6 @@ public class CompteManagementService {
     }
 
     private void logGeneratedCredentials(String email, String password) {
-        // In a real application, send via email or secure channel
-        // For development purposes, just log to console
         System.out.println("Generated email: " + email);
         System.out.println("Generated password: " + password);
     }

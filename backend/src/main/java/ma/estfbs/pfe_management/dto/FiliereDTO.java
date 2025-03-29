@@ -1,4 +1,4 @@
-package ma.estfbs.pfe_management.dto.chefDeDepartement;
+package ma.estfbs.pfe_management.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

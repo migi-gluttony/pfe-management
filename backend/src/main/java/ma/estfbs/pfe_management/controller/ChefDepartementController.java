@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 import ma.estfbs.pfe_management.model.Utilisateur.Role;
+import ma.estfbs.pfe_management.service.chefDeDepartement.BinomeManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.CompteManagementService;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.*;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
 
 @RestController
@@ -19,6 +21,7 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
 public class ChefDepartementController {
 
     private final CompteManagementService compteManagementService;
+    private final BinomeManagementService binomeManagementService;
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -65,4 +68,43 @@ public class ChefDepartementController {
     public ResponseEntity<BatchImportResponse> importComptes(@RequestBody BatchImportRequest request) {
         return ResponseEntity.ok(compteManagementService.importComptes(request));
     }
+
+    // ============= BINOME MANAGEMENT ENDPOINTS =============
+
+    /**
+     * Get binome management data
+     */
+    @GetMapping("/binomes")
+    public ResponseEntity<BinomeManagementResponse> getBinomeManagementData(
+            @RequestParam(required = false) Long filiereId) {
+        return ResponseEntity.ok(binomeManagementService.getBinomeManagementData(filiereId));
+    }
+
+    /**
+     * Add a new binome
+     */
+    @PostMapping("/binomes")
+    public ResponseEntity<BinomeDTO> addBinome(@RequestBody BinomeAddRequest request) {
+        return ResponseEntity.ok(binomeManagementService.addBinome(request));
+    }
+
+    /**
+     * Edit a binome's encadrant
+     */
+    @PutMapping("/binomes/{id}")
+    public ResponseEntity<BinomeDTO> editBinome(
+            @PathVariable Long id,
+            @RequestBody BinomeEditRequest request) {
+        return ResponseEntity.ok(binomeManagementService.editBinome(id, request));
+    }
+
+    /**
+     * Delete a binome
+     */
+    @DeleteMapping("/binomes/{id}")
+    public ResponseEntity<Void> deleteBinome(@PathVariable Long id) {
+        binomeManagementService.deleteBinome(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
