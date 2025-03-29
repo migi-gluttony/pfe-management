@@ -2,6 +2,7 @@ package ma.estfbs.pfe_management.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,6 +41,9 @@ public class Soutenance {
     @JoinColumn(name = "jury2_id", nullable = false)
     private Utilisateur jury2;
     
+    @OneToMany(mappedBy = "soutenance")
+    private List<NoteSoutenance> notesSoutenances;
+
     @ManyToOne
     @JoinColumn(name = "annee_scolaire_id", nullable = false)
     private AnneeScolaire anneeScolaire;

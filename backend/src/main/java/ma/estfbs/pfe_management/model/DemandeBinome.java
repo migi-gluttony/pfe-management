@@ -27,9 +27,11 @@ public class DemandeBinome {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Statut statut = Statut.EN_ATTENTE;
     
     @Column(name = "date_demande", nullable = false)
+    @Builder.Default
     private LocalDateTime dateDemande = LocalDateTime.now();
     
     @ManyToOne

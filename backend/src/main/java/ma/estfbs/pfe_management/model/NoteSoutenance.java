@@ -29,7 +29,8 @@ public class NoteSoutenance {
     
     @Column
     private String commentaire;
-    
+
+    @Builder.Default
     @Column(name = "date_evaluation", nullable = false)
     private LocalDateTime dateEvaluation = LocalDateTime.now();
 }

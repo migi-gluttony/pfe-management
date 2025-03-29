@@ -1,4 +1,3 @@
-// Utilisateur.java
 package ma.estfbs.pfe_management.model;
 
 import java.util.Collection;

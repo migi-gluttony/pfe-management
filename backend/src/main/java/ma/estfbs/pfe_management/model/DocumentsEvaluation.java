@@ -26,7 +26,8 @@ public class DocumentsEvaluation {
     
     @Column(columnDefinition = "TEXT")
     private String commentaire;
-    
+
+    @Builder.Default
     @Column(name = "date_soumission", nullable = false)
     private LocalDateTime dateSoumission = LocalDateTime.now();
     

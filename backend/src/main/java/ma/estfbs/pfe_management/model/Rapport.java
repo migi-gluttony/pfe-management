@@ -33,6 +33,7 @@ public class Rapport {
     @Column
     private String commentaire;
     
+    @Builder.Default
     @Column(name = "date_soumission", nullable = false)
     private LocalDateTime dateSoumission = LocalDateTime.now();
     
