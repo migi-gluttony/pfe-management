@@ -14,9 +14,8 @@ public class Etudiant {
     @Id
     private Long id;
     
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "id")
+    @ManyToOne
+    @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur utilisateur;
     
     @ManyToOne

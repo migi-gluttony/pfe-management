@@ -11,7 +11,6 @@ import ma.estfbs.pfe_management.model.Utilisateur.Role;
 import ma.estfbs.pfe_management.service.chefDeDepartement.CompteManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
 
-
 @RestController
 @RequestMapping("/api/chef_de_departement")
 @CrossOrigin(origins = "*")
@@ -19,12 +18,10 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
 @PreAuthorize("hasRole('CHEF_DE_DEPARTEMENT')")
 public class ChefDepartementController {
 
-
     private final CompteManagementService compteManagementService;
 
-    
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
-    
+
     /**
      * Get accounts by role
      */
@@ -33,7 +30,7 @@ public class ChefDepartementController {
             @RequestParam(required = false) Role role) {
         return ResponseEntity.ok(compteManagementService.getComptesByRole(role));
     }
-    
+
     /**
      * Add a new account
      */
@@ -41,7 +38,7 @@ public class ChefDepartementController {
     public ResponseEntity<CompteDTO> addCompte(@RequestBody CompteAddRequest request) {
         return ResponseEntity.ok(compteManagementService.addCompte(request));
     }
-    
+
     /**
      * Edit an account
      */
@@ -51,7 +48,7 @@ public class ChefDepartementController {
             @RequestBody CompteEditRequest request) {
         return ResponseEntity.ok(compteManagementService.editCompte(id, request));
     }
-    
+
     /**
      * Delete an account
      */
@@ -60,6 +57,12 @@ public class ChefDepartementController {
         compteManagementService.deleteCompte(id);
         return ResponseEntity.ok().build();
     }
-    
-    
+
+    /**
+     * Import multiple accounts in batch
+     */
+    @PostMapping("/comptes/import")
+    public ResponseEntity<BatchImportResponse> importComptes(@RequestBody BatchImportRequest request) {
+        return ResponseEntity.ok(compteManagementService.importComptes(request));
+    }
 }
