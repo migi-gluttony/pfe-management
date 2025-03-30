@@ -16,6 +16,9 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
 import ma.estfbs.pfe_management.dto.SujetDTO;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetManagementResponse;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetRequestDTOs.*;
+import ma.estfbs.pfe_management.service.chefDeDepartement.SujetSuggestionService;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetSuggestionDTO;
+
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -27,6 +30,8 @@ public class ChefDepartementController {
     private final CompteManagementService compteManagementService;
     private final BinomeManagementService binomeManagementService;
     private final SujetManagementService sujetManagementService;
+    private final SujetSuggestionService sujetSuggestionService;
+
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -147,4 +152,33 @@ public class ChefDepartementController {
         sujetManagementService.deleteSujet(id);
         return ResponseEntity.ok().build();
     }
+
+    // ============= SUJET SUGGESTIONS ENDPOINTS =============
+    
+    /**
+     * Get all sujet suggestions
+     */
+    @GetMapping("/sujet-suggestions")
+    public ResponseEntity<List<SujetSuggestionDTO>> getAllSuggestions() {
+        return ResponseEntity.ok(sujetSuggestionService.getAllSuggestions());
+    }
+    
+    /**
+     * Accept a sujet suggestion
+     */
+    @PostMapping("/sujet-suggestions/{id}/accept")
+    public ResponseEntity<Void> acceptSuggestion(@PathVariable Long id) {
+        sujetSuggestionService.acceptSuggestion(id);
+        return ResponseEntity.ok().build();
+    }
+    
+    /**
+     * Reject a sujet suggestion
+     */
+    @PostMapping("/sujet-suggestions/{id}/reject")
+    public ResponseEntity<Void> rejectSuggestion(@PathVariable Long id) {
+        sujetSuggestionService.rejectSuggestion(id);
+        return ResponseEntity.ok().build();
+    }
+    
 }
