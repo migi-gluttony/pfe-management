@@ -33,8 +33,9 @@ public class BinomeManagementDTOs {
         private String prenom;
         private String email;
         private String cne;
+        private String filiereName;
     }
-    
+
     @Data
     @Builder
     @AllArgsConstructor
@@ -47,13 +48,14 @@ public class BinomeManagementDTOs {
     }
     
     @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class SujetDTO {
-        private Long id;
-        private String titre;
-    }
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public static class SujetDTO {
+    private Long id;
+    private String titre;
+    private Long filiereId; // Added this field
+}
     
     @Data
     @Builder

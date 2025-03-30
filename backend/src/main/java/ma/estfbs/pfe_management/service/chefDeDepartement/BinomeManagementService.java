@@ -43,6 +43,17 @@ public class BinomeManagementService {
                 List<BinomeDTO> binomes;
                 AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
 
+                // Get all filieres for dropdown
+                List<FiliereDTO> filieres = filiereRepository.findAll().stream()
+                                .map(this::mapToFiliereDTO)
+                                .collect(Collectors.toList());
+
+                // Get all encadrants
+                List<EncadrantDTO> encadrants = utilisateurRepository.findAll().stream()
+                                .filter(user -> user.getRole() == Role.ENCADRANT)
+                                .map(this::mapToEncadrantDTO)
+                                .collect(Collectors.toList());
+
                 if (filiereId != null) {
                         // Get binomes filtered by filiere for current year
                         Filiere filiere = filiereRepository.findById(filiereId)
@@ -65,44 +76,110 @@ public class BinomeManagementService {
                                                                                                         binome.getEtudiant2()))))
                                         .map(this::mapToBinomeDTO)
                                         .collect(Collectors.toList());
+
+                        // Get available students filtered by filiere who are not in a binome
+                        List<StudentDTO> availableStudents = getAvailableStudentsForFiliere(currentYear, filiere);
+
+                        // Get available subjects filtered by filiere
+                        List<SujetDTO> availableSujets = sujetRepository
+                                        .findByAnneeScolaireAndFiliere(currentYear, filiere)
+                                        .stream()
+                                        .filter(sujet -> sujet.getBinomes().stream()
+                                                        .noneMatch(binome -> binome.getAnneeScolaire().getId()
+                                                                        .equals(currentYear.getId())))
+                                        .map(this::mapToSujetDTO)
+                                        .collect(Collectors.toList());
+
+                        return BinomeManagementResponse.builder()
+                                        .binomes(binomes)
+                                        .filieres(filieres)
+                                        .availableStudents(availableStudents)
+                                        .encadrants(encadrants)
+                                        .availableSujets(availableSujets)
+                                        .build();
                 } else {
                         // Get all binomes for current year
                         binomes = binomeRepository.findAll().stream()
                                         .filter(binome -> binome.getAnneeScolaire().getId().equals(currentYear.getId()))
                                         .map(this::mapToBinomeDTO)
                                         .collect(Collectors.toList());
+
+                        // Get all available students (those not in a binome for current year)
+                        List<StudentDTO> availableStudents = getAvailableStudents(currentYear);
+
+                        // Get all available subjects (not assigned to any binome for current year)
+                        List<SujetDTO> availableSujets = sujetRepository.findByAnneeScolaire(currentYear)
+                                        .stream()
+                                        .filter(sujet -> sujet.getBinomes().stream()
+                                                        .noneMatch(binome -> binome.getAnneeScolaire().getId()
+                                                                        .equals(currentYear.getId())))
+                                        .map(this::mapToSujetDTO)
+                                        .collect(Collectors.toList());
+
+                        return BinomeManagementResponse.builder()
+                                        .binomes(binomes)
+                                        .filieres(filieres)
+                                        .availableStudents(availableStudents)
+                                        .encadrants(encadrants)
+                                        .availableSujets(availableSujets)
+                                        .build();
                 }
+        }
 
-                // Get all filieres
-                List<FiliereDTO> filieres = filiereRepository.findAll().stream()
-                                .map(this::mapToFiliereDTO)
+        /**
+         * Get available students for a specific filiere that are not in a binome
+         */
+        private List<StudentDTO> getAvailableStudentsForFiliere(AnneeScolaire currentYear, Filiere filiere) {
+                // Get all students in this filiere for current year
+                List<Etudiant> allEtudiants = etudiantRepository.findByFiliereAndAnneeScolaire(filiere, currentYear);
+                List<Utilisateur> allStudents = allEtudiants.stream()
+                                .map(Etudiant::getUtilisateur)
                                 .collect(Collectors.toList());
 
-                // Get available students (those not in a binome for current year)
-                List<StudentDTO> availableStudents = getAvailableStudents(currentYear);
+                // Get students already in binomes for current year
+                List<Utilisateur> studentsInBinomes = new ArrayList<>();
+                binomeRepository.findAll().stream()
+                                .filter(binome -> binome.getAnneeScolaire().getId().equals(currentYear.getId()))
+                                .forEach(binome -> {
+                                        studentsInBinomes.add(binome.getEtudiant1());
+                                        if (binome.getEtudiant2() != null) {
+                                                studentsInBinomes.add(binome.getEtudiant2());
+                                        }
+                                });
 
-                // Get all encadrants
-                List<EncadrantDTO> encadrants = utilisateurRepository.findAll().stream()
-                                .filter(user -> user.getRole() == Role.ENCADRANT)
-                                .map(this::mapToEncadrantDTO)
+                // Filter out students already in binomes
+                return allStudents.stream()
+                                .filter(student -> !studentsInBinomes.contains(student))
+                                .map(this::mapToStudentDTO)
+                                .collect(Collectors.toList());
+        }
+
+        /**
+         * Get students that are not in any binome for the current year
+         */
+        private List<StudentDTO> getAvailableStudents(AnneeScolaire currentYear) {
+                // Get all students for current year
+                List<Etudiant> allEtudiants = etudiantRepository.findByAnneeScolaire(currentYear);
+                List<Utilisateur> allStudents = allEtudiants.stream()
+                                .map(Etudiant::getUtilisateur)
                                 .collect(Collectors.toList());
 
-                // Get available subjects (not assigned to any binome for current year)
-                List<SujetDTO> availableSujets = sujetRepository.findByAnneeScolaire(currentYear)
-                                .stream()
-                                .filter(sujet -> sujet.getBinomes().stream()
-                                                .noneMatch(binome -> binome.getAnneeScolaire().getId()
-                                                                .equals(currentYear.getId())))
-                                .map(this::mapToSujetDTO)
-                                .collect(Collectors.toList());
+                // Get students already in binomes for current year
+                List<Utilisateur> studentsInBinomes = new ArrayList<>();
+                binomeRepository.findAll().stream()
+                                .filter(binome -> binome.getAnneeScolaire().getId().equals(currentYear.getId()))
+                                .forEach(binome -> {
+                                        studentsInBinomes.add(binome.getEtudiant1());
+                                        if (binome.getEtudiant2() != null) {
+                                                studentsInBinomes.add(binome.getEtudiant2());
+                                        }
+                                });
 
-                return BinomeManagementResponse.builder()
-                                .binomes(binomes)
-                                .filieres(filieres)
-                                .availableStudents(availableStudents)
-                                .encadrants(encadrants)
-                                .availableSujets(availableSujets)
-                                .build();
+                // Filter out students already in binomes
+                return allStudents.stream()
+                                .filter(student -> !studentsInBinomes.contains(student))
+                                .map(this::mapToStudentDTO)
+                                .collect(Collectors.toList());
         }
 
         /**
@@ -229,34 +306,6 @@ public class BinomeManagementService {
         }
 
         /**
-         * Get students that are not in any binome for the current year
-         */
-        private List<StudentDTO> getAvailableStudents(AnneeScolaire currentYear) {
-                // Get all students for current year
-                List<Etudiant> allEtudiants = etudiantRepository.findByAnneeScolaire(currentYear);
-                List<Utilisateur> allStudents = allEtudiants.stream()
-                                .map(Etudiant::getUtilisateur)
-                                .collect(Collectors.toList());
-
-                // Get students already in binomes for current year
-                List<Utilisateur> studentsInBinomes = new ArrayList<>();
-                binomeRepository.findAll().stream()
-                                .filter(binome -> binome.getAnneeScolaire().getId().equals(currentYear.getId()))
-                                .forEach(binome -> {
-                                        studentsInBinomes.add(binome.getEtudiant1());
-                                        if (binome.getEtudiant2() != null) {
-                                                studentsInBinomes.add(binome.getEtudiant2());
-                                        }
-                                });
-
-                // Filter out students already in binomes
-                return allStudents.stream()
-                                .filter(student -> !studentsInBinomes.contains(student))
-                                .map(this::mapToStudentDTO)
-                                .collect(Collectors.toList());
-        }
-
-        /**
          * Map Binome entity to BinomeDTO
          */
         private BinomeDTO mapToBinomeDTO(Binome binome) {
@@ -283,12 +332,20 @@ public class BinomeManagementService {
          * Map Utilisateur entity to StudentDTO
          */
         private StudentDTO mapToStudentDTO(Utilisateur utilisateur) {
+                // Get filiere info for the student
+                Etudiant etudiant = etudiantRepository.findByUtilisateur(utilisateur).orElse(null);
+                String filiereName = null;
+                if (etudiant != null && etudiant.getFiliere() != null) {
+                        filiereName = etudiant.getFiliere().getNom();
+                }
+
                 return StudentDTO.builder()
                                 .id(utilisateur.getId())
                                 .nom(utilisateur.getNom())
                                 .prenom(utilisateur.getPrenom())
                                 .email(utilisateur.getEmail())
                                 .cne(utilisateur.getCne())
+                                .filiereName(filiereName) // Add filiere name
                                 .build();
         }
 
@@ -308,9 +365,11 @@ public class BinomeManagementService {
          * Map Sujet entity to SujetDTO
          */
         private SujetDTO mapToSujetDTO(Sujet sujet) {
+                // Include filiere information in the subject DTO
                 return SujetDTO.builder()
                                 .id(sujet.getId())
                                 .titre(sujet.getTitre())
+                                .filiereId(sujet.getFiliere() != null ? sujet.getFiliere().getId() : null)
                                 .build();
         }
 

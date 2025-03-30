@@ -15,6 +15,11 @@ public interface SujetRepository extends JpaRepository<Sujet, Long> {
     List<Sujet> findByAnneeScolaire(AnneeScolaire anneeScolaire);
     List<Sujet> findByFiliereAndAnneeScolaire(Filiere filiere, AnneeScolaire anneeScolaire);
     
+    // Renamed method to match existing pattern
+    default List<Sujet> findByAnneeScolaireAndFiliere(AnneeScolaire anneeScolaire, Filiere filiere) {
+        return findByFiliereAndAnneeScolaire(filiere, anneeScolaire);
+    }
+    
     // Find subjects that don't have any binome assigned yet
     List<Sujet> findByBinomesIsEmpty();
     

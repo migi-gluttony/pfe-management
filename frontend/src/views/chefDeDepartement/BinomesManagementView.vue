@@ -18,19 +18,36 @@
             @add="openAddModal"
         />
 
-        <!-- Binomes List -->
-        <BinomesList
-            :binomes="binomes"
-            :loading="loading"
-            :searchQuery="searchQuery"
-            @edit="openEditModal"
-            @delete="confirmDelete"
-        />
-
+        <div class="grid">
+            
+            
+        </div>
+        <div >
+                <!-- Binomes List -->
+                <BinomesList
+                    :binomes="binomes"
+                    :loading="loading"
+                    :searchQuery="searchQuery"
+                    @edit="openEditModal"
+                    @delete="confirmDelete"
+                />
+            </div>
+        <div>
+                <!-- Available Students List -->
+                <AvailableStudentsList
+                    :availableStudents="availableStudents"
+                    :selectedFiliere="selectedFiliere"
+                    :filieres="filieres"
+                    :loading="loading"
+                    :searchQuery="searchQuery"
+                    @addToBinome="handleAddStudentToBinome"
+                />
+            </div>
         <!-- Add Binome Modal -->
         <BinomesAddModal
             v-model:visible="showAddModal"
             :selectedFiliere="selectedFiliere"
+            :filieres="filieres"
             :availableStudents="availableStudents"
             :encadrants="encadrants"
             :availableSujets="availableSujets"
@@ -63,6 +80,7 @@ import BinomesHeader from "@/components/chefDeDepartement/binomesManagement/Bino
 import BinomesList from "@/components/chefDeDepartement/binomesManagement/BinomesList.vue";
 import BinomesAddModal from "@/components/chefDeDepartement/binomesManagement/BinomesAddModal.vue";
 import BinomesEditModal from "@/components/chefDeDepartement/binomesManagement/BinomesEditModal.vue";
+import AvailableStudentsList from "@/components/chefDeDepartement/binomesManagement/AvailableStudentsList.vue";
 
 // Import PrimeVue components
 import Toast from "primevue/toast";
@@ -77,6 +95,13 @@ const encadrants = ref([]);
 const availableSujets = ref([]);
 const editingBinome = ref(null);
 const searchQuery = ref("");
+
+// Store the initial data when first loaded
+const initialData = ref({
+    availableStudents: [],
+    encadrants: [],
+    availableSujets: [],
+});
 
 // UI state
 const showAddModal = ref(false);
@@ -110,6 +135,13 @@ async function fetchData() {
         encadrants.value = response.encadrants || [];
         availableSujets.value = response.availableSujets || [];
 
+        // Store the initial data for later use
+        initialData.value = {
+            availableStudents: [...availableStudents.value],
+            encadrants: [...encadrants.value],
+            availableSujets: [...availableSujets.value],
+        };
+
         // Set first filière as default if none selected
         if (filieres.value.length > 0 && !selectedFiliere.value) {
             selectedFiliere.value = filieres.value[0].id;
@@ -132,24 +164,36 @@ async function fetchBinomesForFiliere(filiereId) {
         const response = await ApiService.get(
             `/chef_de_departement/binomes?filiereId=${filiereId}`
         );
-        
+
         // Update binomes list
         binomes.value = response.binomes || [];
-        
-        // Update available students with filière information
-        availableStudents.value = (response.availableStudents || []).map(student => ({
-            ...student,
-            filiereName: Number(filiereId) // Use Number to ensure consistent type comparison
-        }));
-        
-        // Update available subjects with filière information
-        availableSujets.value = (response.availableSujets || []).map(sujet => ({
-            ...sujet,
-            filiereId: Number(filiereId) // Use Number to ensure consistent type comparison
-        }));
-        
-        console.log(`Fetched ${availableStudents.value.length} students for filière ${filiereId}`);
-        console.log(`Fetched ${availableSujets.value.length} subjects for filière ${filiereId}`);
+
+        // Only update these arrays if they're not empty in the response
+        // Otherwise keep using the initial data we stored
+        if (
+            response.availableStudents &&
+            response.availableStudents.length > 0
+        ) {
+            availableStudents.value = response.availableStudents;
+        } else {
+            availableStudents.value = initialData.value.availableStudents;
+        }
+
+        if (response.encadrants && response.encadrants.length > 0) {
+            encadrants.value = response.encadrants;
+        } else {
+            encadrants.value = initialData.value.encadrants;
+        }
+
+        if (response.availableSujets && response.availableSujets.length > 0) {
+            availableSujets.value = response.availableSujets;
+        } else {
+            availableSujets.value = initialData.value.availableSujets;
+        }
+
+        console.log(
+            `Fetched ${binomes.value.length} binomes for filière ${filiereId}`
+        );
     } catch (error) {
         handleApiError(
             error,
@@ -163,6 +207,20 @@ async function fetchBinomesForFiliere(filiereId) {
 async function handleFiliereChange(filiereId) {
     selectedFiliere.value = filiereId;
     await fetchBinomesForFiliere(filiereId);
+}
+
+// Handle adding a student to a binome from the available students list
+function handleAddStudentToBinome(student) {
+    // Pre-populate the student1 field in the add modal
+    formData = {
+        etudiant1Id: student.id,
+        etudiant2Id: null,
+        encadrantId: null,
+        sujetId: null,
+    };
+
+    // Open the add modal
+    openAddModal();
 }
 
 // CRUD operations
