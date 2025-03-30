@@ -59,8 +59,7 @@ public class BinomeManagementService {
                         // current year
                         binomes = binomeRepository.findAll().stream()
                                         .filter(binome -> binome.getAnneeScolaire().getId().equals(currentYear.getId())
-                                                        &&
-                                                        (filiereUtilisateurs.contains(binome.getEtudiant1()) ||
+                                                        && (filiereUtilisateurs.contains(binome.getEtudiant1()) ||
                                                                         (binome.getEtudiant2() != null
                                                                                         && filiereUtilisateurs.contains(
                                                                                                         binome.getEtudiant2()))))
@@ -273,8 +272,9 @@ public class BinomeManagementService {
                                 .etudiant1(mapToStudentDTO(binome.getEtudiant1()))
                                 .etudiant2(binome.getEtudiant2() != null ? mapToStudentDTO(binome.getEtudiant2())
                                                 : null)
-                                .encadrant(mapToEncadrantDTO(binome.getEncadrant()))
-                                .sujet(mapToSujetDTO(binome.getSujet()))
+                                .encadrant(binome.getEncadrant() != null ? mapToEncadrantDTO(binome.getEncadrant())
+                                                : null)
+                                .sujet(binome.getSujet() != null ? mapToSujetDTO(binome.getSujet()) : null)
                                 .filiereName(filiereName)
                                 .build();
         }

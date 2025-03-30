@@ -8,6 +8,7 @@ import PasswordResetConfirmView from '@/views/auth/PasswordResetConfirmView.vue'
 import ComptesManagementView from '@/views/chefDeDepartement/ComptesManagementView.vue'
 import BinomesManagementView from '@/views/chefDeDepartement/BinomesManagementView.vue'
 import SujetManagementView from '@/views/chefDeDepartement/SujetManagementView.vue'
+import SujetSuggestionsView from '@/views/chefDeDepartement/SujetSuggestionsView.vue'
 
 // Create router instance
 const router = createRouter({
@@ -62,6 +63,15 @@ const router = createRouter({
       path: '/management/sujets',
       name: 'sujetManagement',
       component: SujetManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/sujet-suggestions',
+      name: 'sujetSuggestions',
+      component: SujetSuggestionsView,
       meta: { 
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'

@@ -26,11 +26,11 @@ public class Binome {
     private Utilisateur etudiant2;
 
     @ManyToOne
-    @JoinColumn(name = "encadrant_id", nullable = false)
+    @JoinColumn(name = "encadrant_id")
     private Utilisateur encadrant;
 
     @ManyToOne
-    @JoinColumn(name = "sujet_id", nullable = false)
+    @JoinColumn(name = "sujet_id")
     private Sujet sujet;
 
     @ManyToOne
