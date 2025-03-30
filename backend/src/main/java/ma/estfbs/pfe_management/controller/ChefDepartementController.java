@@ -25,6 +25,8 @@ import ma.estfbs.pfe_management.service.chefDeDepartement.SujetSuggestionService
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetSuggestionDTO;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SoutenanceManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SoutenanceManagementDTOs.*;
+import ma.estfbs.pfe_management.service.chefDeDepartement.NoteManagementService;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.NoteManagementDTOs.*;
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -39,6 +41,8 @@ public class ChefDepartementController {
     private final SujetSuggestionService sujetSuggestionService;
     private final FiliereRepository filiereRepository;
     private final SoutenanceManagementService soutenanceManagementService;
+    private final NoteManagementService noteManagementService;
+
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -257,6 +261,26 @@ public class ChefDepartementController {
     }
 
 
+// ============= NOTE MANAGEMENT ENDPOINTS =============
+    
+
+    /**
+     * Get all student notes with filieres and pourcentages
+     */
+    @GetMapping("/notes")
+    public ResponseEntity<NoteManagementResponse> getAllNotes() {
+        return ResponseEntity.ok(noteManagementService.getAllNotesWithFilieres());
+    }
+
+    /**
+     * Get notes filtered by filiere
+     */
+    @GetMapping("/notes/filiere/{filiereId}")
+    public ResponseEntity<List<NoteDTO>> getNotesByFiliere(@PathVariable Long filiereId) {
+        return ResponseEntity.ok(noteManagementService.getNotesByFiliere(filiereId));
+    }
+
+    // ============= HELPER ENDPOINTS =============
 
 
     /**
