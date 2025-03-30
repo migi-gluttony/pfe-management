@@ -7,4 +7,5 @@ import ma.estfbs.pfe_management.model.AnneeScolaire;
 
 public interface AnneeScolaireRepository extends JpaRepository<AnneeScolaire, Long> {
     Optional<AnneeScolaire> findByCourante(boolean courante);
+    Optional<AnneeScolaire> findByAnnee(String annee);
 }

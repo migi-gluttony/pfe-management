@@ -26,7 +26,10 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetSuggestionDTO;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SoutenanceManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SoutenanceManagementDTOs.*;
 import ma.estfbs.pfe_management.service.chefDeDepartement.NoteManagementService;
+import ma.estfbs.pfe_management.service.chefDeDepartement.SettingsService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.NoteManagementDTOs.*;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SettingsDTOs;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SettingsDTOs.*;
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -42,7 +45,7 @@ public class ChefDepartementController {
     private final FiliereRepository filiereRepository;
     private final SoutenanceManagementService soutenanceManagementService;
     private final NoteManagementService noteManagementService;
-
+    private final SettingsService settingsService;
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -193,7 +196,6 @@ public class ChefDepartementController {
         return ResponseEntity.ok().build();
     }
 
-    
     // ============= SOUTENANCE MANAGEMENT ENDPOINTS =============
 
     /**
@@ -260,9 +262,7 @@ public class ChefDepartementController {
         return ResponseEntity.ok(response);
     }
 
-
-// ============= NOTE MANAGEMENT ENDPOINTS =============
-    
+    // ============= NOTE MANAGEMENT ENDPOINTS =============
 
     /**
      * Get all student notes with filieres and pourcentages
@@ -280,8 +280,48 @@ public class ChefDepartementController {
         return ResponseEntity.ok(noteManagementService.getNotesByFiliere(filiereId));
     }
 
-    // ============= HELPER ENDPOINTS =============
+    // ============= SETTINGS ENDPOINTS =============
 
+    /**
+     * Get current settings (percentages and academic year)
+     */
+    @GetMapping("/settings")
+    public ResponseEntity<SettingsResponse> getSettings() {
+        return ResponseEntity.ok(settingsService.getSettings());
+    }
+
+    /**
+     * Update percentages
+     */
+    @PutMapping("/settings/percentages")
+    public ResponseEntity<ma.estfbs.pfe_management.dto.chefDeDepartement.NoteManagementDTOs.PourcentageDTO> updatePercentages(
+            @RequestBody PourcentageUpdateRequest request) {
+        SettingsDTOs.PourcentageDTO settingsDTO = settingsService.updatePercentages(request);
+        ma.estfbs.pfe_management.dto.chefDeDepartement.NoteManagementDTOs.PourcentageDTO noteDTO = new ma.estfbs.pfe_management.dto.chefDeDepartement.NoteManagementDTOs.PourcentageDTO();
+        noteDTO.setPourcentageRapport(settingsDTO.getPourcentageRapport());
+        noteDTO.setPourcentageSoutenance(settingsDTO.getPourcentageSoutenance());
+        noteDTO.setPourcentageEncadrant(settingsDTO.getPourcentageEncadrant());
+
+        return ResponseEntity.ok(noteDTO);
+    }
+
+    /**
+     * Get all academic years
+     */
+    @GetMapping("/settings/academic-years")
+    public ResponseEntity<AcademicYearsResponse> getAllAcademicYears() {
+        return ResponseEntity.ok(settingsService.getAllAcademicYears());
+    }
+
+    /**
+     * Archive current academic year
+     */
+    @PostMapping("/settings/academic-years/archive")
+    public ResponseEntity<AcademicYearDTO> archiveCurrentYear() {
+        return ResponseEntity.ok(settingsService.archiveCurrentYear());
+    }
+
+    // ============= HELPER ENDPOINTS =============
 
     /**
      * Get all filieres for dropdown menus

@@ -203,6 +203,12 @@ const menuItems = computed(() => {
                 icon: "pi pi-chart-line",
                 command: () => router.push("/management/notes-management"),
                 route: "/management/notes-management",
+            },
+            {
+                label: "Paramètres",
+                icon: "pi pi-cog",
+                command: () => router.push("/management/settings"),
+                route: "/management/settings",
             }
         );
     } else if (role === "JURY") {

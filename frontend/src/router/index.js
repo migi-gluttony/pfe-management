@@ -11,6 +11,7 @@ import SujetManagementView from '@/views/chefDeDepartement/SujetManagementView.v
 import SujetSuggestionsView from '@/views/chefDeDepartement/SujetSuggestionsView.vue'
 import SoutenanceManagementView from '@/views/chefDeDepartement/SoutenanceManagementView.vue'
 import NotesManagementView from '@/views/chefDeDepartement/NotesManagementView.vue'
+import SettingsView from '@/views/chefDeDepartement/SettingsView.vue'
 
 // Create router instance
 const router = createRouter({
@@ -92,6 +93,15 @@ const router = createRouter({
       path: '/management/notes-management',
       name: 'notesManagement',
       component: NotesManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/settings',
+      name: 'settings',
+      component: SettingsView,
       meta: { 
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
