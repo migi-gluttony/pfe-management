@@ -13,6 +13,7 @@ import ma.estfbs.pfe_management.model.Utilisateur.Role;
 import ma.estfbs.pfe_management.repository.FiliereRepository;
 import ma.estfbs.pfe_management.service.chefDeDepartement.BinomeManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.CompteManagementService;
+import ma.estfbs.pfe_management.service.chefDeDepartement.SoutenanceManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SujetManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.*;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
@@ -22,6 +23,8 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetManagementResponse;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetRequestDTOs.*;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SujetSuggestionService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetSuggestionDTO;
+import ma.estfbs.pfe_management.service.chefDeDepartement.SoutenanceManagementService;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SoutenanceManagementDTOs.*;
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -35,6 +38,7 @@ public class ChefDepartementController {
     private final SujetManagementService sujetManagementService;
     private final SujetSuggestionService sujetSuggestionService;
     private final FiliereRepository filiereRepository;
+    private final SoutenanceManagementService soutenanceManagementService;
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -97,7 +101,8 @@ public class ChefDepartementController {
      * Add a new binome
      */
     @PostMapping("/binomes")
-    public ResponseEntity<BinomeDTO> addBinome(@RequestBody BinomeAddRequest request) {
+    public ResponseEntity<ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.BinomeDTO> addBinome(
+            @RequestBody BinomeAddRequest request) {
         return ResponseEntity.ok(binomeManagementService.addBinome(request));
     }
 
@@ -105,7 +110,7 @@ public class ChefDepartementController {
      * Edit a binome's encadrant
      */
     @PutMapping("/binomes/{id}")
-    public ResponseEntity<BinomeDTO> editBinome(
+    public ResponseEntity<ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.BinomeDTO> editBinome(
             @PathVariable Long id,
             @RequestBody BinomeEditRequest request) {
         return ResponseEntity.ok(binomeManagementService.editBinome(id, request));
@@ -184,6 +189,76 @@ public class ChefDepartementController {
         return ResponseEntity.ok().build();
     }
 
+    
+    // ============= SOUTENANCE MANAGEMENT ENDPOINTS =============
+
+    /**
+     * Get all soutenances
+     */
+    @GetMapping("/soutenances")
+    public ResponseEntity<List<SoutenanceDTO>> getAllSoutenances() {
+        return ResponseEntity.ok(soutenanceManagementService.getAllSoutenances());
+    }
+
+    /**
+     * Get soutenance by ID
+     */
+    @GetMapping("/soutenances/{id}")
+    public ResponseEntity<SoutenanceDTO> getSoutenanceById(@PathVariable Long id) {
+        return ResponseEntity.ok(soutenanceManagementService.getSoutenanceById(id));
+    }
+
+    /**
+     * Schedule a new soutenance
+     */
+    @PostMapping("/soutenances")
+    public ResponseEntity<SoutenanceDTO> scheduleSoutenance(@RequestBody SoutenanceAddRequest request) {
+        return ResponseEntity.ok(soutenanceManagementService.addSoutenance(request));
+    }
+
+    /**
+     * Update an existing soutenance
+     */
+    @PutMapping("/soutenances/{id}")
+    public ResponseEntity<SoutenanceDTO> updateSoutenance(
+            @PathVariable Long id,
+            @RequestBody SoutenanceUpdateRequest request) {
+        return ResponseEntity.ok(soutenanceManagementService.updateSoutenance(id, request));
+    }
+
+    /**
+     * Delete a soutenance
+     */
+    @DeleteMapping("/soutenances/{id}")
+    public ResponseEntity<Void> deleteSoutenance(@PathVariable Long id) {
+        soutenanceManagementService.deleteSoutenance(id);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Validate a soutenance request (dry run)
+     */
+    @PostMapping("/soutenances/validate")
+    public ResponseEntity<ValidationResponse> validateSoutenanceRequest(
+            @RequestBody SoutenanceAddRequest request) {
+        ValidationResponse response = soutenanceManagementService.validateSoutenanceRequest(request, null);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Validate a soutenance update request (dry run)
+     */
+    @PostMapping("/soutenances/{id}/validate")
+    public ResponseEntity<ValidationResponse> validateSoutenanceUpdateRequest(
+            @PathVariable Long id,
+            @RequestBody SoutenanceUpdateRequest request) {
+        ValidationResponse response = soutenanceManagementService.validateSoutenanceRequest(request, id);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
     /**
      * Get all filieres for dropdown menus
      */
@@ -198,5 +273,13 @@ public class ChefDepartementController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(filiereDTOs);
+    }
+
+    /**
+     * Get all salles for dropdown menus
+     */
+    @GetMapping("/salles")
+    public ResponseEntity<List<SalleDTO>> getAllSalles() {
+        return ResponseEntity.ok(soutenanceManagementService.getAllSalles());
     }
 }
