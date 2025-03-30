@@ -2,6 +2,7 @@ package ma.estfbs.pfe_management.service.chefDeDepartement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -99,9 +100,12 @@ public class NoteManagementService {
                         .orElse(0);
             }
             
-            // Get encadrant evaluation - in a real application, this should come from a specific entity
-            // For now using a placeholder value
-            Integer noteEncadrant = 15; // Placeholder value
+            // Get encadrant evaluation from NoteFinale entity
+            Integer noteEncadrant = null;
+            Optional<NoteFinale> noteFinale = noteFinaleRepository.findByEtudiantAndAnneeScolaire(utilisateur, currentYear);
+            if (noteFinale.isPresent()) {
+                noteEncadrant = noteFinale.get().getNoteEncadrant();
+            }
             
             // Get the filière info
             Filiere filiere = etudiant.getFiliere();
@@ -178,8 +182,12 @@ public class NoteManagementService {
                         .orElse(0);
             }
             
-            // Get encadrant evaluation (placeholder)
-            Integer noteEncadrant = 15;
+            // Get encadrant evaluation from NoteFinale entity
+            Integer noteEncadrant = null;
+            Optional<NoteFinale> noteFinale = noteFinaleRepository.findByEtudiantAndAnneeScolaire(utilisateur, currentYear);
+            if (noteFinale.isPresent()) {
+                noteEncadrant = noteFinale.get().getNoteEncadrant();
+            }
             
             // Create note DTO
             NoteDTO noteDTO = NoteDTO.builder()
