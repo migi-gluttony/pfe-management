@@ -7,6 +7,8 @@ import PasswordResetRequestView from '@/views/auth/PasswordResetRequestView.vue'
 import PasswordResetConfirmView from '@/views/auth/PasswordResetConfirmView.vue'
 import ComptesManagementView from '@/views/chefDeDepartement/ComptesManagementView.vue'
 import BinomesManagementView from '@/views/chefDeDepartement/BinomesManagementView.vue'
+import SujetManagementView from '@/views/chefDeDepartement/SujetManagementView.vue'
+
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -51,6 +53,15 @@ const router = createRouter({
       path: '/management/binomes',
       name: 'binomesManagement',
       component: BinomesManagementView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/sujets',
+      name: 'sujetManagement',
+      component: SujetManagementView,
       meta: { 
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
