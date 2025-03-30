@@ -132,8 +132,24 @@ async function fetchBinomesForFiliere(filiereId) {
         const response = await ApiService.get(
             `/chef_de_departement/binomes?filiereId=${filiereId}`
         );
+        
+        // Update binomes list
         binomes.value = response.binomes || [];
-        availableStudents.value = response.availableStudents || [];
+        
+        // Update available students with filière information
+        availableStudents.value = (response.availableStudents || []).map(student => ({
+            ...student,
+            filiereName: Number(filiereId) // Use Number to ensure consistent type comparison
+        }));
+        
+        // Update available subjects with filière information
+        availableSujets.value = (response.availableSujets || []).map(sujet => ({
+            ...sujet,
+            filiereId: Number(filiereId) // Use Number to ensure consistent type comparison
+        }));
+        
+        console.log(`Fetched ${availableStudents.value.length} students for filière ${filiereId}`);
+        console.log(`Fetched ${availableSujets.value.length} subjects for filière ${filiereId}`);
     } catch (error) {
         handleApiError(
             error,

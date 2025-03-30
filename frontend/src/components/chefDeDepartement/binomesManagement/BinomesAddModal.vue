@@ -143,15 +143,21 @@ const formData = ref({
     sujetId: null,
 });
 
-
-// Filter students by filiere in a computed property
-const filteredStudents = computed(() => {
-    return props.availableStudents.filter(student => 
-        student.filiereId === props.selectedFiliere
-    );
+// Process and filter students by filiere
+const processedStudents = computed(() => {
+    console.log("Available students:", props.availableStudents);
+    console.log("Selected filière:", props.selectedFiliere);
+    
+    return props.availableStudents
+        .filter(student => student.filiereName === props.selectedFiliere)
+        .map(student => ({
+            ...student,
+            fullName: `${student.nom} ${student.prenom}`,
+            id: student.id
+        }));
 });
 
-
+// Process encadrants for the dropdown display
 const processedEncadrants = computed(() => {
     return props.encadrants.map(encadrant => ({
         ...encadrant,
@@ -165,33 +171,15 @@ const filteredStudent2Options = computed(() => {
     return processedStudents.value.filter(s => s.id !== formData.value.etudiant1Id);
 });
 
-// Reset form when modal opens or closes
-watch(() => props.visible, (newValue) => {
-    if (newValue) {
-        resetForm();
-    }
+// Filter subjects by the selected filiere
+const filteredSujets = computed(() => {
+    console.log("Available sujets:", props.availableSujets);
+    console.log("Selected filière for sujets:", props.selectedFiliere);
+    
+    return props.availableSujets.filter(sujet => 
+        sujet.filiereId === props.selectedFiliere
+    );
 });
-
-// Methods
-function handleStudent1Change() {
-    // Clear student2 when student1 changes
-    formData.value.etudiant2Id = null;
-}
-
-function resetForm() {
-    formData.value = {
-        etudiant1Id: null,
-        etudiant2Id: null,
-        encadrantId: null,
-        sujetId: null,
-    };
-}
-
-function submitForm() {
-    // Create a new object to avoid reactivity issues
-    const formDataCopy = { ...formData.value };
-    emit("submit", formDataCopy);
-}
 </script>
 
 <style scoped>

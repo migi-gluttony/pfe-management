@@ -131,7 +131,19 @@ public class BinomeManagementService {
                 if (request.getEtudiant2Id() != null) {
                         etudiant2 = utilisateurRepository.findById(request.getEtudiant2Id())
                                         .orElseThrow(() -> new RuntimeException("Étudiant 2 non trouvé"));
+                        // Check if both students are from the same filiere
+                        Etudiant etudiant2Info = etudiantRepository.findByUtilisateur(etudiant2)
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Information d'étudiant 2 non trouvée"));
+                        Etudiant etudiant1Info = etudiantRepository.findByUtilisateur(etudiant1)
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Information d'étudiant 2 non trouvée"));
+                        Long etudiant1FiliereId = etudiant1Info.getFiliere().getId();
+                        Long etudiant2FiliereId = etudiant2Info.getFiliere().getId();
 
+                        if (!etudiant1FiliereId.equals(etudiant2FiliereId)) {
+                                throw new RuntimeException("Les deux étudiants doivent être de la même filière");
+                        }
                         // Check if student is already in a binome for current year
                         if (binomeRepository.findAll().stream()
                                         .filter(b -> b.getAnneeScolaire().getId().equals(currentYear.getId()))
@@ -244,7 +256,6 @@ public class BinomeManagementService {
                                 .map(this::mapToStudentDTO)
                                 .collect(Collectors.toList());
         }
-
 
         /**
          * Map Binome entity to BinomeDTO

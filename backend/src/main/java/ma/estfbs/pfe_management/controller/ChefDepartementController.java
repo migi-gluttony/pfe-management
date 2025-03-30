@@ -10,8 +10,12 @@ import lombok.RequiredArgsConstructor;
 import ma.estfbs.pfe_management.model.Utilisateur.Role;
 import ma.estfbs.pfe_management.service.chefDeDepartement.BinomeManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.CompteManagementService;
+import ma.estfbs.pfe_management.service.chefDeDepartement.SujetManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.*;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
+import ma.estfbs.pfe_management.dto.SujetDTO;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetManagementResponse;
+import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetRequestDTOs.*;
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -22,6 +26,7 @@ public class ChefDepartementController {
 
     private final CompteManagementService compteManagementService;
     private final BinomeManagementService binomeManagementService;
+    private final SujetManagementService sujetManagementService;
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -106,5 +111,40 @@ public class ChefDepartementController {
         binomeManagementService.deleteBinome(id);
         return ResponseEntity.ok().build();
     }
+    // ============= SUJET MANAGEMENT ENDPOINTS =============
 
+    /**
+     * Get all subjects and filieres for subject management page
+     */
+    @GetMapping("/sujets")
+    public ResponseEntity<SujetManagementResponse> getAllSujetsAndFilieres() {
+        return ResponseEntity.ok(sujetManagementService.getAllSujetsAndFilieres());
+    }
+
+    /**
+     * Add new subject
+     */
+    @PostMapping("/sujets")
+    public ResponseEntity<SujetDTO> addSujet(@RequestBody SujetAddRequest request) {
+        return ResponseEntity.ok(sujetManagementService.addSujet(request));
+    }
+
+    /**
+     * Edit subject (only title, theme, description)
+     */
+    @PutMapping("/sujets/{id}")
+    public ResponseEntity<SujetDTO> editSujet(
+            @PathVariable Long id,
+            @RequestBody SujetEditRequest request) {
+        return ResponseEntity.ok(sujetManagementService.editSujet(id, request));
+    }
+
+    /**
+     * Delete subject
+     */
+    @DeleteMapping("/sujets/{id}")
+    public ResponseEntity<Void> deleteSujet(@PathVariable Long id) {
+        sujetManagementService.deleteSujet(id);
+        return ResponseEntity.ok().build();
+    }
 }
