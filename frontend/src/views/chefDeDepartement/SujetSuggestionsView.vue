@@ -10,24 +10,33 @@
             @search="handleHeaderSearch"
         />
 
-        <!-- Suggestion Header Component -->
+        <!-- Suggestion Header Component (readded for filtering) -->
         <SuggestionHeader
             v-model:selectedFiliere="selectedFiliere"
             :filieres="filieres"
             @change:filiere="handleFiliereChange"
         />
 
-        <!-- Suggestion List Component -->
-        <SuggestionList
-            :suggestions="suggestions"
-            :selectedFiliere="selectedFiliere"
-            :searchQuery="searchQuery"
-            :loading="loading"
-            :filieres="filieres"
-            @view="viewSuggestion"
-            @accept="confirmAccept"
-            @reject="confirmReject"
-        />
+        <!-- Empty State when no suggestions are found -->
+        <div v-if="!loading && suggestions.length === 0" class="empty-state">
+            <i class="pi pi-inbox empty-icon"></i>
+            <h3>Aucune suggestion de sujet</h3>
+            <p>Il n'y a pas de suggestions de sujets à afficher pour le moment.</p>
+        </div>
+
+        <template v-else>
+            <!-- Suggestion List Component -->
+            <SuggestionList
+                :suggestions="filteredSuggestions"
+                :selectedFiliere="selectedFiliere"
+                :searchQuery="searchQuery"
+                :loading="loading"
+                :filieres="filieres"
+                @view="viewSuggestion"
+                @accept="confirmAccept"
+                @reject="confirmReject"
+            />
+        </template>
 
         <!-- View Details Dialog (kept in main view as requested) -->
         <Dialog
@@ -84,7 +93,7 @@
                     <div class="detail-item">
                         <span class="detail-label">Encadrant:</span>
                         <span class="detail-value">{{
-                            viewingSuggestion.binome.encadrantName
+                            viewingSuggestion.binome.encadrantName || "-"
                         }}</span>
                     </div>
 
@@ -128,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
@@ -155,6 +164,41 @@ const searchQuery = ref("");
 const toast = useToast();
 const confirm = useConfirm();
 
+// Computed property for filtered suggestions
+const filteredSuggestions = computed(() => {
+    const query = searchQuery.value.toLowerCase();
+    let filtered = [...suggestions.value];
+
+    // Filter by search query
+    if (query) {
+        filtered = filtered.filter(
+            (suggestion) =>
+                suggestion.titre.toLowerCase().includes(query) ||
+                suggestion.theme.toLowerCase().includes(query) ||
+                suggestion.description.toLowerCase().includes(query) ||
+                (suggestion.binome.etudiant1Name &&
+                    suggestion.binome.etudiant1Name
+                        .toLowerCase()
+                        .includes(query)) ||
+                (suggestion.binome.etudiant2Name &&
+                    suggestion.binome.etudiant2Name
+                        .toLowerCase()
+                        .includes(query))
+        );
+    }
+
+    // Filter by filière if selected
+    if (selectedFiliere.value) {
+        filtered = filtered.filter(
+            (suggestion) =>
+                suggestion.binome &&
+                suggestion.binome.filiereId === selectedFiliere.value
+        );
+    }
+
+    return filtered;
+});
+
 // Fetch data on component mount
 onMounted(async () => {
     await Promise.all([fetchSuggestions(), fetchFilieres()]);
@@ -177,23 +221,17 @@ async function fetchSuggestions() {
             "/chef_de_departement/sujet-suggestions"
         );
         suggestions.value = response;
-
-        // Extract unique filières from suggestions if needed
-        if (filieres.value.length === 0 && response.length > 0) {
-            extractFilieresFromSuggestions(response);
-        }
-
-        // Add filiereId property to suggestions if missing but filière name is present
+        
+        // Map filière IDs to suggestions if filières are already loaded
         if (filieres.value.length > 0) {
             mapFiliereIdsToSuggestions();
+        } else {
+            // Extract filières from suggestions as a fallback
+            extractFilieresFromSuggestions(response);
         }
     } catch (error) {
         handleApiError(error, "Erreur lors du chargement des suggestions");
-
-        // Generate sample data if in development
-        if (import.meta.env.DEV && suggestions.value.length === 0) {
-            generateSampleData();
-        }
+        suggestions.value = []; // Return empty array on error
     } finally {
         loading.value = false;
     }
@@ -204,9 +242,11 @@ async function fetchFilieres() {
         const response = await ApiService.get("/chef_de_departement/filieres");
         if (Array.isArray(response) && response.length > 0) {
             filieres.value = response;
-
+            
             // Set first filière as default
-            selectedFiliere.value = filieres.value[0].id;
+            if (filieres.value.length > 0) {
+                selectedFiliere.value = filieres.value[0].id;
+            }
 
             // Map filière IDs to suggestions if suggestions are already loaded
             if (suggestions.value.length > 0) {
@@ -222,7 +262,7 @@ async function fetchFilieres() {
     }
 }
 
-// Helper function to extract unique filières from suggestions
+// Helper function to extract unique filières from suggestions as a fallback
 function extractFilieresFromSuggestions(suggestionsData) {
     const uniqueFilieres = new Map();
 
@@ -240,8 +280,8 @@ function extractFilieresFromSuggestions(suggestionsData) {
     if (uniqueFilieres.size > 0) {
         filieres.value = Array.from(uniqueFilieres.values());
 
-        // Set first filière as default
-        if (filieres.value.length > 0 && !selectedFiliere.value) {
+        // Always set first filière as default
+        if (filieres.value.length > 0) {
             selectedFiliere.value = filieres.value[0].id;
         }
     }
@@ -269,51 +309,6 @@ function mapFiliereIdsToSuggestions() {
                 filiereNameToId[suggestion.binome.filiereName];
         }
     });
-}
-
-// Generate sample data for development
-function generateSampleData() {
-    console.log("Generating sample data for development");
-
-    const sampleFilieres = [
-        { id: 1, nom: "Génie Informatique" },
-        { id: 2, nom: "Génie Civil" },
-        { id: 3, nom: "Génie Électrique" },
-    ];
-
-    const sampleSuggestions = [];
-
-    for (let i = 1; i <= 15; i++) {
-        const filiereIndex = i % 3;
-        const filiere = sampleFilieres[filiereIndex];
-
-        sampleSuggestions.push({
-            id: i,
-            titre: `Sujet de PFE ${i}`,
-            theme: `Thème ${i}`,
-            description: `Description détaillée du sujet de PFE ${i}. Ce texte est une longue description qui explique le contexte et les objectifs du projet.`,
-            status:
-                i % 3 === 0
-                    ? "accepter"
-                    : i % 3 === 1
-                    ? "refuser"
-                    : "en_attente",
-            binome: {
-                id: i,
-                etudiant1Name: `Étudiant ${i}A`,
-                etudiant2Name: i % 2 === 0 ? `Étudiant ${i}B` : null,
-                encadrantName: `Encadrant ${i}`,
-                filiereId: filiere.id,
-                filiereName: filiere.nom,
-            },
-        });
-    }
-
-    filieres.value = sampleFilieres;
-    suggestions.value = sampleSuggestions;
-
-    // Set default filière
-    selectedFiliere.value = filieres.value[0].id;
 }
 
 // Suggestion management methods
@@ -457,6 +452,33 @@ function handleApiError(error, defaultMessage) {
 .suggestions-management {
     margin: 0 auto;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Empty state styling */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: var(--surface-card);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 2rem 0;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--text-color-secondary);
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin: 1rem 0 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-color-secondary);
+    margin: 0;
 }
 
 /* Details dialog styles */

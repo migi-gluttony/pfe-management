@@ -22,7 +22,6 @@ import ma.estfbs.pfe_management.repository.ProposerSujetsRepository;
 import ma.estfbs.pfe_management.repository.SujetRepository;
 import ma.estfbs.pfe_management.service.AcademicYearService;
 
-
 @Service
 @RequiredArgsConstructor
 public class SujetSuggestionService {
@@ -38,7 +37,7 @@ public class SujetSuggestionService {
      */
     public List<SujetSuggestionDTO> getAllSuggestions() {
         AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
-        
+
         return proposerSujetsRepository.findAll().stream()
                 .filter(suggestion -> suggestion.getAnneeScolaire().getId().equals(currentYear.getId()))
                 .map(this::mapToSujetSuggestionDTO)
@@ -51,26 +50,27 @@ public class SujetSuggestionService {
     @Transactional
     public void acceptSuggestion(Long id) {
         ProposerSujets suggestion = findSuggestionById(id);
-        
+
         // Check if suggestion is from current year
         AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
         if (!suggestion.getAnneeScolaire().getId().equals(currentYear.getId())) {
             throw new RuntimeException("Impossible d'accepter une suggestion d'une année précédente");
         }
-        
+
         // Update suggestion status
         suggestion.setStatus(Status.ACCEPTER);
         proposerSujetsRepository.save(suggestion);
-        
+
         // Get the binome that suggested the sujet
         Binome binome = suggestion.getBinomeProposerPar();
-        
+
         // Get the filiere from the etudiant1 (must get Etudiant entity first)
         Utilisateur etudiant1User = binome.getEtudiant1();
         Etudiant etudiant1 = etudiantRepository.findByUtilisateur(etudiant1User)
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour l'utilisateur: " + etudiant1User.getId()));
+                .orElseThrow(
+                        () -> new RuntimeException("Étudiant non trouvé pour l'utilisateur: " + etudiant1User.getId()));
         Filiere filiere = etudiant1.getFiliere();
-        
+
         // Create a new sujet based on the suggestion
         Sujet sujet = Sujet.builder()
                 .titre(suggestion.getTitre())
@@ -79,9 +79,9 @@ public class SujetSuggestionService {
                 .filiere(filiere)
                 .anneeScolaire(currentYear)
                 .build();
-        
+
         sujet = sujetRepository.save(sujet);
-        
+
         // Assign the sujet to the binome
         binome.setSujet(sujet);
         binomeRepository.save(binome);
@@ -93,13 +93,13 @@ public class SujetSuggestionService {
     @Transactional
     public void rejectSuggestion(Long id) {
         ProposerSujets suggestion = findSuggestionById(id);
-        
+
         // Check if suggestion is from current year
         AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
         if (!suggestion.getAnneeScolaire().getId().equals(currentYear.getId())) {
             throw new RuntimeException("Impossible de rejeter une suggestion d'une année précédente");
         }
-        
+
         // Update suggestion status
         suggestion.setStatus(Status.REFUSER);
         proposerSujetsRepository.save(suggestion);
@@ -111,38 +111,46 @@ public class SujetSuggestionService {
     private ProposerSujets findSuggestionById(Long id) {
         ProposerSujets suggestion = proposerSujetsRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Suggestion de sujet non trouvée avec l'id: " + id));
-        
+
         // Check if suggestion is from current year
         AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
         if (!suggestion.getAnneeScolaire().getId().equals(currentYear.getId())) {
             throw new RuntimeException("Cette suggestion n'appartient pas à l'année scolaire courante");
         }
-        
+
         return suggestion;
     }
 
     /**
      * Map ProposerSujets entity to SujetSuggestionDTO
+     * Added null checks for encadrant
      */
     private SujetSuggestionDTO mapToSujetSuggestionDTO(ProposerSujets suggestion) {
         Binome binome = suggestion.getBinomeProposerPar();
-        
+
         // Get etudiant1 filiere
         Utilisateur etudiant1User = binome.getEtudiant1();
         Etudiant etudiant1 = etudiantRepository.findByUtilisateur(etudiant1User)
-                .orElseThrow(() -> new RuntimeException("Étudiant non trouvé pour l'utilisateur: " + etudiant1User.getId()));
+                .orElseThrow(
+                        () -> new RuntimeException("Étudiant non trouvé pour l'utilisateur: " + etudiant1User.getId()));
         String filiereName = etudiant1.getFiliere().getNom();
-        
+
+        // Handle null encadrant
+        String encadrantName = null;
+        if (binome.getEncadrant() != null) {
+            encadrantName = binome.getEncadrant().getPrenom() + " " + binome.getEncadrant().getNom();
+        }
+
         SujetSuggestionDTO.BinomeDTO binomeDTO = SujetSuggestionDTO.BinomeDTO.builder()
                 .id(binome.getId())
                 .etudiant1Name(binome.getEtudiant1().getPrenom() + " " + binome.getEtudiant1().getNom())
-                .etudiant2Name(binome.getEtudiant2() != null 
-                        ? binome.getEtudiant2().getPrenom() + " " + binome.getEtudiant2().getNom() 
+                .etudiant2Name(binome.getEtudiant2() != null
+                        ? binome.getEtudiant2().getPrenom() + " " + binome.getEtudiant2().getNom()
                         : null)
-                .encadrantName(binome.getEncadrant().getPrenom() + " " + binome.getEncadrant().getNom())
+                .encadrantName(encadrantName)
                 .filiereName(filiereName)
                 .build();
-        
+
         return SujetSuggestionDTO.builder()
                 .id(suggestion.getId())
                 .titre(suggestion.getTitre())

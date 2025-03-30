@@ -1,24 +1,27 @@
 package ma.estfbs.pfe_management.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
+import ma.estfbs.pfe_management.model.Filiere;
 import ma.estfbs.pfe_management.model.Utilisateur.Role;
+import ma.estfbs.pfe_management.repository.FiliereRepository;
 import ma.estfbs.pfe_management.service.chefDeDepartement.BinomeManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.CompteManagementService;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SujetManagementService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.BinomeManagementDTOs.*;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.CompteManagementDTOs.*;
+import ma.estfbs.pfe_management.dto.FiliereDTO;
 import ma.estfbs.pfe_management.dto.SujetDTO;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetManagementResponse;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetRequestDTOs.*;
 import ma.estfbs.pfe_management.service.chefDeDepartement.SujetSuggestionService;
 import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetSuggestionDTO;
-
 
 @RestController
 @RequestMapping("/api/chef_de_departement")
@@ -31,7 +34,7 @@ public class ChefDepartementController {
     private final BinomeManagementService binomeManagementService;
     private final SujetManagementService sujetManagementService;
     private final SujetSuggestionService sujetSuggestionService;
-
+    private final FiliereRepository filiereRepository;
 
     // ============= COMPTE MANAGEMENT ENDPOINTS =============
 
@@ -154,7 +157,7 @@ public class ChefDepartementController {
     }
 
     // ============= SUJET SUGGESTIONS ENDPOINTS =============
-    
+
     /**
      * Get all sujet suggestions
      */
@@ -162,7 +165,7 @@ public class ChefDepartementController {
     public ResponseEntity<List<SujetSuggestionDTO>> getAllSuggestions() {
         return ResponseEntity.ok(sujetSuggestionService.getAllSuggestions());
     }
-    
+
     /**
      * Accept a sujet suggestion
      */
@@ -171,7 +174,7 @@ public class ChefDepartementController {
         sujetSuggestionService.acceptSuggestion(id);
         return ResponseEntity.ok().build();
     }
-    
+
     /**
      * Reject a sujet suggestion
      */
@@ -180,5 +183,20 @@ public class ChefDepartementController {
         sujetSuggestionService.rejectSuggestion(id);
         return ResponseEntity.ok().build();
     }
-    
+
+    /**
+     * Get all filieres for dropdown menus
+     */
+    @GetMapping("/filieres")
+    public ResponseEntity<List<FiliereDTO>> getAllFilieres() {
+        List<Filiere> filieres = filiereRepository.findAll();
+        List<FiliereDTO> filiereDTOs = filieres.stream()
+                .map(filiere -> FiliereDTO.builder()
+                        .id(filiere.getId())
+                        .nom(filiere.getNom())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filiereDTOs);
+    }
 }
