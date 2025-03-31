@@ -1,7 +1,6 @@
 package ma.estfbs.pfe_management.controller.chefDeDepartement;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import ma.estfbs.pfe_management.dto.chefDeDepartement.SujetRequestDTOs.*;
 @RequestMapping("/api/chef_de_departement/sujets")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('CHEF_DE_DEPARTEMENT')")
 public class SujetManagementController {
 
     private final SujetManagementService sujetManagementService;
