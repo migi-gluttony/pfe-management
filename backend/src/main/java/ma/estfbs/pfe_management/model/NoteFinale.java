@@ -33,8 +33,37 @@ public class NoteFinale {
     private Integer noteEncadrant;
     
     @ManyToOne
+    @JoinColumn(name = "note_rapport_id")
+    private NoteRapport noteRapportId;
+    
+    @ManyToOne
+    @JoinColumn(name = "note_soutenance_id")
+    private NoteSoutenance noteSoutenanceId;
+    
+    @ManyToOne
+    @JoinColumn(name = "note_encadrant_id")
+    private NoteEncadrant noteEncadrantId;
+    
+    @ManyToOne
     @JoinColumn(name = "annee_scolaire_id", nullable = false)
     private AnneeScolaire anneeScolaire;
+    
+    /**
+     * Calculate the final weighted score based on the configured percentages
+     */
+    public double calculateFinalScore(Pourcentage percentages) {
+        if (percentages == null) {
+            // Default to equal weighting if no percentages provided
+            return (noteRapport + noteSoutenance + noteEncadrant) / 3.0;
+        }
+        
+        double finalScore = 
+            (noteRapport * percentages.getPourcentageRapport() / 100.0) +
+            (noteSoutenance * percentages.getPourcentageSoutenance() / 100.0) +
+            (noteEncadrant * percentages.getPourcentageEncadrant() / 100.0);
+            
+        return finalScore;
+    }
     
     // For backward compatibility
     public NoteFinale(Utilisateur etudiant, Integer noteRapport, Integer noteSoutenance) {
