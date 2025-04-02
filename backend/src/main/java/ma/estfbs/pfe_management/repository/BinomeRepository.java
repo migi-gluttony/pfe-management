@@ -33,4 +33,5 @@ public interface BinomeRepository extends JpaRepository<Binome, Long> {
     
     // Find binome by both students for specific year
     Optional<Binome> findByEtudiant1AndEtudiant2AndAnneeScolaire(Utilisateur etudiant1, Utilisateur etudiant2, AnneeScolaire anneeScolaire);
+    List<Binome> findByEncadrantAndAnneeScolaire(Utilisateur encadrant, AnneeScolaire currentYear);
 }

@@ -12,7 +12,9 @@ import SujetSuggestionsView from '@/views/chefDeDepartement/SujetSuggestionsView
 import SoutenanceManagementView from '@/views/chefDeDepartement/SoutenanceManagementView.vue'
 import NotesManagementView from '@/views/chefDeDepartement/NotesManagementView.vue'
 import SettingsView from '@/views/chefDeDepartement/SettingsView.vue'
-
+import JuryGradingView from '@/views/jury/JuryGradingView.vue'
+import EncadrantGradingView from '@/views/encadrant/encadrantGradingView.vue'
+import JuryReportEvaluationView from '@/views/jury/JuryReportEvaluationView.vue'
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -105,6 +107,34 @@ const router = createRouter({
       meta: { 
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    // JURY routes
+    {
+      path: '/jury/grading',
+      name: 'juryGrading',
+      component: JuryGradingView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'JURY'
+      }
+    },{
+      path: '/jury/report-evaluation',
+      name: 'reportEvaluation',
+      component: JuryReportEvaluationView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'JURY'
+      }
+    },
+    // ENCADRANT routes
+    {
+      path: '/encadrant/grading',
+      name: 'encadrantGrading',
+      component: EncadrantGradingView,
+      meta: { 
+        requiresAuth: true,
+        requiresRole: 'ENCADRANT'
       }
     },
     // Redirect root to dashboard
