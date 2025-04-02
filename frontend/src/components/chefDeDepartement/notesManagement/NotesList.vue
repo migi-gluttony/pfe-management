@@ -96,7 +96,11 @@
                     <template #body="slotProps">
                         <span
                             v-if="canShowFinalGrade(slotProps.data)"
-                            :class="getGradeClass(slotProps.data.noteFinale)"
+                            :class="
+                                getGradeClass(
+                                    calculateFinalGrade(slotProps.data)
+                                )
+                            "
                         >
                             <strong>{{
                                 formatGrade(calculateFinalGrade(slotProps.data))
@@ -127,17 +131,42 @@
                         <span v-else>-</span>
                     </template>
                 </Column>
+                <!-- New column for details button -->
+                <Column
+                    header="Détails"
+                    style="min-width: 6rem; text-align: center"
+                >
+                    <template #body="slotProps">
+                        <Button
+                            icon="pi pi-search"
+                            class="p-button-rounded p-button-info p-button-sm"
+                            @click="showDetails(slotProps.data)"
+                            :disabled="!hasAnyNotes(slotProps.data)"
+                            v-tooltip="'Voir les détails des notes'"
+                        />
+                    </template>
+                </Column>
             </DataTable>
         </template>
     </Card>
+
+    <!-- Note details dialog -->
+    <NotesDetailDialog
+        v-model:visible="detailsVisible"
+        :etudiantId="selectedStudent.id"
+        :etudiantNom="selectedStudent.nom"
+        :etudiantPrenom="selectedStudent.prenom"
+    />
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Card from "primevue/card";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Tag from "primevue/tag";
+import Button from "primevue/button";
+import NotesDetailDialog from "./NotesDetailDialog.vue";
 
 const props = defineProps({
     notes: {
@@ -164,6 +193,14 @@ const props = defineProps({
             pourcentageEncadrant: 20,
         }),
     },
+});
+
+// State for details dialog
+const detailsVisible = ref(false);
+const selectedStudent = ref({
+    id: null,
+    nom: "",
+    prenom: "",
 });
 
 // Computed filtered notes
@@ -255,6 +292,25 @@ function canShowFinalGrade(note) {
         note.noteEncadrant != null
     );
 }
+
+// Check if any notes are available to show details
+function hasAnyNotes(note) {
+    return (
+        note.noteRapport != null ||
+        note.noteSoutenance != null ||
+        note.noteEncadrant != null
+    );
+}
+
+// Show details dialog for a student
+function showDetails(note) {
+    selectedStudent.value = {
+        id: note.id,
+        nom: note.etudiant.nom,
+        prenom: note.etudiant.prenom,
+    };
+    detailsVisible.value = true;
+}
 </script>
 
 <style scoped>
@@ -287,6 +343,4 @@ function canShowFinalGrade(note) {
 :deep(.grade-poor) {
     color: #f44336;
 }
-
-/* No need for the placeholder indicator anymore */
 </style>
