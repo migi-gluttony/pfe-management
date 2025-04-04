@@ -96,6 +96,14 @@
                                 Vous avez déjà envoyé une demande qui est en
                                 attente de réponse.
                             </p>
+                            <Button
+                                label="Annuler la demande"
+                                icon="pi pi-times"
+                                class="p-button-outlined p-button-danger mt-3"
+                                @click="cancelRequest"
+                                :loading="processingCancel"
+                                :disabled="processingCancel"
+                            />
                         </div>
                         <div
                             v-else-if="availableStudents.length === 0"
@@ -131,7 +139,10 @@
                                 />
                             </div>
                         </div>
-                        <div class="continue-alone-container">
+                        <div
+                            v-if="!hasSentRequest"
+                            class="continue-alone-container"
+                        >
                             <Divider>
                                 <span>OU</span>
                             </Divider>
@@ -193,6 +204,7 @@ export default {
         const processingStudentId = ref(null);
         const processingAction = ref(null);
         const processingAlone = ref(false);
+        const processingCancel = ref(false);
 
         // Computed properties
         const isProcessingAnyRequest = computed(
@@ -335,9 +347,7 @@ export default {
             processingRequestId.value = requestId;
             processingAction.value = "reject";
             try {
-                await ApiService.post(
-                    `/etudiant/binome/reject/${requestId}`
-                );
+                await ApiService.post(`/etudiant/binome/reject/${requestId}`);
 
                 // Remove from local list
                 pendingRequests.value = pendingRequests.value.filter(
@@ -406,6 +416,32 @@ export default {
                 handleError(error, "Erreur lors de l'envoi de la demande");
             } finally {
                 processingStudentId.value = null;
+            }
+        };
+
+        // Cancel a sent binome request
+        const cancelRequest = async () => {
+            processingCancel.value = true;
+            try {
+                await ApiService.post("/etudiant/binome/cancel");
+
+                toast.add({
+                    severity: "info",
+                    summary: "Demande annulée",
+                    detail: "Vous avez annulé votre demande de binôme",
+                    life: 3000,
+                });
+
+                // Reset sent request status
+                hasSentRequest.value = false;
+                targetStudentId.value = null;
+
+                // Reload available students
+                await loadAvailableStudents();
+            } catch (error) {
+                handleError(error, "Erreur lors de l'annulation de la demande");
+            } finally {
+                processingCancel.value = false;
             }
         };
 
@@ -480,6 +516,7 @@ export default {
             processingStudentId,
             processingAction,
             processingAlone,
+            processingCancel,
             isProcessingAnyRequest,
             isProcessingAnyStudent,
 
@@ -488,6 +525,7 @@ export default {
             acceptRequest,
             rejectRequest,
             sendRequest,
+            cancelRequest,
             continueAlone,
             goToChooseBinome,
         };
@@ -656,6 +694,10 @@ export default {
 .continue-alone-btn {
     margin-top: 16px;
     min-width: 200px;
+}
+
+.mt-3 {
+    margin-top: 1rem;
 }
 
 /* Responsive adjustments */

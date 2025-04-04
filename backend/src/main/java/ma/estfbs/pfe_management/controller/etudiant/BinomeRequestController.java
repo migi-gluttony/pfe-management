@@ -46,15 +46,14 @@ public class BinomeRequestController {
      */
     @PostMapping("/request")
     public ResponseEntity<?> sendRequest(
-            @RequestBody Long targetStudentId, 
+            @RequestBody Long targetStudentId,
             Authentication authentication) {
         try {
             Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
             return ResponseEntity.ok(binomeRequestService.sendBinomeRequest(utilisateur.getId(), targetStudentId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                Map.of("success", false, "message", e.getMessage())
-            );
+                    Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -63,15 +62,14 @@ public class BinomeRequestController {
      */
     @PostMapping("/accept/{requestId}")
     public ResponseEntity<?> acceptRequest(
-            @PathVariable Long requestId, 
+            @PathVariable Long requestId,
             Authentication authentication) {
         try {
             Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
             return ResponseEntity.ok(binomeRequestService.acceptBinomeRequest(utilisateur.getId(), requestId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                Map.of("success", false, "message", e.getMessage())
-            );
+                    Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -80,7 +78,7 @@ public class BinomeRequestController {
      */
     @PostMapping("/reject/{requestId}")
     public ResponseEntity<?> rejectRequest(
-            @PathVariable Long requestId, 
+            @PathVariable Long requestId,
             Authentication authentication) {
         try {
             Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
@@ -88,8 +86,7 @@ public class BinomeRequestController {
             return ResponseEntity.ok().body(Map.of("success", true, "message", "Request rejected successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                Map.of("success", false, "message", e.getMessage())
-            );
+                    Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -103,8 +100,22 @@ public class BinomeRequestController {
             return ResponseEntity.ok(binomeRequestService.createSingleStudentBinome(utilisateur.getId()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
-                Map.of("success", false, "message", e.getMessage())
-            );
+                    Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel a binome request sent by the current student
+     */
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancelRequest(Authentication authentication) {
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            binomeRequestService.cancelBinomeRequest(utilisateur.getId());
+            return ResponseEntity.ok().body(Map.of("success", true, "message", "Request canceled successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("success", false, "message", e.getMessage()));
         }
     }
 }
