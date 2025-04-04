@@ -284,6 +284,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
+import { useRoute } from "vue-router";
 import ApiService from "@/services/ApiService";
 import AuthService from "@/services/AuthService";
 import UserInfoHeader from "@/components/UserInfoHeader.vue";
@@ -298,6 +299,8 @@ import Rating from "primevue/rating";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
 import Toast from "primevue/toast";
+
+const route = useRoute();
 
 // Component state
 const binomes = ref([]);
@@ -348,11 +351,54 @@ const filteredBinomesValue = computed(() => {
 // Fetch data on component mount
 onMounted(async () => {
     await fetchBinomes();
+
+    // Check if we came from the soutenances overview page
+    const selectedBinomeId = sessionStorage.getItem("selectedBinomeId");
+    if (selectedBinomeId) {
+        // Find and select the binome
+        const binome = binomes.value.find(
+            (b) => b.id === parseInt(selectedBinomeId)
+        );
+        if (binome) {
+            // Clear the stored ID
+            sessionStorage.removeItem("selectedBinomeId");
+
+            // Select the binome
+            selectedBinome.value = binome;
+            // Reset and load evaluation form
+            resetEvaluationForm();
+            loadExistingEvaluation();
+
+            // Show a toast notification
+            toast.add({
+                severity: "info",
+                summary: "Binôme sélectionné",
+                detail: `Évaluation du binôme ${binome.etudiant1?.prenom} ${
+                    binome.etudiant1?.nom
+                }${
+                    binome.etudiant2
+                        ? " et " +
+                          binome.etudiant2?.prenom +
+                          " " +
+                          binome.etudiant2?.nom
+                        : ""
+                }`,
+                life: 3000,
+            });
+        }
+    }
 });
 
 // Handle search from UserInfoHeader
 function handleHeaderSearch(query) {
     searchQuery.value = query;
+
+    // If there's only one result after filtering, auto-select it
+    if (filteredBinomesValue.value.length === 1) {
+        selectedBinome.value = filteredBinomesValue.value[0];
+        resetEvaluationForm();
+        loadExistingEvaluation();
+    }
 }
 
 // Methods for fetching data

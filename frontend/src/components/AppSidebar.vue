@@ -164,6 +164,12 @@ const menuItems = computed(() => {
                 icon: "pi pi-calendar",
                 command: () => router.push("/supervisor/schedule"),
                 route: "/supervisor/schedule",
+            },
+            {
+                label: "Mes Soutenances",
+                icon: "pi pi-calendar-plus",
+                command: () => router.push("/encadrant/soutenances"),
+                route: "/encadrant/soutenances",
             }
         );
     } else if (role === "CHEF_DE_DEPARTEMENT") {
@@ -214,22 +220,22 @@ const menuItems = computed(() => {
     } else if (role === "JURY") {
         items.push(
             {
-                label: "Évaluations",
-                icon: "pi pi-star",
-                command: () => router.push("/jury/evaluations"),
-                route: "/jury/evaluations",
+                label: "Mes Soutenances",
+                icon: "pi pi-calendar-plus",
+                command: () => router.push("/jury/soutenances"),
+                route: "/jury/soutenances",
             },
             {
-                label: "Planning",
-                icon: "pi pi-calendar",
-                command: () => router.push("/jury/schedule"),
-                route: "/jury/schedule",
+                label: "Évaluation Soutenances",
+                icon: "pi pi-microphone",
+                command: () => router.push("/jury/grading"),
+                route: "/jury/grading",
             },
             {
-                label: "Rapports",
+                label: "Évaluation Rapports",
                 icon: "pi pi-file-pdf",
-                command: () => router.push("/jury/reports"),
-                route: "/jury/reports",
+                command: () => router.push("/jury/report-evaluation"),
+                route: "/jury/report-evaluation",
             }
         );
     }

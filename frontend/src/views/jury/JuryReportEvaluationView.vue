@@ -397,6 +397,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useToast } from "primevue/usetoast";
+import { useRoute } from 'vue-router';
 import ApiService from "@/services/ApiService";
 import AuthService from "@/services/AuthService";
 import UserInfoHeader from "@/components/UserInfoHeader.vue";
@@ -414,6 +415,8 @@ import Dialog from "primevue/dialog";
 import Toast from "primevue/toast";
 import ProgressSpinner from "primevue/progressspinner";
 
+const route = useRoute();
+
 // Component state
 const reports = ref([]);
 const loading = ref(false);
@@ -422,6 +425,7 @@ const submitting = ref(false);
 const searchQuery = ref("");
 const showPdfPreview = ref(false);
 const showPdfDialog = ref(false);
+const soutenances = ref([]);
 const evaluationForm = ref({
     rapportId: null,
     technicalScore: 0,
@@ -474,12 +478,61 @@ const toast = useToast();
 
 // Fetch data on component mount
 onMounted(async () => {
-    await fetchReports();
+  await fetchReports();
+  
+  // Check if we came from the soutenances overview page
+  const selectedSoutenanceId = sessionStorage.getItem('selectedSoutenanceId');
+  if (selectedSoutenanceId && reports.value.length > 0) {
+    // Clear the stored ID
+    sessionStorage.removeItem('selectedSoutenanceId');
+    
+    // Find the report for this soutenance's binome
+    const report = reports.value.find(r => {
+      // Try to find by soutenance id if available
+      if (r.binome && r.binome.soutenance && r.binome.soutenance.id === parseInt(selectedSoutenanceId)) {
+        return true;
+      }
+      
+      // Otherwise, look for matching binome id
+      const soutenanceBinomeId = soutenances.value?.find(s => s.id === parseInt(selectedSoutenanceId))?.binome?.id;
+      return r.binome && r.binome.id === soutenanceBinomeId;
+    });
+    
+    if (report) {
+      // Select the report
+      selectedReport.value = report;
+      resetEvaluationForm();
+      loadExistingEvaluation();
+      
+      // Show a toast notification
+      toast.add({
+        severity: 'info',
+        summary: 'Rapport sélectionné',
+        detail: `Évaluation du rapport "${report.titre}"`,
+        life: 3000
+      });
+    } else {
+      // If no report found, show notification
+      toast.add({
+        severity: 'warn',
+        summary: 'Rapport non trouvé',
+        detail: 'Aucun rapport n\'a été trouvé pour cette soutenance',
+        life: 5000
+      });
+    }
+  }
 });
 
 // Handle search from UserInfoHeader
 function handleHeaderSearch(query) {
-    searchQuery.value = query;
+  searchQuery.value = query;
+  
+  // If there's only one result after filtering, auto-select it
+  if (filteredReportsValue.value.length === 1) {
+    selectedReport.value = filteredReportsValue.value[0];
+    resetEvaluationForm();
+    loadExistingEvaluation();
+  }
 }
 
 // Format date for display
@@ -510,19 +563,22 @@ function getPdfViewUrl(path) {
 
 // Methods for fetching data
 async function fetchReports() {
-    loading.value = true;
-    try {
-        // This endpoint should now return only reports for soutenances where the jury is assigned
-        const response = await ApiService.get("/grading/jury/reports");
-        reports.value = response;
-    } catch (error) {
-        handleApiError(error, "Erreur lors du chargement des rapports");
-
-        // Use empty array if API call fails
-        reports.value = [];
-    } finally {
-        loading.value = false;
+  loading.value = true;
+  try {
+    const response = await ApiService.get("/grading/jury/reports");
+    reports.value = response;
+    
+    // Update the filteredReportsValue
+    if (reports.value.length > 0) {
+      filteredReportsValue.value = [...reports.value];
     }
+  } catch (error) {
+    handleApiError(error, "Erreur lors du chargement des rapports");
+    reports.value = [];
+    filteredReportsValue.value = [];
+  } finally {
+    loading.value = false;
+  }
 }
 
 // Check if report has already been evaluated

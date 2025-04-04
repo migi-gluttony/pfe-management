@@ -13,8 +13,10 @@ import SoutenanceManagementView from '@/views/chefDeDepartement/SoutenanceManage
 import NotesManagementView from '@/views/chefDeDepartement/NotesManagementView.vue'
 import SettingsView from '@/views/chefDeDepartement/SettingsView.vue'
 import JuryGradingView from '@/views/jury/JuryGradingView.vue'
-import EncadrantGradingView from '@/views/encadrant/encadrantGradingView.vue'
+import EncadrantGradingView from '@/views/encadrant/EncadrantGradingView.vue'
 import JuryReportEvaluationView from '@/views/jury/JuryReportEvaluationView.vue'
+import SoutenancesOverview from '@/views/commun/SoutenancesOverview.vue'
+
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,7 +52,7 @@ const router = createRouter({
       path: '/management/comptes',
       name: 'comptesManagement',
       component: ComptesManagementView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -59,7 +61,7 @@ const router = createRouter({
       path: '/management/binomes',
       name: 'binomesManagement',
       component: BinomesManagementView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -68,7 +70,7 @@ const router = createRouter({
       path: '/management/sujets',
       name: 'sujetManagement',
       component: SujetManagementView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -77,7 +79,7 @@ const router = createRouter({
       path: '/management/sujet-suggestions',
       name: 'sujetSuggestions',
       component: SujetSuggestionsView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -86,7 +88,7 @@ const router = createRouter({
       path: '/management/soutenances',
       name: 'soutenanceManagement',
       component: SoutenanceManagementView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -95,7 +97,7 @@ const router = createRouter({
       path: '/management/notes-management',
       name: 'notesManagement',
       component: NotesManagementView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -104,7 +106,7 @@ const router = createRouter({
       path: '/management/settings',
       name: 'settings',
       component: SettingsView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'
       }
@@ -114,15 +116,24 @@ const router = createRouter({
       path: '/jury/grading',
       name: 'juryGrading',
       component: JuryGradingView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'JURY'
       }
-    },{
+    }, {
       path: '/jury/report-evaluation',
       name: 'reportEvaluation',
       component: JuryReportEvaluationView,
-      meta: { 
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'JURY'
+      }
+    },
+    {
+      path: '/jury/soutenances',
+      name: 'jurySoutenances',
+      component: SoutenancesOverview,
+      meta: {
         requiresAuth: true,
         requiresRole: 'JURY'
       }
@@ -132,17 +143,27 @@ const router = createRouter({
       path: '/encadrant/grading',
       name: 'encadrantGrading',
       component: EncadrantGradingView,
-      meta: { 
+      meta: {
         requiresAuth: true,
         requiresRole: 'ENCADRANT'
       }
     },
+    {
+      path: '/encadrant/soutenances',
+      name: 'encadrantSoutenances',
+      component: SoutenancesOverview,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ENCADRANT'
+      }
+    },
+
     // Redirect root to dashboard
     {
       path: '/',
       redirect: '/dashboard'
     },
-    
+
     // Catch-all route for 404
     {
       path: '/:pathMatch(.*)*',
@@ -157,7 +178,7 @@ router.beforeEach((to, from, next) => {
   // Check if the user is authenticated
   const isAuthenticated = AuthService.isAuthenticated();
   const currentUser = AuthService.getCurrentUser();
-  
+
   // Handle routes that require authentication
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
@@ -165,22 +186,22 @@ router.beforeEach((to, from, next) => {
       next({ name: 'login', query: { redirect: to.fullPath } });
       return;
     }
-    
+
     // Check for role requirements
     if (to.meta.requiresRole && currentUser?.role !== to.meta.requiresRole) {
       // User doesn't have the required role, redirect to dashboard
       next({ name: 'dashboard' });
       return;
     }
-    
+
     // User is authenticated and has the required role (if any)
     next();
-  } 
+  }
   // Handle routes for guests only
   else if (to.matched.some(record => record.meta.guest) && isAuthenticated) {
     // Redirect authenticated users to dashboard
     next({ name: 'dashboard' });
-  } 
+  }
   // Allow access to public routes
   else {
     next();
