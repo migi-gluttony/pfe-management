@@ -25,20 +25,47 @@ public class SettingsController {
     }
 
     /**
-     * Update percentages
+     * Update overall percentages
      */
     @PutMapping("/percentages")
     public ResponseEntity<PourcentageDTO> updatePercentages(
             @RequestBody PourcentageUpdateRequest request) {
-        ma.estfbs.pfe_management.dto.chefDeDepartement.SettingsDTOs.PourcentageDTO settingsDTO = 
-                settingsService.updatePercentages(request);
-        
+        ma.estfbs.pfe_management.dto.chefDeDepartement.SettingsDTOs.PourcentageDTO settingsDTO = settingsService
+                .updatePercentages(request);
+
         PourcentageDTO noteDTO = new PourcentageDTO();
         noteDTO.setPourcentageRapport(settingsDTO.getPourcentageRapport());
         noteDTO.setPourcentageSoutenance(settingsDTO.getPourcentageSoutenance());
         noteDTO.setPourcentageEncadrant(settingsDTO.getPourcentageEncadrant());
 
         return ResponseEntity.ok(noteDTO);
+    }
+
+    /**
+     * Update encadrant percentages
+     */
+    @PutMapping("/percentages/encadrant")
+    public ResponseEntity<PourcentageEncadrantDTO> updateEncadrantPercentages(
+            @RequestBody PourcentageEncadrantUpdateRequest request) {
+        return ResponseEntity.ok(settingsService.updateEncadrantPercentages(request));
+    }
+
+    /**
+     * Update rapport percentages
+     */
+    @PutMapping("/percentages/rapport")
+    public ResponseEntity<PourcentageRapportDTO> updateRapportPercentages(
+            @RequestBody PourcentageRapportUpdateRequest request) {
+        return ResponseEntity.ok(settingsService.updateRapportPercentages(request));
+    }
+
+    /**
+     * Update soutenance percentages
+     */
+    @PutMapping("/percentages/soutenance")
+    public ResponseEntity<PourcentageSoutenanceDTO> updateSoutenancePercentages(
+            @RequestBody PourcentageSoutenanceUpdateRequest request) {
+        return ResponseEntity.ok(settingsService.updateSoutenancePercentages(request));
     }
 
     /**
