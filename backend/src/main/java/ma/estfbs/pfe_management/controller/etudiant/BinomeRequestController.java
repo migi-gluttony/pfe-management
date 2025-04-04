@@ -1,6 +1,7 @@
 package ma.estfbs.pfe_management.controller.etudiant;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -44,42 +45,66 @@ public class BinomeRequestController {
      * Send a binome request to another student
      */
     @PostMapping("/request")
-    public ResponseEntity<BinomeRequestResponse> sendRequest(
+    public ResponseEntity<?> sendRequest(
             @RequestBody Long targetStudentId, 
             Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        return ResponseEntity.ok(binomeRequestService.sendBinomeRequest(utilisateur.getId(), targetStudentId));
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            return ResponseEntity.ok(binomeRequestService.sendBinomeRequest(utilisateur.getId(), targetStudentId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("success", false, "message", e.getMessage())
+            );
+        }
     }
 
     /**
      * Accept a binome request
      */
     @PostMapping("/accept/{requestId}")
-    public ResponseEntity<BinomeDTO> acceptRequest(
+    public ResponseEntity<?> acceptRequest(
             @PathVariable Long requestId, 
             Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        return ResponseEntity.ok(binomeRequestService.acceptBinomeRequest(utilisateur.getId(), requestId));
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            return ResponseEntity.ok(binomeRequestService.acceptBinomeRequest(utilisateur.getId(), requestId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("success", false, "message", e.getMessage())
+            );
+        }
     }
 
     /**
      * Reject a binome request
      */
     @PostMapping("/reject/{requestId}")
-    public ResponseEntity<Void> rejectRequest(
+    public ResponseEntity<?> rejectRequest(
             @PathVariable Long requestId, 
             Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        binomeRequestService.rejectBinomeRequest(utilisateur.getId(), requestId);
-        return ResponseEntity.ok().build();
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            binomeRequestService.rejectBinomeRequest(utilisateur.getId(), requestId);
+            return ResponseEntity.ok().body(Map.of("success", true, "message", "Request rejected successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("success", false, "message", e.getMessage())
+            );
+        }
     }
 
     /**
      * Create a binome with just the current student (continue alone)
      */
     @PostMapping("/continue-alone")
-    public ResponseEntity<BinomeDTO> continueAlone(Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        return ResponseEntity.ok(binomeRequestService.createSingleStudentBinome(utilisateur.getId()));
+    public ResponseEntity<?> continueAlone(Authentication authentication) {
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            return ResponseEntity.ok(binomeRequestService.createSingleStudentBinome(utilisateur.getId()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                Map.of("success", false, "message", e.getMessage())
+            );
+        }
     }
 }

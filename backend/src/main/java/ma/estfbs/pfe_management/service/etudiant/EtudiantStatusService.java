@@ -39,7 +39,7 @@ public class EtudiantStatusService {
         boolean hasBinome = !binomes.isEmpty();
         
         Binome binome = hasBinome ? binomes.get(0) : null;
-        boolean hasSujet = hasBinome && binome.getSujet() != null;
+        boolean hasSujet = hasBinome && binome != null && binome.getSujet() != null;
         
         // Check for pending binome requests
         List<DemandeBinome> pendingRequests = demandeBinomeRepository.findByDemandeAndStatut(
@@ -51,9 +51,9 @@ public class EtudiantStatusService {
                 etudiant, DemandeBinome.Statut.EN_ATTENTE);
         boolean hasSentBinomeRequest = !sentRequests.isEmpty();
         
-        // Check for pending sujet suggestions
+        // Check for pending sujet suggestions (only if student has a binome)
         boolean hasPendingSujetSuggestion = false;
-        if (hasBinome) {
+        if (hasBinome && binome != null) {
             List<ProposerSujets> suggestions = proposerSujetsRepository.findByBinomeProposerParIdAndAnneeScolaireId(
                     binome.getId(), currentYear.getId());
             
@@ -78,7 +78,7 @@ public class EtudiantStatusService {
                 .hasSentBinomeRequest(hasSentBinomeRequest)
                 .hasPendingSujetSuggestion(hasPendingSujetSuggestion)
                 .binomeId(binome != null ? binome.getId() : null)
-                .sujetId(hasSujet ? binome.getSujet().getId() : null)
+                .sujetId(hasSujet && binome != null && binome.getSujet() != null ? binome.getSujet().getId() : null)
                 .nextAction(nextAction)
                 .build();
     }

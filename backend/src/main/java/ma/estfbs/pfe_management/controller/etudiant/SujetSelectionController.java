@@ -1,6 +1,7 @@
 package ma.estfbs.pfe_management.controller.etudiant;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -34,32 +35,44 @@ public class SujetSelectionController {
      * Select a specific sujet
      */
     @PostMapping("/select/{sujetId}")
-    public ResponseEntity<SujetDTO> selectSujet(
+    public ResponseEntity<?> selectSujet(
             @PathVariable Long sujetId, 
             Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        return ResponseEntity.ok(sujetSelectionService.selectSujet(utilisateur.getId(), sujetId));
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            return ResponseEntity.ok(sujetSelectionService.selectSujet(utilisateur.getId(), sujetId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /**
      * Get a random sujet assignment
      */
     @PostMapping("/random")
-    public ResponseEntity<SujetDTO> getRandomSujet(Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        return ResponseEntity.ok(sujetSelectionService.assignRandomSujet(utilisateur.getId()));
+    public ResponseEntity<?> getRandomSujet(Authentication authentication) {
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            return ResponseEntity.ok(sujetSelectionService.assignRandomSujet(utilisateur.getId()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /**
      * Suggest a new sujet
      */
     @PostMapping("/suggest")
-    public ResponseEntity<Void> suggestSujet(
+    public ResponseEntity<?> suggestSujet(
             @RequestBody SujetSuggestionRequest suggestion, 
             Authentication authentication) {
-        Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
-        sujetSelectionService.suggestSujet(utilisateur.getId(), suggestion);
-        return ResponseEntity.ok().build();
+        try {
+            Utilisateur utilisateur = (Utilisateur) authentication.getPrincipal();
+            sujetSelectionService.suggestSujet(utilisateur.getId(), suggestion);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Suggestion submitted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /**
