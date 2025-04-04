@@ -16,7 +16,8 @@ import JuryGradingView from '@/views/jury/JuryGradingView.vue'
 import EncadrantGradingView from '@/views/encadrant/EncadrantGradingView.vue'
 import JuryReportEvaluationView from '@/views/jury/JuryReportEvaluationView.vue'
 import SoutenancesOverview from '@/views/commun/SoutenancesOverview.vue'
-
+import BinomeSelectionView from '@/views/etudiant/BinomeSelectionView.vue'
+import SujetSelectionView from '@/views/etudiant/SujetSelectionView.vue'
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -157,7 +158,25 @@ const router = createRouter({
         requiresRole: 'ENCADRANT'
       }
     },
-
+    // ETUDIANT routes
+    {
+      path: '/etudiant/binome',
+      name: 'etudiantBinome',
+      component: BinomeSelectionView,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ETUDIANT'
+      }
+    },
+    {
+      path: '/etudiant/sujet',
+      name: 'etudiantSujet',
+      component: SujetSelectionView,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ETUDIANT'
+      }
+    },
     // Redirect root to dashboard
     {
       path: '/',
