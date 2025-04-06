@@ -3,186 +3,62 @@
         <Toast />
         <div class="view-container">
             <!-- Student has pending requests view -->
-            <div v-if="hasPendingRequests" class="card">
-                <div class="card-header">
-                    <h1>Demandes de Binôme en Attente</h1>
-                    <p>
-                        Voici les demandes de binôme que vous avez reçues. Vous
-                        pouvez les accepter ou les refuser.
-                    </p>
-                </div>
-                <div class="card-content">
-                    <div v-if="loading" class="loading-container">
-                        <ProgressSpinner />
-                        <p>Chargement des demandes...</p>
-                    </div>
-                    <div
-                        v-else-if="pendingRequests.length === 0"
-                        class="empty-state"
-                    >
-                        <i class="pi pi-users" style="font-size: 3rem"></i>
-                        <h3>Aucune demande en attente</h3>
-                        <p>Vous n'avez pas de demandes de binôme en attente.</p>
-                        <Button
-                            label="Choisir un Binôme"
-                            icon="pi pi-users"
-                            @click="goToChooseBinome"
-                        />
-                    </div>
-                    <div v-else class="requests-container">
-                        <div
-                            v-for="request in pendingRequests"
-                            :key="request.id"
-                            class="request-card"
-                        >
-                            <div class="request-info">
-                                <h3>
-                                    {{ request.demandeurNom }}
-                                    {{ request.demandeurPrenom }}
-                                </h3>
-                                <p>
-                                    Demande envoyée le:
-                                    {{ formatDate(request.dateDemande) }}
-                                </p>
-                            </div>
-                            <div class="request-actions">
-                                <Button
-                                    icon="pi pi-check"
-                                    class="p-button-success p-button-rounded"
-                                    @click="acceptRequest(request.id)"
-                                    :loading="
-                                        processingRequestId === request.id &&
-                                        processingAction === 'accept'
-                                    "
-                                    :disabled="isProcessingAnyRequest"
-                                    tooltip="Accepter"
-                                />
-                                <Button
-                                    icon="pi pi-times"
-                                    class="p-button-danger p-button-rounded"
-                                    @click="rejectRequest(request.id)"
-                                    :loading="
-                                        processingRequestId === request.id &&
-                                        processingAction === 'reject'
-                                    "
-                                    :disabled="isProcessingAnyRequest"
-                                    tooltip="Refuser"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div v-if="hasPendingRequests">
+                <BinomeRequestsList
+                    :pendingRequests="pendingRequests"
+                    :loading="loading"
+                    :processingRequestId="processingRequestId"
+                    :processingAction="processingAction"
+                    @accept="acceptRequest"
+                    @reject="rejectRequest"
+                    @go-to-choose="goToChooseBinome"
+                />
             </div>
 
             <!-- Choose binome view -->
-            <div v-else-if="showChooseBinome" class="card">
-                <div class="card-header">
-                    <h1>Choisir un Binôme</h1>
-                    <p>
-                        Choisissez un étudiant de votre filière pour former un
-                        binôme, ou continuez seul.
-                    </p>
-                </div>
-                <div class="card-content">
-                    <div v-if="loading" class="loading-container">
-                        <ProgressSpinner />
-                        <p>Chargement des étudiants disponibles...</p>
-                    </div>
-                    <div v-else>
-                        <div v-if="hasSentRequest" class="sent-request-info">
-                            <i class="pi pi-clock"></i>
-                            <h3>Demande en attente</h3>
-                            <p>
-                                Vous avez déjà envoyé une demande qui est en
-                                attente de réponse.
-                            </p>
-                            <Button
-                                label="Annuler la demande"
-                                icon="pi pi-times"
-                                class="p-button-outlined p-button-danger mt-3"
-                                @click="cancelRequest"
-                                :loading="processingCancel"
-                                :disabled="processingCancel"
-                            />
-                        </div>
-                        <div
-                            v-else-if="availableStudents.length === 0"
-                            class="empty-state"
-                        >
-                            <i class="pi pi-users" style="font-size: 3rem"></i>
-                            <h3>Aucun étudiant disponible</h3>
-                            <p>
-                                Il n'y a pas d'étudiants disponibles dans votre
-                                filière. Vous pouvez continuer seul.
-                            </p>
-                        </div>
-                        <div v-else class="students-container">
-                            <div
-                                v-for="student in availableStudents"
-                                :key="student.id"
-                                class="student-card"
-                            >
-                                <div class="student-info">
-                                    <h3>
-                                        {{ student.nom }} {{ student.prenom }}
-                                    </h3>
-                                    <p>{{ student.email }}</p>
-                                </div>
-                                <Button
-                                    label="Envoyer une demande"
-                                    icon="pi pi-send"
-                                    @click="sendRequest(student.id)"
-                                    :loading="
-                                        processingStudentId === student.id
-                                    "
-                                    :disabled="isProcessingAnyStudent"
-                                />
-                            </div>
-                        </div>
-                        <div
-                            v-if="!hasSentRequest"
-                            class="continue-alone-container"
-                        >
-                            <Divider>
-                                <span>OU</span>
-                            </Divider>
-                            <Button
-                                label="Continuer Seul"
-                                icon="pi pi-user"
-                                class="p-button-secondary continue-alone-btn"
-                                @click="continueAlone"
-                                :loading="processingAlone"
-                                :disabled="
-                                    isProcessingAnyStudent || processingAlone
-                                "
-                            />
-                        </div>
-                    </div>
-                </div>
+            <div v-else-if="showChooseBinome">
+                <BinomeSelectionHeader
+                    :hasSentRequest="hasSentRequest"
+                    :processingAlone="processingAlone"
+                    :disabled="isProcessingAnyStudent"
+                    @continue-alone="continueAlone"
+                />
+
+                <AvailableStudentsList
+                    :availableStudents="availableStudents"
+                    :loading="loading"
+                    :hasSentRequest="hasSentRequest"
+                    :processingStudentId="processingStudentId"
+                    :processingCancel="processingCancel"
+                    @send-request="sendRequest"
+                    @cancel-request="cancelRequest"
+                />
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import ApiService from "@/services/ApiService";
 
 // PrimeVue components
 import Toast from "primevue/toast";
-import Button from "primevue/button";
-import ProgressSpinner from "primevue/progressspinner";
-import Divider from "primevue/divider";
+
+// Custom components
+import BinomeSelectionHeader from "@/components/etudiant/binomeSelection/BinomeSelectionHeader.vue";
+import BinomeRequestsList from "@/components/etudiant/binomeSelection/BinomeRequestsList.vue";
+import AvailableStudentsList from "@/components/etudiant/binomeSelection/AvailableStudentsList.vue";
 
 export default {
     name: "BinomeSelectionView",
     components: {
         Toast,
-        Button,
-        ProgressSpinner,
-        Divider,
+        BinomeSelectionHeader,
+        BinomeRequestsList,
+        AvailableStudentsList,
     },
     setup() {
         // Router and toast
@@ -218,19 +94,6 @@ export default {
         onMounted(async () => {
             await checkStudentStatus();
         });
-
-        // Format date function for displaying request dates
-        const formatDate = (dateString) => {
-            if (!dateString) return "";
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat("fr-FR", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            }).format(date);
-        };
 
         // Check student's current status
         const checkStudentStatus = async () => {
@@ -521,7 +384,6 @@ export default {
             isProcessingAnyStudent,
 
             // Methods
-            formatDate,
             acceptRequest,
             rejectRequest,
             sendRequest,
@@ -545,172 +407,5 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.card {
-    background-color: var(--surface-card);
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.card-header {
-    padding: 24px;
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.card-header h1 {
-    margin: 0 0 8px;
-    font-size: 1.75rem;
-}
-
-.card-header p {
-    margin: 0;
-    opacity: 0.9;
-}
-
-.card-content {
-    padding: 24px;
-}
-
-.loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
-}
-
-.loading-container p {
-    margin-top: 16px;
-    color: var(--text-color-secondary);
-}
-
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 40px 20px;
-}
-
-.empty-state i {
-    color: var(--primary-color);
-    opacity: 0.6;
-    margin-bottom: 16px;
-}
-
-.empty-state h3 {
-    margin: 0 0 8px;
-    color: var(--text-color);
-}
-
-.empty-state p {
-    margin: 0 0 24px;
-    color: var(--text-color-secondary);
-}
-
-.requests-container,
-.students-container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.request-card,
-.student-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    background-color: var(--surface-hover);
-    border-radius: 8px;
-    transition: background-color 0.2s;
-}
-
-.request-card:hover,
-.student-card:hover {
-    background-color: var(--surface-hover);
-}
-
-.request-info,
-.student-info {
-    flex: 1;
-}
-
-.request-info h3,
-.student-info h3 {
-    margin: 0 0 4px;
-    font-size: 1.1rem;
-    color: var(--text-color);
-}
-
-.request-info p,
-.student-info p {
-    margin: 0;
-    color: var(--text-color-secondary);
-    font-size: 0.9rem;
-}
-
-.request-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.sent-request-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-    background-color: var(--surface-hover);
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.sent-request-info i {
-    font-size: 2rem;
-    color: var(--primary-color);
-    margin-bottom: 16px;
-}
-
-.sent-request-info h3 {
-    margin: 0 0 8px;
-}
-
-.sent-request-info p {
-    margin: 0;
-    color: var(--text-color-secondary);
-}
-
-.continue-alone-container {
-    margin-top: 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.continue-alone-btn {
-    margin-top: 16px;
-    min-width: 200px;
-}
-
-.mt-3 {
-    margin-top: 1rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .request-card,
-    .student-card {
-        flex-direction: column;
-        gap: 16px;
-        align-items: flex-start;
-    }
-
-    .request-actions {
-        align-self: flex-end;
-    }
 }
 </style>
