@@ -18,6 +18,10 @@ import JuryReportEvaluationView from '@/views/jury/JuryReportEvaluationView.vue'
 import SoutenancesOverview from '@/views/commun/SoutenancesOverview.vue'
 import BinomeSelectionView from '@/views/etudiant/BinomeSelectionView.vue'
 import SujetSelectionView from '@/views/etudiant/SujetSelectionView.vue'
+import DocumentSubmissionView from '@/views/etudiant/DocumentSubmissionView.vue'
+import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
+
+
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -172,6 +176,23 @@ const router = createRouter({
       path: '/etudiant/sujet',
       name: 'etudiantSujet',
       component: SujetSelectionView,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ETUDIANT'
+      }
+    }, {
+      path: '/etudiant/documents',
+      name: 'etudiantDocuments',
+      component: DocumentSubmissionView,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ETUDIANT'
+      }
+    },
+    {
+      path: '/etudiant/rapport',
+      name: 'etudiantRapport',
+      component: ReportSubmissionView,
       meta: {
         requiresAuth: true,
         requiresRole: 'ETUDIANT'
