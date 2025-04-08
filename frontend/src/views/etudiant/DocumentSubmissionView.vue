@@ -36,10 +36,10 @@
                         <InputText 
                             id="title" 
                             v-model="uploadForm.title" 
-                            :class="{ 'p-invalid': v$.uploadForm.title.$invalid && v$.uploadForm.title.$dirty }"
+                            :class="{ 'p-invalid': validationErrors.title }"
                         />
-                        <small v-if="v$.uploadForm.title.$invalid && v$.uploadForm.title.$dirty" class="p-error">
-                            {{ v$.uploadForm.title.$errors[0].$message }}
+                        <small v-if="validationErrors.title" class="p-error">
+                            {{ validationErrors.title }}
                         </small>
                     </div>
                     
@@ -175,8 +175,6 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
-import { useVuelidate } from '@vuelidate/core';
-import { required, minLength } from '@vuelidate/validators';
 import ApiService from '@/services/ApiService';
 
 // PrimeVue components
@@ -216,20 +214,12 @@ export default {
         const showUploadDialog = ref(false);
         const fileUploadRef = ref(null);
         const fileUploadError = ref(false);
+        const validationErrors = ref({});
         
         const uploadForm = reactive({
             title: '',
             file: null
         });
-        
-        // Validation rules
-        const rules = {
-            uploadForm: {
-                title: { required, minLength: minLength(3) }
-            }
-        };
-        
-        const v$ = useVuelidate(rules, { uploadForm });
         
         // Load documents on mount
         onMounted(() => {
@@ -269,10 +259,10 @@ export default {
             uploadForm.title = '';
             uploadForm.file = null;
             fileUploadError.value = false;
+            validationErrors.value = {};
             if (fileUploadRef.value) {
                 fileUploadRef.value.clear();
             }
-            v$.value.$reset();
         };
         
         // Handle file selection
@@ -285,13 +275,25 @@ export default {
         const onFileClear = () => {
             uploadForm.file = null;
         };
+
+        // Validate form
+        const validateForm = () => {
+            validationErrors.value = {};
+            
+            if (!uploadForm.title) {
+                validationErrors.value.title = 'Le titre est requis';
+            } else if (uploadForm.title.length < 3) {
+                validationErrors.value.title = 'Le titre doit contenir au moins 3 caractères';
+            }
+            
+            return Object.keys(validationErrors.value).length === 0;
+        };
         
         // Submit document
         const submitDocument = async () => {
             fileUploadError.value = !uploadForm.file;
-            v$.value.$touch();
             
-            if (v$.value.$invalid || fileUploadError.value) return;
+            if (!validateForm() || fileUploadError.value) return;
             
             uploading.value = true;
             try {
@@ -299,11 +301,8 @@ export default {
                 formData.append('file', uploadForm.file);
                 formData.append('titre', uploadForm.title);
                 
-                await ApiService.post('/etudiant/documents-evaluation/upload', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
+                // Use uploadFiles method from ApiService which is designed for this purpose
+                await ApiService.uploadFiles('/etudiant/documents-evaluation/upload', formData);
                 
                 toast.add({
                     severity: 'success',
@@ -397,7 +396,7 @@ export default {
             uploadForm,
             fileUploadRef,
             fileUploadError,
-            v$,
+            validationErrors,
             
             // Methods
             loadDocuments,
