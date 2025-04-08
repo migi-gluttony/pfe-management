@@ -21,6 +21,10 @@ public class DocumentsEvaluation {
     @JoinColumn(name = "binome_id", nullable = false)
     private Binome binome;
     
+    // Add the titre field
+    @Column(nullable = false)
+    private String titre;
+    
     @Column(name = "localisation_doc", nullable = false)
     private String localisationDoc;
     
