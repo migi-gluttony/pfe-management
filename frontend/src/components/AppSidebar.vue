@@ -133,16 +133,10 @@ const menuItems = computed(() => {
                 route: "/student/pfe",
             },
             {
-                label: "Documents",
-                icon: "pi pi-file",
-                to: "/etudiant/documents",
-                role: "ETUDIANT",
-            },
-            {
-                label: "Rapport Final",
-                icon: "pi pi-file-pdf",
-                to: "/etudiant/rapport",
-                role: "ETUDIANT",
+                label: "Soumissions",
+                icon: "pi pi-upload",
+                command: () => router.push("/student/submissions"),
+                route: "/student/submissions",
             },
             {
                 label: "Planning",

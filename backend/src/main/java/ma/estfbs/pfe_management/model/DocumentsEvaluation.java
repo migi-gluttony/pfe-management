@@ -1,5 +1,3 @@
-// Update the DocumentsEvaluation model to include a 'titre' field
-
 package ma.estfbs.pfe_management.model;
 
 import java.time.LocalDateTime;
@@ -22,10 +20,6 @@ public class DocumentsEvaluation {
     @ManyToOne
     @JoinColumn(name = "binome_id", nullable = false)
     private Binome binome;
-    
-    // Add the titre field
-    @Column(nullable = false)
-    private String titre;
     
     @Column(name = "localisation_doc", nullable = false)
     private String localisationDoc;
