@@ -135,14 +135,14 @@ const menuItems = computed(() => {
             {
                 label: "Documents",
                 icon: "pi pi-file",
-                to: "/etudiant/documents",
-                role: "ETUDIANT",
+                command: () => router.push("/etudiant/documents"),
+                route: "/etudiant/documents",
             },
             {
                 label: "Rapport Final",
                 icon: "pi pi-file-pdf",
-                to: "/etudiant/rapport",
-                role: "ETUDIANT",
+                command: () => router.push("/etudiant/rapport"),
+                route: "/etudiant/rapport",
             },
             {
                 label: "Planning",
@@ -162,8 +162,8 @@ const menuItems = computed(() => {
             {
                 label: "Révision des documents",
                 icon: "pi pi-check-square",
-                command: () => router.push("/supervisor/reviews"),
-                route: "/supervisor/reviews",
+                command: () => router.push("/encadrant/document-evaluation"),
+                route: "/encadrant/document-evaluation",
             },
             {
                 label: "Planning",

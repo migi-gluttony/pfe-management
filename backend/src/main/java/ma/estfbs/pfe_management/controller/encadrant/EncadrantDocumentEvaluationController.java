@@ -50,6 +50,37 @@ public class EncadrantDocumentEvaluationController {
     }
 
     /**
+     * Preview a document directly in the browser
+     * This endpoint serves the file directly without Content-Disposition: attachment
+     */
+    @GetMapping("/preview/{documentId}")
+    public ResponseEntity<Resource> previewDocument(
+            @PathVariable Long documentId,
+            Authentication authentication) {
+        
+        Utilisateur encadrant = (Utilisateur) authentication.getPrincipal();
+        
+        try {
+            Resource fileResource = documentEvaluationService.getDocumentResource(encadrant.getId(), documentId);
+            String contentType = documentEvaluationService.getDocumentContentType(documentId);
+            
+            // Set appropriate headers to allow iframe embedding
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.CONTENT_TYPE, contentType);
+            // Explicitly allow embedding in iframes from the same origin
+            headers.set("X-Frame-Options", "SAMEORIGIN");
+            // Also set Content-Security-Policy to be safe
+            headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(fileResource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
      * Download a document
      */
     @GetMapping("/download/{documentId}")
@@ -62,9 +93,10 @@ public class EncadrantDocumentEvaluationController {
         try {
             Resource fileResource = documentEvaluationService.getDocumentResource(encadrant.getId(), documentId);
             String filename = documentEvaluationService.getDocumentFileName(documentId);
+            String contentType = documentEvaluationService.getDocumentContentType(documentId);
             
             return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(fileResource);
         } catch (Exception e) {

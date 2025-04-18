@@ -1,5 +1,7 @@
 package ma.estfbs.pfe_management.service.encadrant;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -150,6 +152,41 @@ public class EncadrantDocumentEvaluationService {
         fileName = fileName.replaceAll("[^a-zA-Z0-9.-]", "_");
 
         return fileName + fileExtension;
+    }
+
+    /**
+     * Get document content type based on file extension
+     * 
+     * @param documentId Document ID
+     * @return Content type for the document
+     */
+    public String getDocumentContentType(Long documentId) {
+        DocumentsEvaluation document = documentsEvaluationRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document non trouvé avec l'ID: " + documentId));
+
+        String filePath = document.getLocalisationDoc();
+        
+        try {
+            // First try to detect content type from the actual file
+            Path path = Paths.get(filePath);
+            return Files.probeContentType(path);
+        } catch (IOException e) {
+            // Fallback to extension-based content type
+            if (filePath.toLowerCase().endsWith(".pdf")) {
+                return "application/pdf";
+            } else if (filePath.toLowerCase().endsWith(".doc")) {
+                return "application/msword";
+            } else if (filePath.toLowerCase().endsWith(".docx")) {
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            } else if (filePath.toLowerCase().endsWith(".jpg") || filePath.toLowerCase().endsWith(".jpeg")) {
+                return "image/jpeg";
+            } else if (filePath.toLowerCase().endsWith(".png")) {
+                return "image/png";
+            } else {
+                // Default fallback
+                return "application/octet-stream";
+            }
+        }
     }
 
     /**

@@ -20,7 +20,7 @@ import BinomeSelectionView from '@/views/etudiant/BinomeSelectionView.vue'
 import SujetSelectionView from '@/views/etudiant/SujetSelectionView.vue'
 import DocumentSubmissionView from '@/views/etudiant/DocumentSubmissionView.vue'
 import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
-
+import EncadrantDocumentEvaluationView from '@/views/encadrant/EncadrantDocumentEvaluationView.vue'
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -156,6 +156,15 @@ const router = createRouter({
       path: '/encadrant/soutenances',
       name: 'encadrantSoutenances',
       component: SoutenancesOverview,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'ENCADRANT'
+      }
+    },
+    {
+      path: '/encadrant/document-evaluation',
+      name: 'encadrantDocumentEvaluation',
+      component: EncadrantDocumentEvaluationView,
       meta: {
         requiresAuth: true,
         requiresRole: 'ENCADRANT'
