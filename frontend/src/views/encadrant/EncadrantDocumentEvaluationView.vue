@@ -8,14 +8,18 @@
             <div class="title-filter-group">
                 <h1 class="page-title">Évaluation des Documents</h1>
                 <p class="page-subtitle">
-                    Consultez et évaluez les documents soumis par vos binômes étudiants
+                    Consultez et évaluez les documents soumis par vos binômes
+                    étudiants
                 </p>
             </div>
 
             <div class="action-buttons">
                 <span class="p-input-icon-left search-input">
                     <i class="pi pi-search" />
-                    <InputText v-model="searchQuery" placeholder="Rechercher un document..." />
+                    <InputText
+                        v-model="searchQuery"
+                        placeholder="Rechercher un document..."
+                    />
                 </span>
             </div>
         </div>
@@ -44,11 +48,15 @@
                         <p>Chargement des documents...</p>
                     </div>
 
-                    <div v-else-if="documents.length === 0" class="empty-documents">
+                    <div
+                        v-else-if="documents.length === 0"
+                        class="empty-documents"
+                    >
                         <i class="pi pi-file-o empty-icon"></i>
                         <h3>Aucun document à évaluer</h3>
                         <p>
-                            Vous n'avez pas encore de documents soumis par vos étudiants.
+                            Vous n'avez pas encore de documents soumis par vos
+                            étudiants.
                         </p>
                     </div>
 
@@ -72,25 +80,54 @@
                                 <div class="binome-info">
                                     <div class="student">
                                         <i class="pi pi-user"></i>
-                                        <span>{{ slotProps.data.etudiant1Prenom }} {{ slotProps.data.etudiant1Nom }}</span>
+                                        <span
+                                            >{{
+                                                slotProps.data.etudiant1Prenom
+                                            }}
+                                            {{
+                                                slotProps.data.etudiant1Nom
+                                            }}</span
+                                        >
                                     </div>
-                                    <div v-if="slotProps.data.etudiant2Nom" class="student">
+                                    <div
+                                        v-if="slotProps.data.etudiant2Nom"
+                                        class="student"
+                                    >
                                         <i class="pi pi-user"></i>
-                                        <span>{{ slotProps.data.etudiant2Prenom }} {{ slotProps.data.etudiant2Nom }}</span>
+                                        <span
+                                            >{{
+                                                slotProps.data.etudiant2Prenom
+                                            }}
+                                            {{
+                                                slotProps.data.etudiant2Nom
+                                            }}</span
+                                        >
                                     </div>
                                 </div>
                             </template>
                         </Column>
-                        <Column header="Date de soumission" sortable sortField="dateSoumission">
+                        <Column
+                            header="Date de soumission"
+                            sortable
+                            sortField="dateSoumission"
+                        >
                             <template #body="slotProps">
                                 {{ formatDate(slotProps.data.dateSoumission) }}
                             </template>
                         </Column>
                         <Column header="Statut">
                             <template #body="slotProps">
-                                <Tag 
-                                    :value="slotProps.data.commentaire ? 'Évalué' : 'Non évalué'" 
-                                    :severity="slotProps.data.commentaire ? 'success' : 'warning'" 
+                                <Tag
+                                    :value="
+                                        slotProps.data.commentaire
+                                            ? 'Évalué'
+                                            : 'Non évalué'
+                                    "
+                                    :severity="
+                                        slotProps.data.commentaire
+                                            ? 'success'
+                                            : 'warning'
+                                    "
                                 />
                             </template>
                         </Column>
@@ -100,13 +137,17 @@
                                     <Button
                                         icon="pi pi-download"
                                         text
-                                        @click="downloadDocument(slotProps.data)"
+                                        @click="
+                                            downloadDocument(slotProps.data)
+                                        "
                                         tooltip="Télécharger"
                                     />
                                     <Button
                                         icon="pi pi-eye"
                                         text
-                                        @click="openPreviewDialog(slotProps.data)"
+                                        @click="
+                                            openPreviewDialog(slotProps.data)
+                                        "
                                         tooltip="Aperçu"
                                     />
                                 </div>
@@ -121,7 +162,10 @@
                 <Card class="document-details-card">
                     <template #title>
                         <div class="card-title">
-                            <i class="pi pi-file" style="font-size: 1.5rem; margin-right: 0.5rem"></i>
+                            <i
+                                class="pi pi-file"
+                                style="font-size: 1.5rem; margin-right: 0.5rem"
+                            ></i>
                             Document: {{ selectedDocument.titre }}
                         </div>
                     </template>
@@ -145,24 +189,39 @@
                         <div class="document-info">
                             <div class="info-row">
                                 <div class="info-label">Titre:</div>
-                                <div class="info-value">{{ selectedDocument.titre }}</div>
+                                <div class="info-value">
+                                    {{ selectedDocument.titre }}
+                                </div>
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Soumis par:</div>
                                 <div class="info-value">
-                                    {{ selectedDocument.etudiant1Prenom }} {{ selectedDocument.etudiant1Nom }}
+                                    {{ selectedDocument.etudiant1Prenom }}
+                                    {{ selectedDocument.etudiant1Nom }}
                                     <span v-if="selectedDocument.etudiant2Nom">
-                                        et {{ selectedDocument.etudiant2Prenom }} {{ selectedDocument.etudiant2Nom }}
+                                        et
+                                        {{ selectedDocument.etudiant2Prenom }}
+                                        {{ selectedDocument.etudiant2Nom }}
                                     </span>
                                 </div>
                             </div>
                             <div class="info-row">
-                                <div class="info-label">Date de soumission:</div>
-                                <div class="info-value">{{ formatDateTime(selectedDocument.dateSoumission) }}</div>
+                                <div class="info-label">
+                                    Date de soumission:
+                                </div>
+                                <div class="info-value">
+                                    {{
+                                        formatDateTime(
+                                            selectedDocument.dateSoumission
+                                        )
+                                    }}
+                                </div>
                             </div>
                             <div class="info-row">
                                 <div class="info-label">Type de document:</div>
-                                <div class="info-value">{{ getFileType(selectedDocument) }}</div>
+                                <div class="info-value">
+                                    {{ getFileType(selectedDocument) }}
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -172,7 +231,10 @@
                 <Card class="evaluation-card">
                     <template #title>
                         <div class="card-title">
-                            <i class="pi pi-pencil" style="font-size: 1.5rem; margin-right: 0.5rem"></i>
+                            <i
+                                class="pi pi-pencil"
+                                style="font-size: 1.5rem; margin-right: 0.5rem"
+                            ></i>
                             Évaluation du Document
                         </div>
                     </template>
@@ -188,7 +250,11 @@
                                     placeholder="Vos commentaires sur le document soumis"
                                     autoResize
                                 />
-                                <small>Fournissez un feedback détaillé sur le document pour aider les étudiants à améliorer leur travail.</small>
+                                <small
+                                    >Fournissez un feedback détaillé sur le
+                                    document pour aider les étudiants à
+                                    améliorer leur travail.</small
+                                >
                             </div>
 
                             <div class="form-actions">
@@ -209,9 +275,15 @@
             <Card v-else class="eval-section info-card">
                 <template #content>
                     <div class="info-message">
-                        <i class="pi pi-info-circle" style="font-size: 2rem; color: var(--primary-color)"></i>
+                        <i
+                            class="pi pi-info-circle"
+                            style="font-size: 2rem; color: var(--primary-color)"
+                        ></i>
                         <h3>Sélectionnez un document pour l'évaluer</h3>
-                        <p>Choisissez un document dans la liste pour commencer votre évaluation</p>
+                        <p>
+                            Choisissez un document dans la liste pour commencer
+                            votre évaluation
+                        </p>
                     </div>
                 </template>
             </Card>
@@ -222,7 +294,9 @@
             v-model:visible="showPreviewDialog"
             :modal="true"
             :style="{ width: '90vw', height: '90vh' }"
-            :header="previewDocument ? previewDocument.titre : 'Aperçu du document'"
+            :header="
+                previewDocument ? previewDocument.titre : 'Aperçu du document'
+            "
             :maximizable="true"
             @show="loadPreviewContent"
         >
@@ -232,7 +306,10 @@
                     <p>Chargement du document en cours...</p>
                 </div>
                 <div v-else-if="previewError" class="preview-error">
-                    <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: var(--red-500);"></i>
+                    <i
+                        class="pi pi-exclamation-triangle"
+                        style="font-size: 3rem; color: var(--red-500)"
+                    ></i>
                     <h3>Erreur de prévisualisation</h3>
                     <p>{{ previewError }}</p>
                     <Button
@@ -242,22 +319,53 @@
                         class="mt-3"
                     />
                 </div>
-                <div v-else-if="previewContentType && previewContentType.startsWith('image/')" class="image-preview">
-                    <img :src="previewDataUrl" :alt="previewDocument && previewDocument.titre" />
-                </div>
-                <div v-else-if="previewContentType === 'application/pdf'" class="pdf-preview">
-                    <iframe
+                <div
+                    v-else-if="
+                        previewContentType &&
+                        previewContentType.startsWith('image/')
+                    "
+                    class="image-preview"
+                >
+                    <img
                         :src="previewDataUrl"
+                        :alt="previewDocument && previewDocument.titre"
+                    />
+                </div>
+                <div
+                    v-else-if="previewContentType === 'application/pdf'"
+                    class="pdf-preview"
+                >
+                    <object
+                        :data="previewDataUrl"
+                        type="application/pdf"
                         width="100%"
                         height="100%"
-                        frameborder="0"
-                        title="PDF Viewer"
-                    ></iframe>
+                    >
+                        <p>
+                            Ce PDF ne peut pas être affiché.
+                            <Button
+                                label="Télécharger le PDF"
+                                icon="pi pi-download"
+                                @click="downloadDocument(previewDocument)"
+                                class="mt-3"
+                            />
+                        </p>
+                    </object>
                 </div>
                 <div v-else class="preview-not-available">
-                    <i class="pi pi-file-export" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
+                    <i
+                        class="pi pi-file-export"
+                        style="
+                            font-size: 3rem;
+                            color: var(--text-color-secondary);
+                        "
+                    ></i>
                     <h3>Aperçu limité</h3>
-                    <p>Ce type de document ({{ previewDocument && getFileType(previewDocument) }}) ne peut pas être prévisualisé directement.</p>
+                    <p>
+                        Ce type de document ({{
+                            previewDocument && getFileType(previewDocument)
+                        }}) ne peut pas être prévisualisé directement.
+                    </p>
                     <Button
                         label="Télécharger le document"
                         icon="pi pi-download"
@@ -271,26 +379,26 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm';
-import ApiService from '@/services/ApiService';
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+import ApiService from "@/services/ApiService";
 
 // PrimeVue components
-import Toast from 'primevue/toast';
-import ConfirmDialog from 'primevue/confirmdialog';
-import Card from 'primevue/card';
-import Button from 'primevue/button';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Textarea from 'primevue/textarea';
-import InputText from 'primevue/inputtext';
-import ProgressSpinner from 'primevue/progressspinner';
-import Tag from 'primevue/tag';
-import Dialog from 'primevue/dialog';
+import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import Card from "primevue/card";
+import Button from "primevue/button";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import Textarea from "primevue/textarea";
+import InputText from "primevue/inputtext";
+import ProgressSpinner from "primevue/progressspinner";
+import Tag from "primevue/tag";
+import Dialog from "primevue/dialog";
 
 export default {
-    name: 'EncadrantDocumentEvaluationView',
+    name: "EncadrantDocumentEvaluationView",
     components: {
         Toast,
         ConfirmDialog,
@@ -302,351 +410,440 @@ export default {
         InputText,
         ProgressSpinner,
         Tag,
-        Dialog
+        Dialog,
     },
     setup() {
         const toast = useToast();
         const confirm = useConfirm();
-        
+
         // State
         const loading = ref(false);
         const submitting = ref(false);
         const documents = ref([]);
         const selectedDocument = ref(null);
-        const searchQuery = ref('');
-        
+        const searchQuery = ref("");
+
         // Preview dialog state
         const showPreviewDialog = ref(false);
         const previewDocument = ref(null);
         const previewLoading = ref(false);
         const previewError = ref(null);
-        const previewDataUrl = ref('');
-        const previewContentType = ref('');
-        
+        const previewDataUrl = ref("");
+        const previewContentType = ref("");
+
         // Blob URLs to revoke on unmount
         const blobUrls = ref([]);
-        
+
         const evaluationForm = ref({
-            commentaire: ''
+            commentaire: "",
         });
-        
+
         // Computed
         const filteredDocuments = computed(() => {
             if (!searchQuery.value) {
                 return documents.value;
             }
-            
+
             const query = searchQuery.value.toLowerCase();
-            return documents.value.filter(doc => {
-                return doc.titre.toLowerCase().includes(query) ||
-                    `${doc.etudiant1Prenom} ${doc.etudiant1Nom}`.toLowerCase().includes(query) ||
-                    (doc.etudiant2Nom && `${doc.etudiant2Prenom} ${doc.etudiant2Nom}`.toLowerCase().includes(query));
+            return documents.value.filter((doc) => {
+                return (
+                    doc.titre.toLowerCase().includes(query) ||
+                    `${doc.etudiant1Prenom} ${doc.etudiant1Nom}`
+                        .toLowerCase()
+                        .includes(query) ||
+                    (doc.etudiant2Nom &&
+                        `${doc.etudiant2Prenom} ${doc.etudiant2Nom}`
+                            .toLowerCase()
+                            .includes(query))
+                );
             });
         });
-        
+
         // Clean up blob URLs when component is destroyed
         onBeforeUnmount(() => {
-            blobUrls.value.forEach(url => {
+            blobUrls.value.forEach((url) => {
                 URL.revokeObjectURL(url);
             });
         });
-        
+
         // Load documents on mount
         onMounted(() => {
             loadDocuments();
         });
-        
+
         // Methods
         const loadDocuments = async () => {
             loading.value = true;
             try {
-                const response = await ApiService.get('/encadrant/documents-evaluation');
+                const response = await ApiService.get(
+                    "/encadrant/documents-evaluation"
+                );
                 documents.value = response;
             } catch (error) {
-                handleError(error, 'Erreur lors du chargement des documents');
+                handleError(error, "Erreur lors du chargement des documents");
             } finally {
                 loading.value = false;
             }
         };
-        
+
         const onDocumentSelect = (event) => {
             selectedDocument.value = event.data;
             loadExistingEvaluation();
         };
-        
+
         const openPreviewDialog = (doc) => {
             previewDocument.value = doc;
             previewLoading.value = true;
             previewError.value = null;
-            previewDataUrl.value = '';
-            previewContentType.value = '';
+            previewDataUrl.value = "";
+            previewContentType.value = "";
             showPreviewDialog.value = true;
         };
-        
+
         const loadPreviewContent = () => {
             if (!previewDocument.value) return;
-            
+
             previewLoading.value = true;
             previewError.value = null;
-            
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            const baseUrl = import.meta.env.VITE_API_URL || '/api';
-            
-            fetch(`${baseUrl}/encadrant/documents-evaluation/download/${previewDocument.value.id}`, {
-                method: 'GET',
+
+            const token =
+                localStorage.getItem("token") ||
+                sessionStorage.getItem("token");
+            const baseUrl = import.meta.env.VITE_API_URL || "/api";
+
+            // Change from download endpoint to preview endpoint
+            const previewUrl = `${baseUrl}/encadrant/documents-evaluation/preview/${previewDocument.value.id}`;
+
+            // For PDF documents, use direct iframe source instead of blob URL
+            if (
+                getFileExtension(
+                    previewDocument.value.localisationDoc
+                ).toLowerCase() === ".pdf"
+            ) {
+                previewDataUrl.value = previewUrl;
+                previewContentType.value = "application/pdf";
+                previewLoading.value = false;
+                return;
+            }
+
+            fetch(previewUrl, {
+                method: "GET",
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Erreur de prévisualisation: ${response.status} ${response.statusText}`);
-                }
-                
-                // Get content type
-                const contentType = response.headers.get('content-type');
-                previewContentType.value = contentType;
-                
-                return response.blob();
-            })
-            .then((blob) => {
-                // Create a blob URL for the preview
-                const url = URL.createObjectURL(blob);
-                
-                // Store for cleanup later
-                blobUrls.value.push(url);
-                
-                // Set the data URL for preview
-                previewDataUrl.value = url;
-                previewLoading.value = false;
-            })
-            .catch((error) => {
-                console.error('Preview error:', error);
-                previewError.value = error.message || 'Impossible de prévisualiser le fichier';
-                previewLoading.value = false;
-            });
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Erreur de prévisualisation: ${response.status} ${response.statusText}`
+                        );
+                    }
+
+                    // Get content type
+                    const contentType = response.headers.get("content-type");
+                    previewContentType.value = contentType;
+
+                    return response.blob();
+                })
+                .then((blob) => {
+                    // Create a blob URL for the preview
+                    const url = URL.createObjectURL(blob);
+
+                    // Store for cleanup later
+                    blobUrls.value.push(url);
+
+                    // Set the data URL for preview
+                    previewDataUrl.value = url;
+                    previewLoading.value = false;
+                })
+                .catch((error) => {
+                    console.error("Preview error:", error);
+                    previewError.value =
+                        error.message ||
+                        "Impossible de prévisualiser le fichier";
+                    previewLoading.value = false;
+                });
         };
-        
+
+        // Add a helper function to get file extension
+        const getFileExtension = (filePath) => {
+            if (!filePath) return "";
+            return filePath.substring(filePath.lastIndexOf("."));
+        };
+
         const getFileType = (doc) => {
             const filePath = doc?.localisationDoc;
-            if (!filePath) return 'Document';
-            
-            const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
+            if (!filePath) return "Document";
+
+            const extension = filePath
+                .substring(filePath.lastIndexOf("."))
+                .toLowerCase();
             switch (extension) {
-                case '.pdf': return 'Document PDF';
-                case '.doc': return 'Document Word';
-                case '.docx': return 'Document Word';
-                case '.jpg':
-                case '.jpeg': return 'Image JPEG';
-                case '.png': return 'Image PNG';
-                case '.gif': return 'Image GIF';
-                case '.svg': return 'Image SVG';
-                default: return `Document ${extension}`;
+                case ".pdf":
+                    return "Document PDF";
+                case ".doc":
+                    return "Document Word";
+                case ".docx":
+                    return "Document Word";
+                case ".jpg":
+                case ".jpeg":
+                    return "Image JPEG";
+                case ".png":
+                    return "Image PNG";
+                case ".gif":
+                    return "Image GIF";
+                case ".svg":
+                    return "Image SVG";
+                default:
+                    return `Document ${extension}`;
             }
         };
 
         const downloadDocument = (doc) => {
             if (!doc) return;
-            
+
             toast.add({
-                severity: 'info',
-                summary: 'Téléchargement',
-                detail: 'Préparation du téléchargement...',
+                severity: "info",
+                summary: "Téléchargement",
+                detail: "Préparation du téléchargement...",
                 life: 2000,
             });
 
             // Get auth token for the request
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-            const baseUrl = import.meta.env.VITE_API_URL || '/api';
-            
-            fetch(`${baseUrl}/encadrant/documents-evaluation/download/${doc.id}`, {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`Erreur de téléchargement: ${response.status} ${response.statusText}`);
+            const token =
+                localStorage.getItem("token") ||
+                sessionStorage.getItem("token");
+            const baseUrl = import.meta.env.VITE_API_URL || "/api";
+
+            fetch(
+                `${baseUrl}/encadrant/documents-evaluation/download/${doc.id}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-
-                // Get content type to determine extension
-                const contentType = response.headers.get('content-type');
-
-                // Try to get filename from Content-Disposition header
-                let filename = '';
-                const disposition = response.headers.get('content-disposition');
-                if (disposition && disposition.includes('filename=')) {
-                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                    const matches = filenameRegex.exec(disposition);
-                    if (matches && matches[1]) {
-                        filename = matches[1].replace(/['"]/g, '');
+            )
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(
+                            `Erreur de téléchargement: ${response.status} ${response.statusText}`
+                        );
                     }
-                }
 
-                // If no filename from header, use document title or default
-                if (!filename) {
-                    filename = doc.titre || 'document';
+                    // Get content type to determine extension
+                    const contentType = response.headers.get("content-type");
 
-                    // Add extension based on content type
-                    if (contentType) {
-                        if (contentType.includes('pdf') && !filename.toLowerCase().endsWith('.pdf')) {
-                            filename += '.pdf';
-                        } else if (contentType.includes('msword') && !filename.toLowerCase().endsWith('.doc')) {
-                            filename += '.doc';
-                        } else if (contentType.includes('wordprocessingml') && !filename.toLowerCase().endsWith('.docx')) {
-                            filename += '.docx';
-                        } else if (contentType.includes('jpeg') && !filename.toLowerCase().endsWith('.jpg')) {
-                            filename += '.jpg';
-                        } else if (contentType.includes('png') && !filename.toLowerCase().endsWith('.png')) {
-                            filename += '.png';
+                    // Try to get filename from Content-Disposition header
+                    let filename = "";
+                    const disposition = response.headers.get(
+                        "content-disposition"
+                    );
+                    if (disposition && disposition.includes("filename=")) {
+                        const filenameRegex =
+                            /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        const matches = filenameRegex.exec(disposition);
+                        if (matches && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, "");
                         }
                     }
-                }
 
-                // Sanitize filename
-                filename = filename.replace(/[/\\?%*:|"<>]/g, '-');
+                    // If no filename from header, use document title or default
+                    if (!filename) {
+                        filename = doc.titre || "document";
 
-                // Return blob and filename for next step
-                return response.blob().then(blob => {
-                    return { blob, filename };
-                });
-            })
-            .then(({ blob, filename }) => {
-                // Create a blob URL and trigger download
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                
-                // Clean up
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }, 100);
+                        // Add extension based on content type
+                        if (contentType) {
+                            if (
+                                contentType.includes("pdf") &&
+                                !filename.toLowerCase().endsWith(".pdf")
+                            ) {
+                                filename += ".pdf";
+                            } else if (
+                                contentType.includes("msword") &&
+                                !filename.toLowerCase().endsWith(".doc")
+                            ) {
+                                filename += ".doc";
+                            } else if (
+                                contentType.includes("wordprocessingml") &&
+                                !filename.toLowerCase().endsWith(".docx")
+                            ) {
+                                filename += ".docx";
+                            } else if (
+                                contentType.includes("jpeg") &&
+                                !filename.toLowerCase().endsWith(".jpg")
+                            ) {
+                                filename += ".jpg";
+                            } else if (
+                                contentType.includes("png") &&
+                                !filename.toLowerCase().endsWith(".png")
+                            ) {
+                                filename += ".png";
+                            }
+                        }
+                    }
 
-                toast.add({
-                    severity: 'success',
-                    summary: 'Téléchargement réussi',
-                    detail: `Fichier "${filename}" téléchargé avec succès`,
-                    life: 3000,
+                    // Sanitize filename
+                    filename = filename.replace(/[/\\?%*:|"<>]/g, "-");
+
+                    // Return blob and filename for next step
+                    return response.blob().then((blob) => {
+                        return { blob, filename };
+                    });
+                })
+                .then(({ blob, filename }) => {
+                    // Create a blob URL and trigger download
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    // Clean up
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 100);
+
+                    toast.add({
+                        severity: "success",
+                        summary: "Téléchargement réussi",
+                        detail: `Fichier "${filename}" téléchargé avec succès`,
+                        life: 3000,
+                    });
+                })
+                .catch((error) => {
+                    console.error("Download error:", error);
+                    toast.add({
+                        severity: "error",
+                        summary: "Erreur de téléchargement",
+                        detail:
+                            error.message ||
+                            "Impossible de télécharger le fichier",
+                        life: 3000,
+                    });
                 });
-            })
-            .catch((error) => {
-                console.error('Download error:', error);
-                toast.add({
-                    severity: 'error',
-                    summary: 'Erreur de téléchargement',
-                    detail: error.message || 'Impossible de télécharger le fichier',
-                    life: 3000,
-                });
-            });
         };
-        
+
         const loadExistingEvaluation = () => {
             if (!selectedDocument.value) return;
-            
+
             // Reset the form
-            evaluationForm.value.commentaire = '';
-            
+            evaluationForm.value.commentaire = "";
+
             // If there's already a commentaire, load it
             if (selectedDocument.value.commentaire) {
-                evaluationForm.value.commentaire = selectedDocument.value.commentaire;
+                evaluationForm.value.commentaire =
+                    selectedDocument.value.commentaire;
             }
         };
-        
+
         const submitEvaluation = async () => {
             if (!selectedDocument.value) return;
-            
+
             if (!evaluationForm.value.commentaire.trim()) {
                 toast.add({
-                    severity: 'warn',
-                    summary: 'Champ requis',
-                    detail: 'Veuillez saisir un commentaire pour l\'évaluation',
-                    life: 3000
+                    severity: "warn",
+                    summary: "Champ requis",
+                    detail: "Veuillez saisir un commentaire pour l'évaluation",
+                    life: 3000,
                 });
                 return;
             }
-            
+
             confirm.require({
-                message: 'Êtes-vous sûr de vouloir soumettre cette évaluation ?',
-                header: 'Confirmation',
-                icon: 'pi pi-info-circle',
-                acceptClass: 'p-button-primary',
+                message:
+                    "Êtes-vous sûr de vouloir soumettre cette évaluation ?",
+                header: "Confirmation",
+                icon: "pi pi-info-circle",
+                acceptClass: "p-button-primary",
                 accept: async () => {
                     submitting.value = true;
                     try {
-                        await ApiService.post(`/encadrant/documents-evaluation/evaluate/${selectedDocument.value.id}`, {
-                            commentaire: evaluationForm.value.commentaire
-                        });
-                        
+                        await ApiService.post(
+                            `/encadrant/documents-evaluation/evaluate/${selectedDocument.value.id}`,
+                            {
+                                commentaire: evaluationForm.value.commentaire,
+                            }
+                        );
+
                         // Update the document in the list with the new evaluation
-                        const index = documents.value.findIndex(d => d.id === selectedDocument.value.id);
+                        const index = documents.value.findIndex(
+                            (d) => d.id === selectedDocument.value.id
+                        );
                         if (index !== -1) {
-                            documents.value[index].commentaire = evaluationForm.value.commentaire;
+                            documents.value[index].commentaire =
+                                evaluationForm.value.commentaire;
                         }
-                        
+
                         // Update the selected document too
-                        selectedDocument.value.commentaire = evaluationForm.value.commentaire;
-                        
+                        selectedDocument.value.commentaire =
+                            evaluationForm.value.commentaire;
+
                         toast.add({
-                            severity: 'success',
-                            summary: 'Évaluation soumise',
-                            detail: 'Votre évaluation a été enregistrée avec succès',
-                            life: 3000
+                            severity: "success",
+                            summary: "Évaluation soumise",
+                            detail: "Votre évaluation a été enregistrée avec succès",
+                            life: 3000,
                         });
                     } catch (error) {
-                        handleError(error, 'Erreur lors de la soumission de l\'évaluation');
+                        handleError(
+                            error,
+                            "Erreur lors de la soumission de l'évaluation"
+                        );
                     } finally {
                         submitting.value = false;
                     }
-                }
+                },
             });
         };
-        
+
         // Helper functions
         const formatDate = (dateString) => {
-            if (!dateString) return '';
+            if (!dateString) return "";
             const date = new Date(dateString);
-            return new Intl.DateTimeFormat('fr-FR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+            return new Intl.DateTimeFormat("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
             }).format(date);
         };
-        
+
         const formatDateTime = (dateString) => {
-            if (!dateString) return '';
+            if (!dateString) return "";
             const date = new Date(dateString);
-            return new Intl.DateTimeFormat('fr-FR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            return new Intl.DateTimeFormat("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
             }).format(date);
         };
-        
+
         const handleError = (error, defaultMessage) => {
             console.error(defaultMessage, error);
             let message = defaultMessage;
-            
+
             if (error.message) {
                 message = error.message;
-            } else if (error.response && error.response.data && error.response.data.message) {
+            } else if (
+                error.response &&
+                error.response.data &&
+                error.response.data.message
+            ) {
                 message = error.response.data.message;
             }
-            
+
             toast.add({
-                severity: 'error',
-                summary: 'Erreur',
+                severity: "error",
+                summary: "Erreur",
                 detail: message,
-                life: 5000
+                life: 5000,
             });
         };
-        
+
         return {
             // State
             loading,
@@ -661,10 +858,10 @@ export default {
             previewDataUrl,
             previewContentType,
             evaluationForm,
-            
+
             // Computed
             filteredDocuments,
-            
+
             // Methods
             loadDocuments,
             onDocumentSelect,
@@ -674,9 +871,9 @@ export default {
             downloadDocument,
             submitEvaluation,
             formatDate,
-            formatDateTime
+            formatDateTime,
         };
-    }
+    },
 };
 </script>
 
@@ -741,14 +938,16 @@ export default {
     color: var(--primary-color);
 }
 
-.loading-container, .preview-loading {
+.loading-container,
+.preview-loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem;
 }
 
-.loading-container p, .preview-loading p {
+.loading-container p,
+.preview-loading p {
     margin-top: 1rem;
     color: var(--text-color-secondary);
 }
@@ -892,7 +1091,8 @@ export default {
     height: 100%;
 }
 
-.preview-error, .preview-not-available {
+.preview-error,
+.preview-not-available {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -902,11 +1102,13 @@ export default {
     padding: 2rem;
 }
 
-.preview-error h3, .preview-not-available h3 {
+.preview-error h3,
+.preview-not-available h3 {
     margin: 1rem 0 0.5rem;
 }
 
-.preview-error p, .preview-not-available p {
+.preview-error p,
+.preview-not-available p {
     margin: 0 0 1rem;
     color: var(--text-color-secondary);
     max-width: 500px;
@@ -948,25 +1150,25 @@ export default {
     .content-container {
         grid-template-columns: 1fr;
     }
-    
+
     .header-section {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .action-buttons {
         width: 100%;
     }
-    
+
     .eval-section {
         margin-top: 1rem;
     }
-    
+
     .info-row {
         flex-direction: column;
     }
-    
+
     .info-label {
         min-width: auto;
     }
