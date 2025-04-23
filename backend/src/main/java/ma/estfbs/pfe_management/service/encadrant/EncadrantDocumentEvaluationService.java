@@ -54,7 +54,7 @@ public class EncadrantDocumentEvaluationService {
 
         // Get all documents for these binomes
         List<DocumentsEvaluation> allDocuments = new ArrayList<>();
-        
+
         for (Binome binome : binomes) {
             List<DocumentsEvaluation> binomeDocuments = documentsEvaluationRepository
                     .findByBinomeAndAnneeScolaire(binome, currentYear);
@@ -131,9 +131,10 @@ public class EncadrantDocumentEvaluationService {
 
     /**
      * Get document file name for Content-Disposition header
+     * This version ensures proper filename generation for downloads
      * 
      * @param documentId Document ID
-     * @return File name
+     * @return File name with extension
      */
     public String getDocumentFileName(Long documentId) {
         DocumentsEvaluation document = documentsEvaluationRepository.findById(documentId)
@@ -151,7 +152,12 @@ public class EncadrantDocumentEvaluationService {
         // Clean file name for download (removing special characters)
         fileName = fileName.replaceAll("[^a-zA-Z0-9.-]", "_");
 
-        return fileName + fileExtension;
+        // Make sure the filename has the correct extension
+        if (!fileName.toLowerCase().endsWith(fileExtension.toLowerCase())) {
+            fileName += fileExtension;
+        }
+
+        return fileName;
     }
 
     /**
@@ -165,7 +171,7 @@ public class EncadrantDocumentEvaluationService {
                 .orElseThrow(() -> new RuntimeException("Document non trouvé avec l'ID: " + documentId));
 
         String filePath = document.getLocalisationDoc();
-        
+
         try {
             // First try to detect content type from the actual file
             Path path = Paths.get(filePath);
@@ -225,7 +231,7 @@ public class EncadrantDocumentEvaluationService {
      */
     private DocumentEvaluationDTO mapToDTO(DocumentsEvaluation document) {
         Binome binome = document.getBinome();
-        
+
         return DocumentEvaluationDTO.builder()
                 .id(document.getId())
                 .titre(document.getTitre())
@@ -239,4 +245,5 @@ public class EncadrantDocumentEvaluationService {
                 .etudiant2Prenom(binome.getEtudiant2() != null ? binome.getEtudiant2().getPrenom() : null)
                 .build();
     }
+
 }

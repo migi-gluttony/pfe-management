@@ -106,7 +106,7 @@
                                     <Button
                                         icon="pi pi-eye"
                                         text
-                                        @click="openDocumentPreview(slotProps.data)"
+                                        @click="openPreviewDialog(slotProps.data)"
                                         tooltip="Aperçu"
                                     />
                                 </div>
@@ -118,7 +118,7 @@
 
             <!-- Document details and evaluation form -->
             <div v-if="selectedDocument" class="eval-section">
-                <Card class="document-preview-card">
+                <Card class="document-details-card">
                     <template #title>
                         <div class="card-title">
                             <i class="pi pi-file" style="font-size: 1.5rem; margin-right: 0.5rem"></i>
@@ -134,42 +134,15 @@
                                 @click="downloadDocument(selectedDocument)"
                             />
                             <Button
-                                :label="showDocPreview ? 'Masquer l\'aperçu' : 'Afficher l\'aperçu'"
-                                :icon="showDocPreview ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                @click="toggleDocPreview"
-                            />
-                            <Button
-                                label="Voir en plein écran"
-                                icon="pi pi-window-maximize"
+                                label="Prévisualiser"
+                                icon="pi pi-eye"
                                 class="p-button-outlined"
-                                @click="openPreviewInNewTab"
+                                @click="openPreviewDialog(selectedDocument)"
                             />
                         </div>
                     </template>
                     <template #content>
-                        <div v-if="showDocPreview" class="document-preview-container">
-                            <iframe
-                                v-if="isPdfFile(selectedDocument)"
-                                :src="getPreviewUrl(selectedDocument)"
-                                width="100%"
-                                height="500"
-                                frameborder="0"
-                                title="Document Preview"
-                                sandbox="allow-same-origin allow-scripts"
-                            ></iframe>
-                            <div v-else class="preview-not-available">
-                                <i class="pi pi-file-export" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
-                                <h3>Aperçu limité</h3>
-                                <p>Ce type de document ({{ getFileType(selectedDocument) }}) peut nécessiter un téléchargement pour être visualisé correctement.</p>
-                                <Button
-                                    label="Télécharger le document"
-                                    icon="pi pi-download"
-                                    @click="downloadDocument(selectedDocument)"
-                                    class="mt-3"
-                                />
-                            </div>
-                        </div>
-                        <div v-else class="document-info">
+                        <div class="document-info">
                             <div class="info-row">
                                 <div class="info-label">Titre:</div>
                                 <div class="info-value">{{ selectedDocument.titre }}</div>
@@ -244,32 +217,51 @@
             </Card>
         </div>
 
-        <!-- Document Dialog for preview -->
+        <!-- Document Preview Dialog -->
         <Dialog
-            v-model:visible="showDocDialog"
+            v-model:visible="showPreviewDialog"
             :modal="true"
             :style="{ width: '90vw', height: '90vh' }"
-            :header="selectedDocument ? selectedDocument.titre : 'Aperçu du document'"
+            :header="previewDocument ? previewDocument.titre : 'Aperçu du document'"
             :maximizable="true"
+            @show="loadPreviewContent"
         >
-            <div v-if="selectedDocument" class="dialog-content">
-                <iframe
-                    v-if="isPdfFile(selectedDocument)"
-                    :src="getPreviewUrl(selectedDocument)"
-                    width="100%"
-                    height="100%"
-                    frameborder="0"
-                    title="Document Viewer"
-                    sandbox="allow-same-origin allow-scripts"
-                ></iframe>
+            <div class="preview-dialog-content">
+                <div v-if="previewLoading" class="preview-loading">
+                    <ProgressSpinner />
+                    <p>Chargement du document en cours...</p>
+                </div>
+                <div v-else-if="previewError" class="preview-error">
+                    <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: var(--red-500);"></i>
+                    <h3>Erreur de prévisualisation</h3>
+                    <p>{{ previewError }}</p>
+                    <Button
+                        label="Télécharger plutôt"
+                        icon="pi pi-download"
+                        @click="downloadDocument(previewDocument)"
+                        class="mt-3"
+                    />
+                </div>
+                <div v-else-if="previewContentType && previewContentType.startsWith('image/')" class="image-preview">
+                    <img :src="previewDataUrl" :alt="previewDocument && previewDocument.titre" />
+                </div>
+                <div v-else-if="previewContentType === 'application/pdf'" class="pdf-preview">
+                    <iframe
+                        :src="previewDataUrl"
+                        width="100%"
+                        height="100%"
+                        frameborder="0"
+                        title="PDF Viewer"
+                    ></iframe>
+                </div>
                 <div v-else class="preview-not-available">
                     <i class="pi pi-file-export" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
                     <h3>Aperçu limité</h3>
-                    <p>Ce type de document ({{ getFileType(selectedDocument) }}) peut nécessiter un téléchargement pour être visualisé correctement.</p>
+                    <p>Ce type de document ({{ previewDocument && getFileType(previewDocument) }}) ne peut pas être prévisualisé directement.</p>
                     <Button
                         label="Télécharger le document"
                         icon="pi pi-download"
-                        @click="downloadDocument(selectedDocument)"
+                        @click="downloadDocument(previewDocument)"
                         class="mt-3"
                     />
                 </div>
@@ -279,7 +271,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import ApiService from '@/services/ApiService';
@@ -322,8 +314,17 @@ export default {
         const documents = ref([]);
         const selectedDocument = ref(null);
         const searchQuery = ref('');
-        const showDocPreview = ref(false);
-        const showDocDialog = ref(false);
+        
+        // Preview dialog state
+        const showPreviewDialog = ref(false);
+        const previewDocument = ref(null);
+        const previewLoading = ref(false);
+        const previewError = ref(null);
+        const previewDataUrl = ref('');
+        const previewContentType = ref('');
+        
+        // Blob URLs to revoke on unmount
+        const blobUrls = ref([]);
         
         const evaluationForm = ref({
             commentaire: ''
@@ -340,6 +341,13 @@ export default {
                 return doc.titre.toLowerCase().includes(query) ||
                     `${doc.etudiant1Prenom} ${doc.etudiant1Nom}`.toLowerCase().includes(query) ||
                     (doc.etudiant2Nom && `${doc.etudiant2Prenom} ${doc.etudiant2Nom}`.toLowerCase().includes(query));
+            });
+        });
+        
+        // Clean up blob URLs when component is destroyed
+        onBeforeUnmount(() => {
+            blobUrls.value.forEach(url => {
+                URL.revokeObjectURL(url);
             });
         });
         
@@ -363,42 +371,64 @@ export default {
         
         const onDocumentSelect = (event) => {
             selectedDocument.value = event.data;
-            showDocPreview.value = false;
             loadExistingEvaluation();
         };
         
-        const openDocumentPreview = (document) => {
-            selectedDocument.value = document;
-            showDocPreview.value = true;
+        const openPreviewDialog = (doc) => {
+            previewDocument.value = doc;
+            previewLoading.value = true;
+            previewError.value = null;
+            previewDataUrl.value = '';
+            previewContentType.value = '';
+            showPreviewDialog.value = true;
         };
         
-        const toggleDocPreview = () => {
-            showDocPreview.value = !showDocPreview.value;
-        };
-        
-        const getPreviewUrl = (document) => {
-            const baseUrl = import.meta.env.VITE_API_URL || '/api';
-            return `${baseUrl}/encadrant/documents-evaluation/preview/${document.id}`;
-        };
-        
-        const openPreviewInNewTab = () => {
-            if (!selectedDocument.value) return;
+        const loadPreviewContent = () => {
+            if (!previewDocument.value) return;
             
-            if (isPdfFile(selectedDocument.value)) {
-                const previewUrl = getPreviewUrl(selectedDocument.value);
-                window.open(previewUrl, '_blank');
-            } else {
-                showDocDialog.value = true;
-            }
+            previewLoading.value = true;
+            previewError.value = null;
+            
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const baseUrl = import.meta.env.VITE_API_URL || '/api';
+            
+            fetch(`${baseUrl}/encadrant/documents-evaluation/download/${previewDocument.value.id}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`Erreur de prévisualisation: ${response.status} ${response.statusText}`);
+                }
+                
+                // Get content type
+                const contentType = response.headers.get('content-type');
+                previewContentType.value = contentType;
+                
+                return response.blob();
+            })
+            .then((blob) => {
+                // Create a blob URL for the preview
+                const url = URL.createObjectURL(blob);
+                
+                // Store for cleanup later
+                blobUrls.value.push(url);
+                
+                // Set the data URL for preview
+                previewDataUrl.value = url;
+                previewLoading.value = false;
+            })
+            .catch((error) => {
+                console.error('Preview error:', error);
+                previewError.value = error.message || 'Impossible de prévisualiser le fichier';
+                previewLoading.value = false;
+            });
         };
         
-        const isPdfFile = (document) => {
-            const filePath = document.localisationDoc;
-            return filePath && filePath.toLowerCase().endsWith('.pdf');
-        };
-        
-        const getFileType = (document) => {
-            const filePath = document.localisationDoc;
+        const getFileType = (doc) => {
+            const filePath = doc?.localisationDoc;
             if (!filePath) return 'Document';
             
             const extension = filePath.substring(filePath.lastIndexOf('.')).toLowerCase();
@@ -409,11 +439,15 @@ export default {
                 case '.jpg':
                 case '.jpeg': return 'Image JPEG';
                 case '.png': return 'Image PNG';
+                case '.gif': return 'Image GIF';
+                case '.svg': return 'Image SVG';
                 default: return `Document ${extension}`;
             }
         };
 
-        const downloadDocument = (document) => {
+        const downloadDocument = (doc) => {
+            if (!doc) return;
+            
             toast.add({
                 severity: 'info',
                 summary: 'Téléchargement',
@@ -425,8 +459,7 @@ export default {
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             const baseUrl = import.meta.env.VITE_API_URL || '/api';
             
-            // Use window.fetch API instead of axios to handle the download properly
-            fetch(`${baseUrl}/encadrant/documents-evaluation/download/${document.id}`, {
+            fetch(`${baseUrl}/encadrant/documents-evaluation/download/${doc.id}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -453,7 +486,7 @@ export default {
 
                 // If no filename from header, use document title or default
                 if (!filename) {
-                    filename = document.titre || 'document';
+                    filename = doc.titre || 'document';
 
                     // Add extension based on content type
                     if (contentType) {
@@ -474,11 +507,14 @@ export default {
                 // Sanitize filename
                 filename = filename.replace(/[/\\?%*:|"<>]/g, '-');
 
-                return response.blob().then(blob => ({ blob, filename }));
+                // Return blob and filename for next step
+                return response.blob().then(blob => {
+                    return { blob, filename };
+                });
             })
             .then(({ blob, filename }) => {
                 // Create a blob URL and trigger download
-                const url = window.URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = filename;
@@ -488,7 +524,7 @@ export default {
                 // Clean up
                 setTimeout(() => {
                     document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
+                    URL.revokeObjectURL(url);
                 }, 100);
 
                 toast.add({
@@ -618,8 +654,12 @@ export default {
             documents,
             selectedDocument,
             searchQuery,
-            showDocPreview,
-            showDocDialog,
+            showPreviewDialog,
+            previewDocument,
+            previewLoading,
+            previewError,
+            previewDataUrl,
+            previewContentType,
             evaluationForm,
             
             // Computed
@@ -628,11 +668,8 @@ export default {
             // Methods
             loadDocuments,
             onDocumentSelect,
-            openDocumentPreview,
-            toggleDocPreview,
-            getPreviewUrl,
-            openPreviewInNewTab,
-            isPdfFile,
+            openPreviewDialog,
+            loadPreviewContent,
             getFileType,
             downloadDocument,
             submitEvaluation,
@@ -704,14 +741,14 @@ export default {
     color: var(--primary-color);
 }
 
-.loading-container {
+.loading-container, .preview-loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 2rem;
 }
 
-.loading-container p {
+.loading-container p, .preview-loading p {
     margin-top: 1rem;
     color: var(--text-color-secondary);
 }
@@ -769,36 +806,6 @@ export default {
 .card-title {
     display: flex;
     align-items: center;
-}
-
-.document-preview-container {
-    width: 100%;
-    height: 500px;
-    border: 1px solid var(--surface-border);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.preview-not-available {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 300px;
-    text-align: center;
-    padding: 1rem;
-    background-color: var(--surface-hover);
-    border-radius: 4px;
-}
-
-.preview-not-available h3 {
-    margin: 1rem 0 0.5rem;
-}
-
-.preview-not-available p {
-    margin: 0;
-    color: var(--text-color-secondary);
-    max-width: 400px;
 }
 
 .document-info {
@@ -867,8 +874,69 @@ export default {
     color: var(--text-color-secondary);
 }
 
-.dialog-content {
+/* Preview Dialog Styles */
+.preview-dialog-content {
+    height: 80vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-loading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     height: 100%;
+}
+
+.preview-error, .preview-not-available {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+.preview-error h3, .preview-not-available h3 {
+    margin: 1rem 0 0.5rem;
+}
+
+.preview-error p, .preview-not-available p {
+    margin: 0 0 1rem;
+    color: var(--text-color-secondary);
+    max-width: 500px;
+}
+
+.image-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: var(--surface-ground);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.pdf-preview {
+    height: 100%;
+    width: 100%;
+}
+
+.pdf-preview iframe {
+    border: none;
+    background-color: white;
 }
 
 .mt-3 {
