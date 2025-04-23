@@ -590,9 +590,7 @@ export default {
 
 <style scoped>
 .document-submission-view {
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
 }
 
 .view-container {

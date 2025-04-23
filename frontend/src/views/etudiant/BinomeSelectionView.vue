@@ -397,10 +397,7 @@ export default {
 
 <style scoped>
 .etudiant-view {
-    width: 100%;
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
 }
 
 .view-container {

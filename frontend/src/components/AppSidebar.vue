@@ -1,21 +1,52 @@
 <template>
-    <aside v-if="isAuthenticated" class="app-sidebar">
+    <aside
+        v-if="isAuthenticated"
+        class="app-sidebar"
+        :class="{ collapsed: collapsed }"
+    >
         <div class="sidebar-content">
-            <!--dynamic logo section -->
+            <!-- Logo section with collapse toggle -->
             <div class="sidebar-logo">
-                <img
-                    v-if="isDarkMode"
-                    src="@/assets/logo/full_dark.svg"
-                    alt="pfe management"
-                />
-                <img
-                    v-else
-                    src="@/assets/logo/full_light.svg"
-                    alt="pfe management"
-                />
+                <!-- Full logo (visible when expanded) -->
+                <template v-if="!collapsed">
+                    <img
+                        v-if="isDarkMode"
+                        src="@/assets/logo/full_dark.svg"
+                        alt="pfe management"
+                    />
+                    <img
+                        v-else
+                        src="@/assets/logo/full_light.svg"
+                        alt="pfe management"
+                    />
+                    <button class="collapse-btn" @click="toggleSidebar">
+                        <i class="pi pi-angle-double-left"></i>
+                    </button>
+                </template>
+
+                <!-- Small logo (visible when collapsed) -->
+                <template v-else>
+                    <img
+                        v-if="isDarkMode"
+                        src="@/assets/logo/full_dark.svg"
+                        alt="pfe management"
+                    />
+                    <img
+                        v-else
+                        src="@/assets/logo/full_light.svg"
+                        alt="pfe management"
+                    />
+                </template>
             </div>
 
-            <!-- dymanic menue for diferent user roles -->
+            <!-- Expand button (only visible when collapsed) -->
+            <div v-if="collapsed" class="expand-btn-container">
+                <button class="expand-btn" @click="toggleSidebar">
+                    <i class="pi pi-angle-double-right"></i>
+                </button>
+            </div>
+
+            <!-- Menu items -->
             <div class="sidebar-menu">
                 <div
                     v-for="(item, index) in menuItems"
@@ -23,21 +54,22 @@
                     class="menu-item"
                     :class="{ active: isActiveRoute(item.route) }"
                     @click="navigateTo(item.command)"
+                    :title="collapsed ? item.label : ''"
                 >
                     <i :class="item.icon"></i>
-                    <span>{{ item.label }}</span>
-                    <i
-                        v-if="item.hasSubmenu"
-                        class="pi pi-chevron-down submenu-icon"
-                    ></i>
+                    <span v-if="!collapsed">{{ item.label }}</span>
                 </div>
             </div>
 
-            <!-- Logout button  -->
+            <!-- Logout button -->
             <div class="sidebar-footer">
-                <div class="menu-item logout-item" @click="logout">
+                <div
+                    class="menu-item logout-item"
+                    @click="logout"
+                    :title="collapsed ? 'Déconnexion' : ''"
+                >
                     <i class="pi pi-sign-out"></i>
-                    <span>Déconnexion</span>
+                    <span v-if="!collapsed">Déconnexion</span>
                 </div>
             </div>
         </div>
@@ -50,11 +82,25 @@ import { useRouter, useRoute } from "vue-router";
 import AuthService from "../services/AuthService";
 import { ThemeService } from "@/services/ThemeService";
 
+const props = defineProps({
+    collapsed: {
+        type: Boolean,
+        default: false
+    }
+});
+
+const emit = defineEmits(['toggle']);
+
 const router = useRouter();
 const route = useRoute();
 const isDarkMode = computed(() => ThemeService.getTheme() === "dark");
 
-// listen for theme changes
+// Toggle sidebar collapse state
+const toggleSidebar = () => {
+    emit('toggle');
+};
+
+// Listen for theme changes
 onMounted(() => {
     window.addEventListener("themechange", (e) => {
         isDarkMode.value = e.detail.theme === "dark";
@@ -127,12 +173,6 @@ const menuItems = computed(() => {
     if (role === "ETUDIANT") {
         items.push(
             {
-                label: "Mon PFE",
-                icon: "pi pi-file",
-                command: () => router.push("/student/pfe"),
-                route: "/student/pfe",
-            },
-            {
                 label: "Documents",
                 icon: "pi pi-file",
                 command: () => router.push("/etudiant/documents"),
@@ -144,32 +184,14 @@ const menuItems = computed(() => {
                 command: () => router.push("/etudiant/rapport"),
                 route: "/etudiant/rapport",
             },
-            {
-                label: "Planning",
-                icon: "pi pi-calendar",
-                command: () => router.push("/student/schedule"),
-                route: "/student/schedule",
-            }
         );
     } else if (role === "ENCADRANT") {
         items.push(
-            {
-                label: "Mes Étudiants",
-                icon: "pi pi-users",
-                command: () => router.push("/supervisor/students"),
-                route: "/supervisor/students",
-            },
             {
                 label: "Révision des documents",
                 icon: "pi pi-check-square",
                 command: () => router.push("/encadrant/document-evaluation"),
                 route: "/encadrant/document-evaluation",
-            },
-            {
-                label: "Planning",
-                icon: "pi pi-calendar",
-                command: () => router.push("/supervisor/schedule"),
-                route: "/supervisor/schedule",
             },
             {
                 label: "Mes Soutenances",
@@ -264,7 +286,11 @@ const menuItems = computed(() => {
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0;
-    /* border-radius: 0 16px 16px 0; */
+    transition: width 0.3s ease;
+}
+
+.app-sidebar.collapsed {
+    width: 60px;
 }
 
 .dark-mode .app-sidebar {
@@ -283,20 +309,80 @@ const menuItems = computed(() => {
 
 /* Logo section styles */
 .sidebar-logo {
-    padding: 10px 20px;
+    padding: 16px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.collapsed .sidebar-logo {
     justify-content: center;
-    gap: 12px;
+    padding: 16px 10px;
 }
 
 .sidebar-logo img {
     height: auto;
-    width: 100%;
+    width: 85%;
+    transition: all 0.3s ease;
 }
 
-.dark-mode .app-name {
-    color: #f0f0f0;
+.sidebar-logo .small-logo {
+    width: 30px;
+    height: 30px;
+}
+
+.collapse-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 10px;
+    margin-left: 5px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.collapse-btn:hover {
+    background-color: #f5f5f5;
+    color: var(--primary-color);
+}
+
+.dark-mode .collapse-btn:hover {
+    background-color: #2a2a2a;
+}
+
+/* Expand button (visible when collapsed) */
+.expand-btn-container {
+    display: flex;
+    justify-content: center;
+}
+
+.expand-btn {
+    background: transparent;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 10px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.expand-btn:hover {
+    background-color: #f5f5f5;
+    color: var(--primary-color);
+}
+
+.dark-mode .expand-btn:hover {
+    background-color: #2a2a2a;
 }
 
 /* Menu styles */
@@ -314,6 +400,12 @@ const menuItems = computed(() => {
     font-size: 14px;
     position: relative;
     transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.collapsed .menu-item {
+    padding: 12px 0;
+    justify-content: center;
 }
 
 .menu-item:hover {
@@ -347,20 +439,22 @@ const menuItems = computed(() => {
 }
 
 .menu-item i {
-    margin-right: 12px;
     font-size: 18px;
     width: 20px;
     text-align: center;
 }
 
-.menu-item span {
-    flex: 1;
+.collapsed .menu-item i {
+    margin-right: 0;
 }
 
-.submenu-icon {
-    font-size: 12px !important;
-    margin-right: 0 !important;
-    opacity: 0.7;
+.menu-item span {
+    margin-left: 12px;
+    transition: opacity 0.3s ease;
+}
+
+.collapsed .menu-item span {
+    display: none;
 }
 
 /* Footer/Logout styles */
@@ -397,16 +491,32 @@ const menuItems = computed(() => {
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
 
+    .app-sidebar.collapsed {
+        width: 100%;
+    }
+
     .sidebar-content {
         height: auto;
     }
 
+    .collapsed .sidebar-logo,
     .sidebar-logo {
         padding: 16px;
+        justify-content: space-between;
     }
 
-    .menu-item {
+    .collapsed .menu-item {
         padding: 10px 16px;
+        justify-content: flex-start;
+    }
+
+    .collapsed .menu-item span {
+        display: block;
+        margin-left: 12px;
+    }
+
+    .expand-btn-container {
+        display: none;
     }
 }
 </style>

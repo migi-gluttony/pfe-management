@@ -751,9 +751,7 @@ export default {
 
 <style scoped>
 .report-submission-view {
-    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
 }
 
 .view-container {
