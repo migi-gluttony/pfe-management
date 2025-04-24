@@ -4,7 +4,7 @@
 
         <!-- User Info Header -->
         <UserInfoHeader
-            searchPlaceholder="Rechercher un binôme..."
+            searchPlaceholder="Rechercher un étudiant..."
             :initialSearchValue="searchQuery"
             @search="handleHeaderSearch"
         />
@@ -14,7 +14,7 @@
             v-model:selectedFiliere="selectedFiliere"
             :filieres="filieres"
             @filiereChange="handleFiliereChange"
-            @print="printTable"
+            @print="openPrintDialog"
         />
 
         <!-- Notes List -->
@@ -26,7 +26,37 @@
             :pourcentages="pourcentages"
         />
 
-        <!-- Print button is kept in the NotesHeader component, but the print feature is removed -->
+        <!-- Print Dialog -->
+        <PrintDialog
+            v-model:visible="showPrintDialog"
+            :notes="notes"
+            :filieres="filieres"
+            :selectedFiliere="selectedFiliere"
+            @print="printNotes"
+            @print-evaluation-sheet="printEvaluationSheet"
+        />
+
+        <!-- Printable Notes Component (hidden in normal view) -->
+        <PrintableNotes
+            ref="printableNotesRef"
+            :notes="notes"
+            :filieres="filieres"
+            :selectedFiliere="selectedFiliere"
+            :showAllFilieres="printSettings.showAllFilieres"
+            :showDetails="printSettings.showDetails"
+            :pourcentages="pourcentages"
+        />
+        
+        <!-- Student Evaluation Sheet (hidden in normal view) -->
+        <StudentEvaluationSheet
+            v-if="selectedEvaluationStudent"
+            ref="evaluationSheetRef"
+            :student="selectedEvaluationStudent"
+            :note="selectedEvaluationNote"
+            :noteDetail="selectedEvaluationDetail"
+            :filiereName="selectedEvaluationFiliereName"
+            :pourcentages="pourcentages"
+        />
     </div>
 </template>
 
@@ -37,6 +67,9 @@ import ApiService from "@/services/ApiService";
 import UserInfoHeader from "@/components/UserInfoHeader.vue";
 import NotesHeader from "@/components/chefDeDepartement/notesManagement/NotesHeader.vue";
 import NotesList from "@/components/chefDeDepartement/notesManagement/NotesList.vue";
+import PrintDialog from "@/components/chefDeDepartement/notesManagement/PrintDialog.vue";
+import PrintableNotes from "@/components/chefDeDepartement/notesManagement/PrintableNotes.vue";
+import StudentEvaluationSheet from "@/components/chefDeDepartement/notesManagement/StudentEvaluationSheet.vue";
 
 // Import PrimeVue components
 import Toast from "primevue/toast";
@@ -47,6 +80,20 @@ const filieres = ref([]);
 const selectedFiliere = ref(null);
 const loading = ref(false);
 const searchQuery = ref("");
+const showPrintDialog = ref(false);
+const printableNotesRef = ref(null);
+
+// Print settings
+const printSettings = ref({
+    showDetails: true,
+    showAllFilieres: false
+});
+
+// Student evaluation sheet state
+const selectedEvaluationStudent = ref(null);
+const selectedEvaluationNote = ref(null);
+const selectedEvaluationDetail = ref(null);
+const selectedEvaluationFiliereName = ref('');
 
 // Services
 const toast = useToast();
@@ -57,14 +104,6 @@ const pourcentages = ref({
     pourcentageSoutenance: 40,
     pourcentageEncadrant: 20,
 });
-
-// No longer needed after removing print feature
-
-// Print function (placeholder for future implementation)
-function printTable() {
-    // Print functionality removed as requested
-    console.log("Print button clicked - functionality to be implemented later");
-}
 
 // Fetch data on component mount
 onMounted(async () => {
@@ -130,7 +169,71 @@ function handleHeaderSearch(query) {
     searchQuery.value = query;
 }
 
-// These methods are now handled in the NotesList component
+// Print functionality
+function openPrintDialog() {
+    showPrintDialog.value = true;
+}
+
+function printNotes(options) {
+    // Update print settings with dialog options
+    printSettings.value = options;
+    
+    // Reset any evaluation sheet state
+    selectedEvaluationStudent.value = null;
+    selectedEvaluationNote.value = null;
+    
+    // Schedule print operation to occur after the DOM has been updated
+    setTimeout(() => {
+        window.print();
+    }, 100);
+}
+
+async function printEvaluationSheet(data) {
+    try {
+        // Show loading state
+        loading.value = true;
+        
+        // Reset summary print settings
+        printSettings.value = {
+            showDetails: false,
+            showAllFilieres: false
+        };
+        
+        // Set student data
+        selectedEvaluationStudent.value = data.student;
+        selectedEvaluationNote.value = data.note;
+        selectedEvaluationFiliereName.value = data.filiereName;
+        
+        // Fetch detailed note information for the student
+        if (data.student && data.student.id) {
+            try {
+                const detailsResponse = await ApiService.get(
+                    `/chef_de_departement/notes/student/${data.student.id}/details`
+                );
+                selectedEvaluationDetail.value = detailsResponse;
+            } catch (error) {
+                console.error("Error fetching note details:", error);
+                selectedEvaluationDetail.value = {};
+            }
+        }
+        
+        // Schedule print after details have been loaded
+        setTimeout(() => {
+            window.print();
+            
+            // Reset state after printing
+            setTimeout(() => {
+                selectedEvaluationStudent.value = null;
+                selectedEvaluationNote.value = null;
+                selectedEvaluationDetail.value = null;
+            }, 500);
+        }, 300);
+    } catch (error) {
+        handleApiError(error, "Erreur lors de la préparation de l'impression");
+    } finally {
+        loading.value = false;
+    }
+}
 
 function handleApiError(error, defaultMessage) {
     console.error(defaultMessage, error);
@@ -155,5 +258,25 @@ function handleApiError(error, defaultMessage) {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Print styles removed as requested */
+/* Hide printable component in normal view */
+.print-only {
+    display: none;
+}
+
+/* Print styles */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+}
 </style>
