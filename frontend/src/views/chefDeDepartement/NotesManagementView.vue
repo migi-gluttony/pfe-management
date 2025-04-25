@@ -38,6 +38,7 @@
 
         <!-- Printable Notes Component (hidden in normal view) -->
         <PrintableNotes
+            v-if="!isPrintingEvaluationSheet"
             ref="printableNotesRef"
             :notes="notes"
             :filieres="filieres"
@@ -49,7 +50,7 @@
         
         <!-- Student Evaluation Sheet (hidden in normal view) -->
         <StudentEvaluationSheet
-            v-if="selectedEvaluationStudent"
+            v-if="selectedEvaluationStudent && isPrintingEvaluationSheet"
             ref="evaluationSheetRef"
             :student="selectedEvaluationStudent"
             :note="selectedEvaluationNote"
@@ -82,6 +83,7 @@ const loading = ref(false);
 const searchQuery = ref("");
 const showPrintDialog = ref(false);
 const printableNotesRef = ref(null);
+const isPrintingEvaluationSheet = ref(false);
 
 // Print settings
 const printSettings = ref({
@@ -175,6 +177,9 @@ function openPrintDialog() {
 }
 
 function printNotes(options) {
+    // Set flag to indicate we're printing the summary table, not an evaluation sheet
+    isPrintingEvaluationSheet.value = false;
+    
     // Update print settings with dialog options
     printSettings.value = options;
     
@@ -192,6 +197,9 @@ async function printEvaluationSheet(data) {
     try {
         // Show loading state
         loading.value = true;
+        
+        // Set flag to indicate we're printing an evaluation sheet
+        isPrintingEvaluationSheet.value = true;
         
         // Reset summary print settings
         printSettings.value = {
@@ -226,6 +234,7 @@ async function printEvaluationSheet(data) {
                 selectedEvaluationStudent.value = null;
                 selectedEvaluationNote.value = null;
                 selectedEvaluationDetail.value = null;
+                isPrintingEvaluationSheet.value = false;
             }, 500);
         }, 300);
     } catch (error) {
@@ -277,6 +286,11 @@ function handleApiError(error, defaultMessage) {
     
     .print-only {
         display: block !important;
+    }
+    
+    @page {
+        size: A4;
+        margin: 1cm;
     }
 }
 </style>
