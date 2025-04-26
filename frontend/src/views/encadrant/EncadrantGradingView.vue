@@ -1,6 +1,7 @@
 <template>
     <div class="encadrant-grading">
         <Toast />
+        <ConfirmDialog />
 
         <!-- Header -->
         <UserInfoHeader
@@ -118,145 +119,204 @@
                 </template>
                 <template #content>
                     <div class="eval-form">
-                        <!-- Technical skills evaluation -->
-                        <div class="form-field">
-                            <label for="technicalScore"
-                                >Compétences Techniques (0-20)</label
+                        <!-- Reports section integrated into evaluation form (MOVED TO TOP) -->
+                        <div class="reports-section">
+                            <h3 class="section-title">
+                                <i class="pi pi-file-pdf" style="margin-right: 0.5rem"></i>
+                                Rapports du Binôme
+                            </h3>
+                            
+                            <div v-if="loadingReports" class="loading-container">
+                                <ProgressSpinner />
+                                <p>Chargement des rapports...</p>
+                            </div>
+                            
+                            <div v-else-if="reports.length === 0" class="empty-reports">
+                                <i class="pi pi-file-o empty-icon"></i>
+                                <p>Ce binôme n'a pas encore soumis de rapport final.</p>
+                            </div>
+                            
+                            <DataTable
+                                v-else
+                                :value="reports"
+                                stripedRows
+                                class="reports-table"
+                                :rows="5"
+                                emptyMessage="Aucun rapport trouvé"
                             >
-                            <div class="score-input">
-                                <Rating
-                                    v-model="
-                                        evaluationForm.technicalScoreRating
-                                    "
-                                    :cancel="false"
-                                    :stars="4"
-                                    @change="calculateTechnicalScore"
-                                />
-                                <InputNumber
-                                    id="technicalScore"
-                                    v-model="evaluationForm.technicalScore"
-                                    :min="0"
-                                    :max="20"
-                                    :step="1"
-                                    inputId="minmax"
-                                    showButtons
+                                <Column field="titre" header="Titre" sortable />
+                                <Column header="Date" sortable sortField="dateSoumission">
+                                    <template #body="slotProps">
+                                        {{ formatDate(slotProps.data.dateSoumission) }}
+                                    </template>
+                                </Column>
+                                <Column header="Actions">
+                                    <template #body="slotProps">
+                                        <div class="report-actions">
+                                            <Button
+                                                icon="pi pi-download"
+                                                text
+                                                @click="downloadReport(slotProps.data)"
+                                                tooltip="Télécharger"
+                                            />
+                                            <Button
+                                                icon="pi pi-eye"
+                                                text
+                                                @click="openPreviewDialog(slotProps.data)"
+                                                tooltip="Aperçu"
+                                            />
+                                        </div>
+                                    </template>
+                                </Column>
+                            </DataTable>
+                        </div>
+                        
+                        <div class="grading-section">
+                            <h3 class="section-title">
+                                <i class="pi pi-star" style="margin-right: 0.5rem"></i>
+                                Notes d'Évaluation
+                            </h3>
+                        
+                            <!-- Technical skills evaluation -->
+                            <div class="form-field">
+                                <label for="technicalScore"
+                                    >Compétences Techniques (0-20)</label
+                                >
+                                <div class="score-input">
+                                    <Rating
+                                        v-model="
+                                            evaluationForm.technicalScoreRating
+                                        "
+                                        :cancel="false"
+                                        :stars="4"
+                                        @change="calculateTechnicalScore"
+                                    />
+                                    <InputNumber
+                                        id="technicalScore"
+                                        v-model="evaluationForm.technicalScore"
+                                        :min="0"
+                                        :max="20"
+                                        :step="1"
+                                        inputId="minmax"
+                                        showButtons
+                                    />
+                                </div>
+                                <small
+                                    >Évaluez les compétences techniques et
+                                    l'implémentation du projet</small
+                                >
+                            </div>
+
+                            <!-- Report quality evaluation -->
+                            <div class="form-field">
+                                <label for="reportScore"
+                                    >Qualité du Rapport (0-20)</label
+                                >
+                                <div class="score-input">
+                                    <Rating
+                                        v-model="evaluationForm.reportScoreRating"
+                                        :cancel="false"
+                                        :stars="4"
+                                        @change="calculateReportScore"
+                                    />
+                                    <InputNumber
+                                        id="reportScore"
+                                        v-model="evaluationForm.reportScore"
+                                        :min="0"
+                                        :max="20"
+                                        :step="1"
+                                        inputId="reportScoreInput"
+                                        showButtons
+                                    />
+                                </div>
+                                <small
+                                    >Évaluez la qualité, la structure et le contenu
+                                    du rapport</small
+                                >
+                            </div>
+
+                            <!-- Progress tracking evaluation -->
+                            <div class="form-field">
+                                <label for="progressScore"
+                                    >Suivi du Projet (0-20)</label
+                                >
+                                <div class="score-input">
+                                    <Rating
+                                        v-model="evaluationForm.progressScoreRating"
+                                        :cancel="false"
+                                        :stars="4"
+                                        @change="calculateProgressScore"
+                                    />
+                                    <InputNumber
+                                        id="progressScore"
+                                        v-model="evaluationForm.progressScore"
+                                        :min="0"
+                                        :max="20"
+                                        :step="1"
+                                        inputId="progressScoreInput"
+                                        showButtons
+                                    />
+                                </div>
+                                <small
+                                    >Évaluez le respect des délais et le suivi
+                                    régulier du projet</small
+                                >
+                            </div>
+
+                            <!-- Professionalism evaluation -->
+                            <div class="form-field">
+                                <label for="professionalismScore"
+                                    >Professionnalisme (0-20)</label
+                                >
+                                <div class="score-input">
+                                    <Rating
+                                        v-model="
+                                            evaluationForm.professionalismScoreRating
+                                        "
+                                        :cancel="false"
+                                        :stars="4"
+                                        @change="calculateProfessionalismScore"
+                                    />
+                                    <InputNumber
+                                        id="professionalismScore"
+                                        v-model="
+                                            evaluationForm.professionalismScore
+                                        "
+                                        :min="0"
+                                        :max="20"
+                                        :step="1"
+                                        inputId="professionalismScoreInput"
+                                        showButtons
+                                    />
+                                </div>
+                                <small
+                                    >Évaluez le professionnalisme, la communication
+                                    et l'autonomie</small
+                                >
+                            </div>
+
+                            <!-- Comments -->
+                            <div class="form-field">
+                                <label for="commentaire">Commentaires</label>
+                                <Textarea
+                                    id="commentaire"
+                                    v-model="evaluationForm.commentaire"
+                                    rows="3"
+                                    class="w-full"
+                                    placeholder="Vos commentaires et retours sur le travail du binôme"
+                                    autoResize
                                 />
                             </div>
-                            <small
-                                >Évaluez les compétences techniques et
-                                l'implémentation du projet</small
-                            >
-                        </div>
 
-                        <!-- Report quality evaluation -->
-                        <div class="form-field">
-                            <label for="reportScore"
-                                >Qualité du Rapport (0-20)</label
-                            >
-                            <div class="score-input">
-                                <Rating
-                                    v-model="evaluationForm.reportScoreRating"
-                                    :cancel="false"
-                                    :stars="4"
-                                    @change="calculateReportScore"
-                                />
-                                <InputNumber
-                                    id="reportScore"
-                                    v-model="evaluationForm.reportScore"
-                                    :min="0"
-                                    :max="20"
-                                    :step="1"
-                                    inputId="reportScoreInput"
-                                    showButtons
+                            <div class="form-actions">
+                                <Button
+                                    label="Soumettre l'évaluation"
+                                    icon="pi pi-check"
+                                    @click="submitEvaluation"
+                                    :loading="submitting"
+                                    class="p-button-primary"
                                 />
                             </div>
-                            <small
-                                >Évaluez la qualité, la structure et le contenu
-                                du rapport</small
-                            >
-                        </div>
-
-                        <!-- Progress tracking evaluation -->
-                        <div class="form-field">
-                            <label for="progressScore"
-                                >Suivi du Projet (0-20)</label
-                            >
-                            <div class="score-input">
-                                <Rating
-                                    v-model="evaluationForm.progressScoreRating"
-                                    :cancel="false"
-                                    :stars="4"
-                                    @change="calculateProgressScore"
-                                />
-                                <InputNumber
-                                    id="progressScore"
-                                    v-model="evaluationForm.progressScore"
-                                    :min="0"
-                                    :max="20"
-                                    :step="1"
-                                    inputId="progressScoreInput"
-                                    showButtons
-                                />
-                            </div>
-                            <small
-                                >Évaluez le respect des délais et le suivi
-                                régulier du projet</small
-                            >
-                        </div>
-
-                        <!-- Professionalism evaluation -->
-                        <div class="form-field">
-                            <label for="professionalismScore"
-                                >Professionnalisme (0-20)</label
-                            >
-                            <div class="score-input">
-                                <Rating
-                                    v-model="
-                                        evaluationForm.professionalismScoreRating
-                                    "
-                                    :cancel="false"
-                                    :stars="4"
-                                    @change="calculateProfessionalismScore"
-                                />
-                                <InputNumber
-                                    id="professionalismScore"
-                                    v-model="
-                                        evaluationForm.professionalismScore
-                                    "
-                                    :min="0"
-                                    :max="20"
-                                    :step="1"
-                                    inputId="professionalismScoreInput"
-                                    showButtons
-                                />
-                            </div>
-                            <small
-                                >Évaluez le professionnalisme, la communication
-                                et l'autonomie</small
-                            >
-                        </div>
-
-                        <!-- Comments -->
-                        <div class="form-field">
-                            <label for="commentaire">Commentaires</label>
-                            <Textarea
-                                id="commentaire"
-                                v-model="evaluationForm.commentaire"
-                                rows="3"
-                                class="w-full"
-                                placeholder="Vos commentaires et retours sur le travail du binôme"
-                                autoResize
-                            />
-                        </div>
-
-                        <div class="form-actions">
-                            <Button
-                                label="Soumettre l'évaluation"
-                                icon="pi pi-check"
-                                @click="submitEvaluation"
-                                :loading="submitting"
-                                class="p-button-primary"
-                            />
                         </div>
                     </div>
                 </template>
@@ -278,12 +338,65 @@
                 </template>
             </Card>
         </div>
+
+        <!-- Preview dialog -->
+        <Dialog
+            v-model:visible="showPreviewDialog"
+            :modal="true"
+            :style="{ width: '90vw', height: '90vh' }"
+            :header="previewReport ? previewReport.titre : 'Aperçu du rapport'"
+            :maximizable="true"
+            @show="loadPreviewContent"
+        >
+            <div class="preview-dialog-content">
+                <div v-if="previewLoading" class="preview-loading">
+                    <ProgressSpinner />
+                    <p>Chargement du rapport en cours...</p>
+                </div>
+                <div v-else-if="previewError" class="preview-error">
+                    <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: var(--red-500)"></i>
+                    <h3>Erreur de prévisualisation</h3>
+                    <p>{{ previewError }}</p>
+                    <Button 
+                        label="Télécharger plutôt" 
+                        icon="pi pi-download" 
+                        @click="downloadReport(previewReport)" 
+                        class="mt-3"
+                    />
+                </div>
+                <div v-else-if="previewContentType && previewContentType.startsWith('image/')" class="image-preview">
+                    <img :src="previewDataUrl" :alt="previewReport && previewReport.titre" />
+                </div>
+                <div v-else-if="previewContentType === 'application/pdf'" class="pdf-preview">
+                    <embed 
+                        :src="previewDataUrl" 
+                        type="application/pdf"
+                        width="100%" 
+                        height="100%"
+                    />
+                </div>
+                <div v-else class="preview-not-available">
+                    <i class="pi pi-file-export" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
+                    <h3>Aperçu limité</h3>
+                    <p>
+                        Ce type de document ne peut pas être prévisualisé directement.
+                    </p>
+                    <Button 
+                        label="Télécharger le document" 
+                        icon="pi pi-download" 
+                        @click="downloadReport(previewReport)" 
+                        class="mt-3"
+                    />
+                </div>
+            </div>
+        </Dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
 import { useRoute } from "vue-router";
 import ApiService from "@/services/ApiService";
 import AuthService from "@/services/AuthService";
@@ -299,6 +412,9 @@ import Rating from "primevue/rating";
 import Button from "primevue/button";
 import Tag from "primevue/tag";
 import Toast from "primevue/toast";
+import ProgressSpinner from "primevue/progressspinner";
+import Dialog from "primevue/dialog";
+import ConfirmDialog from "primevue/confirmdialog";
 
 const route = useRoute();
 
@@ -321,11 +437,26 @@ const evaluationForm = ref({
     commentaire: "",
 });
 
+// Report state
+const reports = ref([]);
+const loadingReports = ref(false);
+const selectedReport = ref(null);
+
+// Preview dialog state
+const showPreviewDialog = ref(false);
+const previewReport = ref(null);
+const previewLoading = ref(false);
+const previewError = ref(null);
+const previewDataUrl = ref("");
+const previewContentType = ref("");
+const blobUrls = ref([]);
+
 // Get current user
 const currentUser = AuthService.getCurrentUser();
 
 // Services
 const toast = useToast();
+const confirm = useConfirm();
 
 // Compute filteredBinomes with a different approach to avoid modifying computed directly
 const filteredBinomesValue = computed(() => {
@@ -368,6 +499,8 @@ onMounted(async () => {
             // Reset and load evaluation form
             resetEvaluationForm();
             loadExistingEvaluation();
+            // Load reports
+            fetchReports();
 
             // Show a toast notification
             toast.add({
@@ -389,6 +522,13 @@ onMounted(async () => {
     }
 });
 
+// Clean up blob URLs on unmount
+onBeforeUnmount(() => {
+    blobUrls.value.forEach((url) => {
+        URL.revokeObjectURL(url);
+    });
+});
+
 // Handle search from UserInfoHeader
 function handleHeaderSearch(query) {
     searchQuery.value = query;
@@ -398,6 +538,7 @@ function handleHeaderSearch(query) {
         selectedBinome.value = filteredBinomesValue.value[0];
         resetEvaluationForm();
         loadExistingEvaluation();
+        fetchReports();
     }
 }
 
@@ -413,6 +554,145 @@ async function fetchBinomes() {
     } finally {
         loading.value = false;
     }
+}
+
+// Fetch reports for the selected binome
+async function fetchReports() {
+    if (!selectedBinome.value) return;
+    
+    loadingReports.value = true;
+    reports.value = [];
+    
+    try {
+        const response = await ApiService.get(`/grading/encadrant/binome-reports/${selectedBinome.value.id}`);
+        reports.value = response;
+    } catch (error) {
+        handleApiError(error, "Erreur lors du chargement des rapports");
+    } finally {
+        loadingReports.value = false;
+    }
+}
+
+// Preview report
+function openPreviewDialog(report) {
+    previewReport.value = report;
+    previewLoading.value = true;
+    previewError.value = null;
+    previewDataUrl.value = "";
+    previewContentType.value = "";
+    showPreviewDialog.value = true;
+}
+
+// Load preview content using document evaluation approach
+function loadPreviewContent() {
+    if (!previewReport.value) return;
+    
+    previewLoading.value = true;
+    previewError.value = null;
+    
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    
+    // Fetch the file directly and create a blob URL to avoid X-Frame-Options issues
+    fetch(`${baseUrl}/grading/encadrant/report-preview/${previewReport.value.id}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Erreur de prévisualisation: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        previewContentType.value = contentType || 'application/pdf';
+        
+        return response.blob();
+    })
+    .then((blob) => {
+        // Create a blob URL which is immune to X-Frame-Options restrictions
+        const url = URL.createObjectURL(blob);
+        blobUrls.value.push(url);
+        previewDataUrl.value = url;
+        previewLoading.value = false;
+    })
+    .catch((error) => {
+        console.error("Preview error:", error);
+        previewError.value = error.message || "Impossible de prévisualiser le fichier";
+        previewLoading.value = false;
+    });
+}
+
+// Download a report
+function downloadReport(report) {
+    if (!report) return;
+    
+    toast.add({
+        severity: "info",
+        summary: "Téléchargement",
+        detail: "Préparation du téléchargement...",
+        life: 2000,
+    });
+    
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    
+    // Fix URL path to match controller endpoint
+    fetch(`${baseUrl}/grading/encadrant/report-download/${report.id}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Erreur de téléchargement: ${response.status}`);
+        }
+        
+        let filename = "rapport.pdf";
+        const disposition = response.headers.get("content-disposition");
+        if (disposition && disposition.includes("filename=")) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches && matches[1]) {
+                filename = matches[1].replace(/['"]/g, "");
+            }
+        }
+        
+        return response.blob().then((blob) => {
+            return { blob, filename };
+        });
+    })
+    .then(({ blob, filename }) => {
+        const url = URL.createObjectURL(blob);
+        blobUrls.value.push(url); // Store for cleanup
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+        }, 100);
+        
+        toast.add({
+            severity: "success",
+            summary: "Téléchargement réussi",
+            detail: `Fichier "${filename}" téléchargé avec succès`,
+            life: 3000,
+        });
+    })
+    .catch((error) => {
+        console.error("Download error:", error);
+        toast.add({
+            severity: "error",
+            summary: "Erreur de téléchargement",
+            detail: error.message || "Impossible de télécharger le fichier",
+            life: 3000,
+        });
+    });
 }
 
 // Check if binome has already been evaluated
@@ -439,6 +719,7 @@ function onBinomeSelect(event) {
     selectedBinome.value = event.data;
     resetEvaluationForm();
     loadExistingEvaluation();
+    fetchReports();
 }
 
 // Reset evaluation form
@@ -511,47 +792,68 @@ function calculateProfessionalismScore() {
     );
 }
 
+// Format date for display
+function formatDate(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(date);
+}
+
 // Submit evaluation
 async function submitEvaluation() {
     if (!validateEvaluationForm()) return;
 
-    submitting.value = true;
+    confirm.require({
+        message: "Êtes-vous sûr de vouloir soumettre cette évaluation ?",
+        header: "Confirmation",
+        icon: "pi pi-info-circle",
+        acceptClass: "p-button-primary",
+        accept: async () => {
+            submitting.value = true;
 
-    // Create a cleaned up payload without the rating properties
-    const payload = {
-        binomeId: evaluationForm.value.binomeId,
-        technicalScore: evaluationForm.value.technicalScore,
-        reportScore: evaluationForm.value.reportScore,
-        progressScore: evaluationForm.value.progressScore,
-        professionalismScore: evaluationForm.value.professionalismScore,
-        commentaire: evaluationForm.value.commentaire,
-    };
+            // Create a cleaned up payload without the rating properties
+            const payload = {
+                binomeId: evaluationForm.value.binomeId,
+                technicalScore: evaluationForm.value.technicalScore,
+                reportScore: evaluationForm.value.reportScore,
+                progressScore: evaluationForm.value.progressScore,
+                professionalismScore: evaluationForm.value.professionalismScore,
+                commentaire: evaluationForm.value.commentaire,
+            };
 
-    try {
-        const response = await ApiService.post(
-            "/grading/encadrant/evaluation",
-            payload
-        );
+            try {
+                const response = await ApiService.post(
+                    "/grading/encadrant/evaluation",
+                    payload
+                );
 
-        // Update binome in the list
-        const index = binomes.value.findIndex(
-            (b) => b.id === selectedBinome.value.id
-        );
-        if (index !== -1) {
-            binomes.value[index].noteEncadrant = true;
+                // Update binome in the list
+                const index = binomes.value.findIndex(
+                    (b) => b.id === selectedBinome.value.id
+                );
+                if (index !== -1) {
+                    binomes.value[index].noteEncadrant = true;
+                }
+
+                toast.add({
+                    severity: "success",
+                    summary: "Évaluation soumise",
+                    detail: "Votre évaluation a été enregistrée avec succès",
+                    life: 3000,
+                });
+            } catch (error) {
+                handleApiError(error, "Erreur lors de la soumission de l'évaluation");
+            } finally {
+                submitting.value = false;
+            }
         }
-
-        toast.add({
-            severity: "success",
-            summary: "Évaluation soumise",
-            detail: "Votre évaluation a été enregistrée avec succès",
-            life: 3000,
-        });
-    } catch (error) {
-        handleApiError(error, "Erreur lors de la soumission de l'évaluation");
-    } finally {
-        submitting.value = false;
-    }
+    });
 }
 
 // Validate form before submission
@@ -657,6 +959,12 @@ function showValidationError(message) {
     gap: 1.5rem;
 }
 
+.grading-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--surface-border);
+    padding-top: 1.5rem;
+}
+
 .form-field {
     display: flex;
     flex-direction: column;
@@ -704,6 +1012,104 @@ function showValidationError(message) {
 
 .info-message p {
     color: var(--text-color-secondary);
+}
+
+/* Report section styles */
+.reports-section {
+    margin-bottom: 1rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.empty-reports {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--text-color-secondary);
+}
+
+.reports-table {
+    margin-top: 0.5rem;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.loading-container p {
+    margin-top: 1rem;
+    color: var(--text-color-secondary);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    color: var(--text-color-secondary);
+    margin-bottom: 1rem;
+}
+
+.report-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* Preview dialog styles */
+.preview-dialog-content {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-loading, .preview-error, .preview-not-available {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+.image-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: var(--surface-ground);
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.pdf-preview {
+    height: 100%;
+    width: 100%;
+}
+
+.pdf-preview embed {
+    border: none;
+    height: 100%;
+    width: 100%;
+}
+
+.mt-3 {
+    margin-top: 1rem;
 }
 
 /* Responsive layout */

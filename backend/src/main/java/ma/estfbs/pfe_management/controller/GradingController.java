@@ -1,10 +1,17 @@
 package ma.estfbs.pfe_management.controller;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -134,6 +141,124 @@ public class GradingController {
         NoteEncadrantResponse response = gradingService.submitEncadrantEvaluation(encadrant.getId(), request);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all reports for a specific binome (for encadrant)
+     */
+    @GetMapping("/encadrant/binome-reports/{binomeId}")
+    public ResponseEntity<List<RapportDTO>> getBinomeReports(
+            Authentication authentication,
+            @PathVariable Long binomeId) {
+        
+        Utilisateur encadrant = (Utilisateur) authentication.getPrincipal();
+        
+        if (encadrant.getRole() != Utilisateur.Role.ENCADRANT) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        Binome binome = binomeRepository.findById(binomeId)
+                .orElseThrow(() -> new RuntimeException("Binome not found with id: " + binomeId));
+        
+        if (!binome.getEncadrant().getId().equals(encadrant.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
+        List<Rapport> reports = rapportRepository.findByBinomeAndAnneeScolaire(binome, currentYear);
+        
+        List<RapportDTO> reportDTOs = reports.stream()
+                .map(rapport -> mapToRapportDTO(rapport, encadrant))
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(reportDTOs);
+    }
+
+    /**
+     * Download a report
+     */
+    @GetMapping("/encadrant/report-download/{reportId}")
+    public ResponseEntity<Resource> downloadReport(
+            Authentication authentication,
+            @PathVariable Long reportId) {
+        
+        Utilisateur encadrant = (Utilisateur) authentication.getPrincipal();
+        
+        if (encadrant.getRole() != Utilisateur.Role.ENCADRANT) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        try {
+            Rapport rapport = rapportRepository.findById(reportId)
+                    .orElseThrow(() -> new RuntimeException("Report not found"));
+            
+            if (!rapport.getBinome().getEncadrant().getId().equals(encadrant.getId())) {
+                return ResponseEntity.status(403).build();
+            }
+            
+            Path path = Paths.get(rapport.getLocalisationRapport());
+            Resource resource = new UrlResource(path.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + path.getFileName().toString() + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.status(404).build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    /**
+     * Preview a report - with proper headers for content viewing
+     */
+    @GetMapping("/encadrant/report-preview/{reportId}")
+    public ResponseEntity<Resource> previewReport(
+            Authentication authentication,
+            @PathVariable Long reportId) {
+        
+        Utilisateur encadrant = (Utilisateur) authentication.getPrincipal();
+        
+        if (encadrant.getRole() != Utilisateur.Role.ENCADRANT) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        try {
+            Rapport rapport = rapportRepository.findById(reportId)
+                    .orElseThrow(() -> new RuntimeException("Report not found"));
+            
+            if (!rapport.getBinome().getEncadrant().getId().equals(encadrant.getId())) {
+                return ResponseEntity.status(403).build();
+            }
+            
+            Path path = Paths.get(rapport.getLocalisationRapport());
+            Resource resource = new UrlResource(path.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = Files.probeContentType(path);
+                if (contentType == null) contentType = "application/octet-stream";
+                
+                // Set the appropriate content type without any frame restrictions
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(contentType));
+                
+                // Add Access-Control headers to allow XHR requests
+                headers.add("Access-Control-Allow-Origin", "*");
+                headers.add("Access-Control-Allow-Methods", "GET, OPTIONS");
+                headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+                
+                return ResponseEntity.ok()
+                        .headers(headers)
+                        .body(resource);
+            } else {
+                return ResponseEntity.status(404).build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
     }
 
     // ==================== JURY ENDPOINTS ====================
@@ -497,25 +622,25 @@ public class GradingController {
     /**
      * Map Rapport entity to RapportDTO
      */
-    private RapportDTO mapToRapportDTO(Rapport rapport, Utilisateur jury) {
+    private RapportDTO mapToRapportDTO(Rapport rapport, Utilisateur evaluateur) {
         return RapportDTO.builder()
                 .id(rapport.getId())
                 .titre(rapport.getTitre())
                 .localisationRapport(rapport.getLocalisationRapport())
                 .binome(mapToBinomeDTO(rapport.getBinome()))
                 .dateSoumission(rapport.getDateSoumission())
-                .evaluated(hasReportEvaluationByJury(rapport, jury))
+                .evaluated(hasReportEvaluationByUser(rapport, evaluateur))
                 .build();
     }
 
     /**
-     * Check if report has been evaluated by the specific jury
+     * Check if report has been evaluated by the specific user
      */
-    private boolean hasReportEvaluationByJury(Rapport rapport, Utilisateur jury) {
+    private boolean hasReportEvaluationByUser(Rapport rapport, Utilisateur evaluateur) {
         AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
 
         return noteRapportRepository
-                .findByRapportAndEvaluateurAndAnneeScolaire(rapport, jury, currentYear)
+                .findByRapportAndEvaluateurAndAnneeScolaire(rapport, evaluateur, currentYear)
                 .isPresent();
     }
 

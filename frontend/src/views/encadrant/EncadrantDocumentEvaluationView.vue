@@ -73,6 +73,7 @@
                         dataKey="id"
                         @row-select="onDocumentSelect"
                         emptyMessage="Aucun document trouvé pour votre recherche"
+                        sortField="dateSoumission" :sortOrder="-1" 
                     >
                         <Column field="titre" header="Titre" sortable />
                         <Column header="Binôme">
@@ -107,14 +108,14 @@
                             </template>
                         </Column>
                         <Column
-                            header="Date de soumission"
-                            sortable
-                            sortField="dateSoumission"
-                        >
-                            <template #body="slotProps">
-                                {{ formatDate(slotProps.data.dateSoumission) }}
-                            </template>
-                        </Column>
+    header="Date de soumission"
+    sortable
+    sortField="dateSoumission"
+>
+    <template #body="slotProps">
+        {{ formatDate(slotProps.data.dateSoumission) }}
+    </template>
+</Column>
                         <Column header="Statut">
                             <template #body="slotProps">
                                 <Tag
