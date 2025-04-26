@@ -1,6 +1,7 @@
 <template>
     <div class="jury-report-evaluation">
         <Toast />
+        <ConfirmDialog />
 
         <!-- Header -->
         <UserInfoHeader
@@ -142,30 +143,17 @@
                                 label="Télécharger"
                                 icon="pi pi-download"
                                 class="p-button-outlined p-button-primary"
-                                @click="downloadReport"
+                                @click="downloadReport(selectedReport)"
                             />
                             <Button
                                 label="Voir le PDF"
                                 icon="pi pi-eye"
-                                @click="previewReport"
+                                @click="openPreviewDialog(selectedReport)"
                             />
                         </div>
                     </template>
                     <template #content>
-                        <div v-if="showPdfPreview" class="pdf-preview">
-                            <iframe
-                                :src="
-                                    getPdfViewUrl(
-                                        selectedReport.localisationRapport
-                                    )
-                                "
-                                width="100%"
-                                height="500"
-                                frameborder="0"
-                                title="PDF Preview"
-                            ></iframe>
-                        </div>
-                        <div v-else class="report-info">
+                        <div class="report-info">
                             <div class="info-row">
                                 <div class="info-label">Titre:</div>
                                 <div class="info-value">
@@ -195,18 +183,7 @@
                                 </div>
                             </div>
                             <div class="info-row">
-                                <div class="info-label">Encadrant:</div>
-                                <div class="info-value">
-                                    {{
-                                        selectedReport.binome?.encadrant?.prenom
-                                    }}
-                                    {{ selectedReport.binome?.encadrant?.nom }}
-                                </div>
-                            </div>
-                            <div class="info-row">
-                                <div class="info-label">
-                                    Date de soumission:
-                                </div>
+                                <div class="info-label">Date de soumission:</div>
                                 <div class="info-value">
                                     {{
                                         formatDateTime(
@@ -374,29 +351,64 @@
             </Card>
         </div>
 
-        <!-- PDF Dialog -->
+        <!-- Preview dialog -->
         <Dialog
-            v-model:visible="showPdfDialog"
+            v-model:visible="showPreviewDialog"
             :modal="true"
-            :style="{ width: '80vw', height: '80vh' }"
-            header="Visualisation du Rapport"
+            :style="{ width: '90vw', height: '90vh' }"
+            :header="previewReport ? previewReport.titre : 'Aperçu du rapport'"
             :maximizable="true"
+            @show="loadPreviewContent"
         >
-            <iframe
-                v-if="showPdfDialog && selectedReport"
-                :src="getPdfViewUrl(selectedReport.localisationRapport)"
-                width="100%"
-                height="100%"
-                frameborder="0"
-                title="PDF Viewer"
-            ></iframe>
+            <div class="preview-dialog-content">
+                <div v-if="previewLoading" class="preview-loading">
+                    <ProgressSpinner />
+                    <p>Chargement du rapport en cours...</p>
+                </div>
+                <div v-else-if="previewError" class="preview-error">
+                    <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: var(--red-500)"></i>
+                    <h3>Erreur de prévisualisation</h3>
+                    <p>{{ previewError }}</p>
+                    <Button 
+                        label="Télécharger plutôt" 
+                        icon="pi pi-download" 
+                        @click="downloadReport(previewReport)" 
+                        class="mt-3"
+                    />
+                </div>
+                <div v-else-if="previewContentType && previewContentType.startsWith('image/')" class="image-preview">
+                    <img :src="previewDataUrl" :alt="previewReport && previewReport.titre" />
+                </div>
+                <div v-else-if="previewContentType === 'application/pdf'" class="pdf-preview">
+                    <embed 
+                        :src="previewDataUrl" 
+                        type="application/pdf"
+                        width="100%" 
+                        height="100%"
+                    />
+                </div>
+                <div v-else class="preview-not-available">
+                    <i class="pi pi-file-export" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
+                    <h3>Aperçu limité</h3>
+                    <p>
+                        Ce type de document ne peut pas être prévisualisé directement.
+                    </p>
+                    <Button 
+                        label="Télécharger le document" 
+                        icon="pi pi-download" 
+                        @click="downloadReport(previewReport)" 
+                        class="mt-3"
+                    />
+                </div>
+            </div>
         </Dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
 import { useRoute } from 'vue-router';
 import ApiService from "@/services/ApiService";
 import AuthService from "@/services/AuthService";
@@ -414,6 +426,7 @@ import Tag from "primevue/tag";
 import Dialog from "primevue/dialog";
 import Toast from "primevue/toast";
 import ProgressSpinner from "primevue/progressspinner";
+import ConfirmDialog from "primevue/confirmdialog";
 
 const route = useRoute();
 
@@ -423,8 +436,6 @@ const loading = ref(false);
 const selectedReport = ref(null);
 const submitting = ref(false);
 const searchQuery = ref("");
-const showPdfPreview = ref(false);
-const showPdfDialog = ref(false);
 const soutenances = ref([]);
 const evaluationForm = ref({
     rapportId: null,
@@ -437,8 +448,16 @@ const evaluationForm = ref({
     commentaire: "",
 });
 
-// Create a derived value for filtered reports rather than a computed property
-// to avoid the "write operation failed: computed value is readonly" error
+// Preview dialog state
+const showPreviewDialog = ref(false);
+const previewReport = ref(null);
+const previewLoading = ref(false);
+const previewError = ref(null);
+const previewDataUrl = ref("");
+const previewContentType = ref("");
+const blobUrls = ref([]);
+
+// Create a derived value for filtered reports
 const filteredReportsValue = ref([]);
 
 watch(
@@ -475,6 +494,7 @@ const currentUser = AuthService.getCurrentUser();
 
 // Services
 const toast = useToast();
+const confirm = useConfirm();
 
 // Fetch data on component mount
 onMounted(async () => {
@@ -523,6 +543,13 @@ onMounted(async () => {
   }
 });
 
+// Clean up blob URLs on unmount
+onBeforeUnmount(() => {
+    blobUrls.value.forEach((url) => {
+        URL.revokeObjectURL(url);
+    });
+});
+
 // Handle search from UserInfoHeader
 function handleHeaderSearch(query) {
   searchQuery.value = query;
@@ -539,26 +566,24 @@ function handleHeaderSearch(query) {
 function formatDate(dateString) {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    }).format(date);
 }
 
 // Format date and time for display
 function formatDateTime(dateTimeString) {
     if (!dateTimeString) return "";
     const dateTime = new Date(dateTimeString);
-    return `${dateTime.toLocaleDateString()} ${dateTime.toLocaleTimeString()}`;
-}
-
-// Function to construct PDF viewer URL
-function getPdfViewUrl(path) {
-    // Check if path is already a full URL
-    if (path && (path.startsWith("http://") || path.startsWith("https://"))) {
-        return path;
-    }
-
-    // Otherwise, assume it's a relative path and needs the base URL
-    // You might need a specific endpoint to serve files, adjust as needed
-    return `/uploads/files/${path}`;
+    return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(dateTime);
 }
 
 // Methods for fetching data
@@ -602,46 +627,128 @@ function getEvaluationStatusSeverity(report) {
 // Handle report selection
 function onReportSelect(event) {
     selectedReport.value = event.data;
-    showPdfPreview.value = false;
     resetEvaluationForm();
     loadExistingEvaluation();
 }
 
-// Preview report in the card
-function previewReport() {
-    showPdfPreview.value = !showPdfPreview.value;
+// Preview report
+function openPreviewDialog(report) {
+    previewReport.value = report;
+    previewLoading.value = true;
+    previewError.value = null;
+    previewDataUrl.value = "";
+    previewContentType.value = "";
+    showPreviewDialog.value = true;
 }
 
-// Open report in a dialog
-function viewReportInDialog() {
-    showPdfDialog.value = true;
+// Load preview content
+function loadPreviewContent() {
+    if (!previewReport.value) return;
+    
+    previewLoading.value = true;
+    previewError.value = null;
+    
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    
+    // Fetch the file directly and create a blob URL to avoid X-Frame-Options issues
+    fetch(`${baseUrl}/grading/jury/report-preview/${previewReport.value.id}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Erreur de prévisualisation: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        previewContentType.value = contentType || 'application/pdf';
+        
+        return response.blob();
+    })
+    .then((blob) => {
+        // Create a blob URL which is immune to X-Frame-Options restrictions
+        const url = URL.createObjectURL(blob);
+        blobUrls.value.push(url);
+        previewDataUrl.value = url;
+        previewLoading.value = false;
+    })
+    .catch((error) => {
+        console.error("Preview error:", error);
+        previewError.value = error.message || "Impossible de prévisualiser le fichier";
+        previewLoading.value = false;
+    });
 }
 
-// Download report
-function downloadReport() {
-    if (!selectedReport.value || !selectedReport.value.localisationRapport) {
+// Download a report
+function downloadReport(report) {
+    if (!report) return;
+    
+    toast.add({
+        severity: "info",
+        summary: "Téléchargement",
+        detail: "Préparation du téléchargement...",
+        life: 2000,
+    });
+    
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    
+    fetch(`${baseUrl}/grading/jury/report-download/${report.id}`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`Erreur de téléchargement: ${response.status}`);
+        }
+        
+        let filename = "rapport.pdf";
+        const disposition = response.headers.get("content-disposition");
+        if (disposition && disposition.includes("filename=")) {
+            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+            const matches = filenameRegex.exec(disposition);
+            if (matches && matches[1]) {
+                filename = matches[1].replace(/['"]/g, "");
+            }
+        }
+        
+        return response.blob().then((blob) => {
+            return { blob, filename };
+        });
+    })
+    .then(({ blob, filename }) => {
+        const url = URL.createObjectURL(blob);
+        blobUrls.value.push(url); // Store for cleanup
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+        }, 100);
+        
         toast.add({
-            severity: "error",
-            summary: "Erreur",
-            detail: "Impossible de télécharger le rapport",
+            severity: "success",
+            summary: "Téléchargement réussi",
+            detail: `Fichier "${filename}" téléchargé avec succès`,
             life: 3000,
         });
-        return;
-    }
-
-    // Create a link element to trigger download
-    const link = document.createElement("a");
-    link.href = getPdfViewUrl(selectedReport.value.localisationRapport);
-    link.download = `${selectedReport.value.titre || "rapport"}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.add({
-        severity: "success",
-        summary: "Téléchargement",
-        detail: "Téléchargement du rapport initié",
-        life: 3000,
+    })
+    .catch((error) => {
+        console.error("Download error:", error);
+        toast.add({
+            severity: "error",
+            summary: "Erreur de téléchargement",
+            detail: error.message || "Impossible de télécharger le fichier",
+            life: 3000,
+        });
     });
 }
 
@@ -710,46 +817,54 @@ function calculateOriginalityScore() {
 async function submitEvaluation() {
     if (!validateEvaluationForm()) return;
 
-    submitting.value = true;
+    confirm.require({
+        message: "Êtes-vous sûr de vouloir soumettre cette évaluation ?",
+        header: "Confirmation",
+        icon: "pi pi-info-circle",
+        acceptClass: "p-button-primary",
+        accept: async () => {
+            submitting.value = true;
 
-    // Create a cleaned up payload without the rating properties
-    const payload = {
-        rapportId: evaluationForm.value.rapportId,
-        technicalScore: evaluationForm.value.technicalScore,
-        structureScore: evaluationForm.value.structureScore,
-        originalityScore: evaluationForm.value.originalityScore,
-        commentaire: evaluationForm.value.commentaire,
-    };
+            // Create a cleaned up payload without the rating properties
+            const payload = {
+                rapportId: evaluationForm.value.rapportId,
+                technicalScore: evaluationForm.value.technicalScore,
+                structureScore: evaluationForm.value.structureScore,
+                originalityScore: evaluationForm.value.originalityScore,
+                commentaire: evaluationForm.value.commentaire,
+            };
 
-    try {
-        await ApiService.post("/grading/jury/rapport-evaluation", payload);
+            try {
+                await ApiService.post("/grading/jury/rapport-evaluation", payload);
 
-        // Update report in the list to mark as evaluated
-        const index = reports.value.findIndex(
-            (r) => r.id === selectedReport.value.id
-        );
-        if (index !== -1) {
-            reports.value[index].evaluated = true;
-            // Update the filtered list as well
-            const filteredIndex = filteredReportsValue.value.findIndex(
-                (r) => r.id === selectedReport.value.id
-            );
-            if (filteredIndex !== -1) {
-                filteredReportsValue.value[filteredIndex].evaluated = true;
+                // Update report in the list to mark as evaluated
+                const index = reports.value.findIndex(
+                    (r) => r.id === selectedReport.value.id
+                );
+                if (index !== -1) {
+                    reports.value[index].evaluated = true;
+                    // Update the filtered list as well
+                    const filteredIndex = filteredReportsValue.value.findIndex(
+                        (r) => r.id === selectedReport.value.id
+                    );
+                    if (filteredIndex !== -1) {
+                        filteredReportsValue.value[filteredIndex].evaluated = true;
+                    }
+                }
+
+                toast.add({
+                    severity: "success",
+                    summary: "Évaluation soumise",
+                    detail: "Votre évaluation a été enregistrée avec succès",
+                    life: 3000,
+                });
+            } catch (error) {
+                handleApiError(error, "Erreur lors de la soumission de l'évaluation");
+            } finally {
+                submitting.value = false;
             }
         }
-
-        toast.add({
-            severity: "success",
-            summary: "Évaluation soumise",
-            detail: "Votre évaluation a été enregistrée avec succès",
-            life: 3000,
-        });
-    } catch (error) {
-        handleApiError(error, "Erreur lors de la soumission de l'évaluation");
-    } finally {
-        submitting.value = false;
-    }
+    });
 }
 
 // Validate form before submission
@@ -888,14 +1003,6 @@ function showValidationError(message) {
     margin-top: 0.5rem;
 }
 
-.pdf-preview {
-    width: 100%;
-    height: 500px;
-    border: 1px solid var(--surface-border);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
 .report-info {
     display: flex;
     flex-direction: column;
@@ -971,6 +1078,56 @@ function showValidationError(message) {
 
 .info-message p {
     color: var(--text-color-secondary);
+}
+
+/* Preview dialog styles */
+.preview-dialog-content {
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.preview-loading, .preview-error, .preview-not-available {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    padding: 2rem;
+}
+
+.image-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background-color: var(--surface-ground);
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.pdf-preview {
+    height: 100%;
+    width: 100%;
+}
+
+.pdf-preview embed {
+    border: none;
+    height: 100%;
+    width: 100%;
+}
+
+.mt-3 {
+    margin-top: 1rem;
 }
 
 /* Responsive layout */

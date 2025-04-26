@@ -619,6 +619,109 @@ public class GradingController {
         return ResponseEntity.ok(response);
     }
 
+/**
+ * Download a report for jury
+ */
+@GetMapping("/jury/report-download/{reportId}")
+public ResponseEntity<Resource> downloadJuryReport(
+        Authentication authentication,
+        @PathVariable Long reportId) {
+    
+    Utilisateur jury = (Utilisateur) authentication.getPrincipal();
+    
+    if (jury.getRole() != Utilisateur.Role.JURY) {
+        return ResponseEntity.status(403).build();
+    }
+    
+    try {
+        Rapport rapport = rapportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+        
+        // Verify the jury is assigned to this report's binome's soutenance
+        Binome binome = rapport.getBinome();
+        AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
+        List<Soutenance> jurySoutenances = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear);
+        
+        boolean isAuthorized = jurySoutenances.stream()
+                .anyMatch(s -> s.getBinome().getId().equals(binome.getId()));
+        
+        if (!isAuthorized) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        Path path = Paths.get(rapport.getLocalisationRapport());
+        Resource resource = new UrlResource(path.toUri());
+        
+        if (resource.exists() && resource.isReadable()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + path.getFileName().toString() + "\"")
+                    .body(resource);
+        } else {
+            return ResponseEntity.status(404).build();
+        }
+    } catch (Exception e) {
+        return ResponseEntity.status(500).build();
+    }
+}
+
+/**
+ * Preview a report for jury - with proper headers for content viewing
+ */
+@GetMapping("/jury/report-preview/{reportId}")
+public ResponseEntity<Resource> previewJuryReport(
+        Authentication authentication,
+        @PathVariable Long reportId) {
+    
+    Utilisateur jury = (Utilisateur) authentication.getPrincipal();
+    
+    if (jury.getRole() != Utilisateur.Role.JURY) {
+        return ResponseEntity.status(403).build();
+    }
+    
+    try {
+        Rapport rapport = rapportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found"));
+        
+        // Verify the jury is assigned to this report's binome's soutenance
+        Binome binome = rapport.getBinome();
+        AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
+        List<Soutenance> jurySoutenances = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear);
+        
+        boolean isAuthorized = jurySoutenances.stream()
+                .anyMatch(s -> s.getBinome().getId().equals(binome.getId()));
+        
+        if (!isAuthorized) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        Path path = Paths.get(rapport.getLocalisationRapport());
+        Resource resource = new UrlResource(path.toUri());
+        
+        if (resource.exists() && resource.isReadable()) {
+            String contentType = Files.probeContentType(path);
+            if (contentType == null) contentType = "application/octet-stream";
+            
+            // Set appropriate content type without frame restrictions
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType(contentType));
+            
+            // Add Access-Control headers
+            headers.add("Access-Control-Allow-Origin", "*");
+            headers.add("Access-Control-Allow-Methods", "GET, OPTIONS");
+            headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(resource);
+        } else {
+            return ResponseEntity.status(404).build();
+        }
+    } catch (Exception e) {
+        return ResponseEntity.status(500).build();
+    }
+}
+
     /**
      * Map Rapport entity to RapportDTO
      */
