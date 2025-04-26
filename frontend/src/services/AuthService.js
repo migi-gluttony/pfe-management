@@ -20,28 +20,31 @@ export default {
     }
   },
 
-  /**
+/**
    * Parse JWT token to extract user information
    * @param {string} token - JWT token
    * @returns {Object} - User information from token
    */
-  parseToken(token) {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      
-      return {
-        email: payload.sub,
-        role: payload.role,
-        userId: payload.userId,
-        exp: payload.exp // Extract expiration timestamp
-      };
-    } catch (e) {
-      console.error('Error parsing token:', e);
-      return null;
-    }
-  },
+parseToken(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(window.atob(base64));
+
+    return {
+      email: payload.sub,
+      role: payload.role,
+      userId: payload.userId,
+      nom: payload.nom, // Ensure this line is present
+      prenom: payload.prenom, // Ensure this line is present
+      exp: payload.exp // Extract expiration timestamp
+    };
+  } catch (e) {
+    console.error('Error parsing token:', e);
+    return null;
+  }
+},
+
 
   /**
    * Check if the current token is expired
@@ -49,21 +52,21 @@ export default {
    */
   isTokenExpired() {
     const token = this.getToken();
-    
+
     if (!token) {
       return true; // No token means it's "expired"
     }
-    
+
     try {
       const tokenData = this.parseToken(token);
-      
+
       if (!tokenData || !tokenData.exp) {
         return true; // Invalid token or no expiration
       }
-      
+
       // exp is in seconds, Date.now() is in milliseconds
       const currentTime = Math.floor(Date.now() / 1000);
-      
+
       return tokenData.exp < currentTime;
     } catch (error) {
       console.error('Error checking token expiration:', error);
@@ -92,7 +95,7 @@ export default {
   async login(email, motDePasse, rememberMe = false) {
     try {
       // Match the field names expected by the backend (LoginRequest.java)
-      const data = await ApiService.post('/auth/login', { 
+      const data = await ApiService.post('/auth/login', {
         email,
         motDePasse
       });
@@ -101,7 +104,7 @@ export default {
       if (data.token) {
         // Parse token to extract user info
         const userInfo = this.parseToken(data.token);
-        
+
         if (rememberMe) {
           localStorage.setItem('token', data.token);
           if (userInfo) {
@@ -117,7 +120,7 @@ export default {
 
       // Dispatch event when authentication state changes
       window.dispatchEvent(new CustomEvent('auth-state-changed'));
-      
+
       return data;
     } catch (error) {
       console.error('Login error:', error);
@@ -133,7 +136,7 @@ export default {
     localStorage.removeItem('user');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
-    
+
     // Dispatch event when authentication state changes
     window.dispatchEvent(new CustomEvent('auth-state-changed'));
   },
@@ -160,9 +163,9 @@ export default {
    */
   async confirmPasswordReset(token, newPassword) {
     try {
-      return await ApiService.post('/auth/reset-password-confirm', { 
-        token, 
-        newPassword 
+      return await ApiService.post('/auth/reset-password-confirm', {
+        token,
+        newPassword
       });
     } catch (error) {
       console.error('Password reset error:', error);
@@ -185,7 +188,7 @@ export default {
   getToken() {
     return localStorage.getItem('token') || sessionStorage.getItem('token') || null;
   },
-  
+
   /**
    * Get the current user data
    * @returns {Object|null} - User data or null if not authenticated

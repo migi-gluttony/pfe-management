@@ -1,6 +1,5 @@
 <template>
   <div class="user-info-header">
-      
     <div class="search-container">
       <i class="pi pi-search"></i>
       <InputText 
@@ -9,6 +8,13 @@
         class="search-input"
         @input="handleSearch"
       />
+      <button 
+        class="clear-button" 
+        v-if="searchValue" 
+        @click="clearSearch"
+      >
+        <i class="pi pi-times"></i>
+      </button>
     </div>
     
     <div class="user-container">
@@ -27,7 +33,10 @@
           </div>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ userName }}</div>
+          <div class="user-name-with-role">
+            <span class="user-full-name">{{ userName }}</span>
+            <span class="user-role-badge">{{ userRole }}</span>
+          </div>
           <div class="user-email">{{ userEmail }}</div>
         </div>
       </div>
@@ -42,6 +51,7 @@ import AuthService from '@/services/AuthService';
 import InputText from 'primevue/inputtext';
 
 const router = useRouter();
+
 
 // Props
 const props = defineProps({
@@ -69,8 +79,14 @@ const currentUser = ref(AuthService.getCurrentUser());
 // Computed properties
 const userName = computed(() => {
   if (!currentUser.value) return 'Utilisateur';
-  return `${currentUser.value.prenom || ''} ${currentUser.value.nom || ''}`.trim();
+  return `${currentUser.value?.prenom || ''} ${currentUser.value?.nom || ''}`.trim();
 });
+
+// Add this watch to log the user data whenever it changes
+watch(currentUser, (newValue) => {
+  console.log('Current user from auth service:', newValue);
+}, { immediate: true }); // The immediate option logs the initial value
+
 
 const userEmail = computed(() => {
   return currentUser.value?.email || '';
@@ -78,6 +94,10 @@ const userEmail = computed(() => {
 
 const userAvatar = computed(() => {
   return null; // Set to image URL if you have user avatars
+});
+
+const userRole = computed(() => {
+  return currentUser.value?.role || 'Utilisateur';
 });
 
 // Methods
@@ -90,6 +110,11 @@ function getEmailInitial() {
 
 function handleSearch() {
   emit('search', searchValue.value);
+}
+
+function clearSearch() {
+  searchValue.value = '';
+  handleSearch();
 }
 
 // Watch props
@@ -142,7 +167,7 @@ onMounted(() => {
   border: 1px solid #eaeaea;
   color: var(--text-color);
   font-size: 0.9rem;
-  padding: 0 1rem 0 2.5rem;
+  padding: 0 2.5rem 0 2.5rem;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -161,6 +186,23 @@ onMounted(() => {
   left: 0.8rem;
   color: var(--primary-color);
   font-size: 0.9rem;
+}
+
+/* Clear button styles */
+.clear-button {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.dark-mode .clear-button {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Dark mode overrides */
@@ -280,10 +322,24 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.user-name {
+.user-name-with-role {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-full-name {
   font-weight: 500;
   font-size: 0.9rem;
   color: var(--text-color);
+}
+
+.user-role-badge {
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
 }
 
 .user-email {
@@ -292,7 +348,7 @@ onMounted(() => {
 }
 
 /* Dark mode overrides for user info */
-.dark-mode .user-name {
+.dark-mode .user-full-name {
   color: #fff;
 }
 
