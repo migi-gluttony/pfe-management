@@ -21,6 +21,7 @@ import SujetSelectionView from '@/views/etudiant/SujetSelectionView.vue'
 import DocumentSubmissionView from '@/views/etudiant/DocumentSubmissionView.vue'
 import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
 import EncadrantDocumentEvaluationView from '@/views/encadrant/EncadrantDocumentEvaluationView.vue'
+import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
