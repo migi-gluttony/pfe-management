@@ -3,6 +3,13 @@
         <Toast />
         <ConfirmDialog />
 
+        <!-- User Info Header -->
+        <UserInfoHeader
+            searchPlaceholder="Rechercher un document..."
+            :initialSearchValue="searchQuery"
+            @search="handleHeaderSearch"
+        />
+
         <!-- Header section -->
         <div class="header-section">
             <div class="title-filter-group">
@@ -11,16 +18,6 @@
                     Consultez et évaluez les documents soumis par vos binômes
                     étudiants
                 </p>
-            </div>
-
-            <div class="action-buttons">
-                <span class="p-input-icon-left search-input">
-                    <i class="pi pi-search" />
-                    <InputText
-                        v-model="searchQuery"
-                        placeholder="Rechercher un document..."
-                    />
-                </span>
             </div>
         </div>
 
@@ -31,15 +28,6 @@
                 <template #title>
                     <div class="card-header">
                         <h3>Documents à Évaluer</h3>
-                        <div class="header-actions">
-                            <Button
-                                icon="pi pi-refresh"
-                                text
-                                @click="loadDocuments"
-                                :disabled="loading"
-                                tooltip="Rafraîchir"
-                            />
-                        </div>
                     </div>
                 </template>
                 <template #content>
@@ -384,6 +372,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
+import UserInfoHeader from "@/components/UserInfoHeader.vue";
 
 // PrimeVue components
 import Toast from "primevue/toast";
@@ -412,6 +401,7 @@ export default {
         ProgressSpinner,
         Tag,
         Dialog,
+        UserInfoHeader
     },
     setup() {
         const toast = useToast();
@@ -459,6 +449,11 @@ export default {
                 );
             });
         });
+
+        // Handle search from header
+        function handleHeaderSearch(query) {
+            searchQuery.value = query;
+        }
 
         // Clean up blob URLs when component is destroyed
         onBeforeUnmount(() => {
@@ -860,6 +855,7 @@ export default {
             submitEvaluation,
             formatDate,
             formatDateTime,
+            handleHeaderSearch
         };
     },
 };
@@ -1141,10 +1137,6 @@ export default {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
-    }
-
-    .action-buttons {
-        width: 100%;
     }
 
     .eval-section {

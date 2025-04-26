@@ -3,6 +3,13 @@
         <Toast />
         <ConfirmDialog />
 
+        <!-- User Info Header -->
+        <UserInfoHeader
+            searchPlaceholder="Rechercher un rapport..."
+            :initialSearchValue="searchQuery"
+            @search="handleHeaderSearch"
+        />
+
         <div class="view-container">
             <!-- Header section -->
             <div class="header-section">
@@ -343,6 +350,7 @@ import { ref, reactive, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
+import UserInfoHeader from "@/components/UserInfoHeader.vue";
 
 // PrimeVue components
 import Toast from "primevue/toast";
@@ -367,6 +375,7 @@ export default {
         ProgressSpinner,
         Tag,
         ConfirmDialog,
+        UserInfoHeader
     },
     setup() {
         const toast = useToast();
@@ -383,6 +392,7 @@ export default {
         const fileUploadRef = ref(null);
         const fileUploadError = ref(false);
         const validationErrors = ref({});
+        const searchQuery = ref("");
 
         const uploadForm = reactive({
             title: "",
@@ -395,6 +405,11 @@ export default {
         });
 
         // Methods
+
+        // Handle search from header
+        const handleHeaderSearch = (query) => {
+            searchQuery.value = query;
+        };
 
         // Load existing report if any
         const loadReport = async () => {
@@ -556,7 +571,6 @@ export default {
             }
         };
 
-        // Download report
         // Download report
         const downloadReport = (report) => {
             toast.add({
@@ -731,6 +745,7 @@ export default {
             fileUploadRef,
             fileUploadError,
             validationErrors,
+            searchQuery,
 
             // Methods
             openUploadDialog,
@@ -744,6 +759,7 @@ export default {
             formatDate,
             formatTime,
             formatDateTime,
+            handleHeaderSearch
         };
     },
 };

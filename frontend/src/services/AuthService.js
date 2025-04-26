@@ -35,8 +35,8 @@ parseToken(token) {
       email: payload.sub,
       role: payload.role,
       userId: payload.userId,
-      nom: payload.nom, // Ensure this line is present
-      prenom: payload.prenom, // Ensure this line is present
+      nom: payload.nom,
+      prenom: payload.prenom,
       exp: payload.exp // Extract expiration timestamp
     };
   } catch (e) {

@@ -3,6 +3,13 @@
         <Toast />
         <ConfirmDialog />
 
+        <!-- User Info Header -->
+        <UserInfoHeader
+            searchPlaceholder="Rechercher un sujet..."
+            :initialSearchValue="searchQuery"
+            @search="handleHeaderSearch"
+        />
+
         <div class="content-container">
             <!-- Status Display for Pending Suggestion or Already Selected Sujet -->
             <SujetStatusDisplay
@@ -31,7 +38,7 @@
 
                 <!-- List of available subjects -->
                 <SujetsList
-                    :sujets="availableSujets"
+                    :sujets="filteredAvailableSujets"
                     :showSujetList="showSujetList"
                     :processingSubjectId="processingSubjectId"
                     :isProcessingAnyAction="isProcessingAnyAction"
@@ -56,6 +63,7 @@ import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
+import UserInfoHeader from "@/components/UserInfoHeader.vue";
 
 // PrimeVue components
 import Toast from "primevue/toast";
@@ -81,6 +89,7 @@ const hasPendingSuggestion = ref(false);
 const binomeId = ref(null);
 const selectedSujet = ref(null);
 const availableSujets = ref([]);
+const searchQuery = ref("");
 
 // UI state
 const showSujetList = ref(false);
@@ -98,6 +107,15 @@ const isProcessingAnyAction = computed(() => {
         processingRandom.value ||
         processingSuggestion.value
     );
+});
+
+const filteredAvailableSujets = computed(() => {
+    if (!searchQuery.value) return availableSujets.value;
+
+    const query = searchQuery.value.toLowerCase();
+    return availableSujets.value.filter((sujet) => {
+        return sujet.titre.toLowerCase().includes(query);
+    });
 });
 
 // Check student status on mount
@@ -259,6 +277,11 @@ const closeSuggestionDialog = () => {
 
 const goToDashboard = () => {
     router.push("/dashboard");
+};
+
+// Handle search from header
+const handleHeaderSearch = (query) => {
+    searchQuery.value = query;
 };
 
 // Confirm selecting a specific sujet

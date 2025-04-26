@@ -3,6 +3,13 @@
         <Toast />
         <ConfirmDialog />
 
+        <!-- User Info Header -->
+        <UserInfoHeader
+            searchPlaceholder="Rechercher un document..."
+            :initialSearchValue="searchQuery"
+            @search="handleHeaderSearch"
+        />
+
         <div class="view-container">
             <!-- Header section -->
             <div class="header-section">
@@ -135,7 +142,7 @@
                         </div>
 
                         <div
-                            v-else-if="documents.length === 0"
+                            v-else-if="filteredDocuments.length === 0"
                             class="empty-documents"
                         >
                             <i class="pi pi-file-o empty-icon"></i>
@@ -148,10 +155,12 @@
 
                         <DataTable
                             v-else
-                            :value="documents"
+                            :value="filteredDocuments"
                             stripedRows
                             responsiveLayout="scroll"
                             class="documents-table"
+                            sortField="dateSoumission" :sortOrder="-1" 
+
                         >
                             <Column field="titre" header="Titre" sortable />
                             <Column
@@ -218,11 +227,12 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
 import axios from "axios";
+import UserInfoHeader from "@/components/UserInfoHeader.vue";
 
 // PrimeVue components
 import Toast from "primevue/toast";
@@ -249,6 +259,7 @@ export default {
         DataTable,
         Column,
         ConfirmDialog,
+        UserInfoHeader
     },
     setup() {
         const toast = useToast();
@@ -262,10 +273,21 @@ export default {
         const fileUploadRef = ref(null);
         const fileUploadError = ref(false);
         const validationErrors = ref({});
+        const searchQuery = ref("");
 
         const uploadForm = reactive({
             title: "",
             file: null,
+        });
+
+        // Computed properties
+        const filteredDocuments = computed(() => {
+            if (!searchQuery.value) return documents.value;
+
+            const query = searchQuery.value.toLowerCase();
+            return documents.value.filter((doc) => {
+                return doc.titre.toLowerCase().includes(query);
+            });
         });
 
         // Load documents on mount
@@ -274,6 +296,11 @@ export default {
         });
 
         // Methods
+
+        // Handle search from header
+        const handleHeaderSearch = (query) => {
+            searchQuery.value = query;
+        };
 
         // Load submitted documents
         const loadDocuments = async () => {
@@ -572,6 +599,10 @@ export default {
             fileUploadRef,
             fileUploadError,
             validationErrors,
+            searchQuery,
+
+            // Computed
+            filteredDocuments,
 
             // Methods
             loadDocuments,
@@ -583,6 +614,7 @@ export default {
             downloadDocument,
             confirmDeleteDocument,
             formatDate,
+            handleHeaderSearch
         };
     },
 };

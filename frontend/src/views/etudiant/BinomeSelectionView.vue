@@ -1,6 +1,15 @@
 <template>
     <div class="etudiant-view">
         <Toast />
+        <ConfirmDialog />
+
+        <!-- User Info Header -->
+        <UserInfoHeader
+            searchPlaceholder="Rechercher un étudiant..."
+            :initialSearchValue="searchQuery"
+            @search="handleHeaderSearch"
+        />
+
         <div class="view-container">
             <!-- Student has pending requests view -->
             <div v-if="hasPendingRequests">
@@ -25,7 +34,7 @@
                 />
 
                 <AvailableStudentsList
-                    :availableStudents="availableStudents"
+                    :availableStudents="filteredStudents"
                     :loading="loading"
                     :hasSentRequest="hasSentRequest"
                     :processingStudentId="processingStudentId"
@@ -42,10 +51,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
 import ApiService from "@/services/ApiService";
+import UserInfoHeader from "@/components/UserInfoHeader.vue";
 
 // PrimeVue components
 import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
 
 // Custom components
 import BinomeSelectionHeader from "@/components/etudiant/binomeSelection/BinomeSelectionHeader.vue";
@@ -56,6 +68,8 @@ export default {
     name: "BinomeSelectionView",
     components: {
         Toast,
+        ConfirmDialog,
+        UserInfoHeader,
         BinomeSelectionHeader,
         BinomeRequestsList,
         AvailableStudentsList,
@@ -64,6 +78,7 @@ export default {
         // Router and toast
         const router = useRouter();
         const toast = useToast();
+        const confirm = useConfirm();
 
         // State management
         const loading = ref(false);
@@ -74,6 +89,7 @@ export default {
         const hasSentRequest = ref(false);
         const targetStudentId = ref(null);
         const hasBinome = ref(false);
+        const searchQuery = ref("");
 
         // Processing states
         const processingRequestId = ref(null);
@@ -89,6 +105,20 @@ export default {
         const isProcessingAnyStudent = computed(
             () => processingStudentId.value !== null
         );
+        const filteredStudents = computed(() => {
+            if (!searchQuery.value) return availableStudents.value;
+
+            const query = searchQuery.value.toLowerCase();
+            return availableStudents.value.filter((student) => {
+                return (
+                    student.prenom.toLowerCase().includes(query) ||
+                    student.nom.toLowerCase().includes(query) ||
+                    `${student.prenom} ${student.nom}`
+                        .toLowerCase()
+                        .includes(query)
+                );
+            });
+        });
 
         // Check student status on mount
         onMounted(async () => {
@@ -104,14 +134,7 @@ export default {
                 // Check if student already has a binome
                 if (status.hasBinome) {
                     hasBinome.value = true;
-
-                    // If has binome but no sujet, go to sujet selection
-                    if (!status.hasSujet) {
                         router.push("/etudiant/sujet");
-                    } else {
-                        // Go to dashboard or other student view if has both binome and sujet
-                        router.push("/dashboard");
-                    }
                     return;
                 }
 
@@ -344,6 +367,11 @@ export default {
             loadAvailableStudents();
         };
 
+        // Handle search from header
+        const handleHeaderSearch = (query) => {
+            searchQuery.value = query;
+        };
+
         // Error handling
         const handleError = (error, defaultMessage) => {
             console.error(defaultMessage, error);
@@ -375,6 +403,7 @@ export default {
             showChooseBinome,
             availableStudents,
             hasSentRequest,
+            searchQuery,
             processingRequestId,
             processingStudentId,
             processingAction,
@@ -382,6 +411,7 @@ export default {
             processingCancel,
             isProcessingAnyRequest,
             isProcessingAnyStudent,
+            filteredStudents,
 
             // Methods
             acceptRequest,
@@ -390,6 +420,7 @@ export default {
             cancelRequest,
             continueAlone,
             goToChooseBinome,
+            handleHeaderSearch,
         };
     },
 };
