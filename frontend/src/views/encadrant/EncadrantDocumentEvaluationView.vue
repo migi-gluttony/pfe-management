@@ -501,69 +501,56 @@ export default {
         };
 
         const loadPreviewContent = () => {
-            if (!previewDocument.value) return;
+    if (!previewDocument.value) return;
 
-            previewLoading.value = true;
-            previewError.value = null;
+    previewLoading.value = true;
+    previewError.value = null;
+    previewDataUrl.value = "";
+    previewContentType.value = "";
 
-            const token =
-                localStorage.getItem("token") ||
-                sessionStorage.getItem("token");
-            const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const baseUrl = import.meta.env.VITE_API_URL || "/api";
+    const previewUrl = `${baseUrl}/encadrant/documents-evaluation/preview/${previewDocument.value.id}`;
 
-            // Change from download endpoint to preview endpoint
-            const previewUrl = `${baseUrl}/encadrant/documents-evaluation/preview/${previewDocument.value.id}`;
-
-            // For PDF documents, use direct iframe source instead of blob URL
-            if (
-                getFileExtension(
-                    previewDocument.value.localisationDoc
-                ).toLowerCase() === ".pdf"
-            ) {
-                previewDataUrl.value = previewUrl;
-                previewContentType.value = "application/pdf";
-                previewLoading.value = false;
-                return;
+    // IMPORTANT: Always get the file as a blob for all file types, including PDFs
+    fetch(previewUrl, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(
+                    `Erreur de prévisualisation: ${response.status} ${response.statusText}`
+                );
             }
 
-            fetch(previewUrl, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(
-                            `Erreur de prévisualisation: ${response.status} ${response.statusText}`
-                        );
-                    }
+            // Get content type
+            const contentType = response.headers.get("content-type");
+            previewContentType.value = contentType;
 
-                    // Get content type
-                    const contentType = response.headers.get("content-type");
-                    previewContentType.value = contentType;
+            return response.blob();
+        })
+        .then((blob) => {
+            // Create a blob URL for the preview
+            const url = URL.createObjectURL(blob);
 
-                    return response.blob();
-                })
-                .then((blob) => {
-                    // Create a blob URL for the preview
-                    const url = URL.createObjectURL(blob);
+            // Store for cleanup later
+            blobUrls.value.push(url);
 
-                    // Store for cleanup later
-                    blobUrls.value.push(url);
-
-                    // Set the data URL for preview
-                    previewDataUrl.value = url;
-                    previewLoading.value = false;
-                })
-                .catch((error) => {
-                    console.error("Preview error:", error);
-                    previewError.value =
-                        error.message ||
-                        "Impossible de prévisualiser le fichier";
-                    previewLoading.value = false;
-                });
-        };
+            // Set the data URL for preview
+            previewDataUrl.value = url;
+            previewLoading.value = false;
+        })
+        .catch((error) => {
+            console.error("Preview error:", error);
+            previewError.value =
+                error.message ||
+                "Impossible de prévisualiser le fichier";
+            previewLoading.value = false;
+        });
+};
 
         // Add a helper function to get file extension
         const getFileExtension = (filePath) => {

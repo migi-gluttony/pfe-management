@@ -85,11 +85,11 @@ import { ThemeService } from "@/services/ThemeService";
 const props = defineProps({
     collapsed: {
         type: Boolean,
-        default: false
-    }
+        default: false,
+    },
 });
 
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(["toggle"]);
 
 const router = useRouter();
 const route = useRoute();
@@ -97,7 +97,7 @@ const isDarkMode = computed(() => ThemeService.getTheme() === "dark");
 
 // Toggle sidebar collapse state
 const toggleSidebar = () => {
-    emit('toggle');
+    emit("toggle");
 };
 
 // Listen for theme changes
@@ -183,7 +183,7 @@ const menuItems = computed(() => {
                 icon: "pi pi-file-pdf",
                 command: () => router.push("/etudiant/rapport"),
                 route: "/etudiant/rapport",
-            },
+            }
         );
     } else if (role === "ENCADRANT") {
         items.push(
@@ -194,10 +194,10 @@ const menuItems = computed(() => {
                 route: "/encadrant/document-evaluation",
             },
             {
-                label: "Mes Soutenances",
-                icon: "pi pi-calendar-plus",
-                command: () => router.push("/encadrant/soutenances"),
-                route: "/encadrant/soutenances",
+                label: "Évaluation des Binômes",
+                icon: "pi pi-check-circle",
+                command: () => router.push("/encadrant/grading"),
+                route: "/encadrant/grading",
             }
         );
     } else if (role === "CHEF_DE_DEPARTEMENT") {

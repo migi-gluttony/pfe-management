@@ -123,52 +123,19 @@
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="action-buttons">
-                                <!-- For jury role -->
-                                <template v-if="isJury">
-                                    <Button
-                                        icon="pi pi-file-pdf"
-                                        class="p-button-rounded p-button-primary p-button-sm"
-                                        tooltip="Évaluer le rapport"
-                                        @click="
-                                            navigateToReportGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                    <Button
-                                        icon="pi pi-microphone"
-                                        class="p-button-rounded p-button-success p-button-sm"
-                                        tooltip="Évaluer la soutenance"
-                                        :disabled="
-                                            !isSoutenanceDay(slotProps.data)
-                                        "
-                                        @click="
-                                            navigateToSoutenanceGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                </template>
-
-                                <!-- For encadrant role -->
-                                <template v-else-if="isEncadrant">
-                                    <Button
-                                        icon="pi pi-file-pdf"
-                                        class="p-button-rounded p-button-primary p-button-sm"
-                                        tooltip="Voir le rapport"
-                                        @click="viewReport(slotProps.data)"
-                                    />
-                                    <Button
-                                        icon="pi pi-users"
-                                        class="p-button-rounded p-button-success p-button-sm"
-                                        tooltip="Évaluer le binôme"
-                                        @click="
-                                            navigateToEncadrantGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                </template>
+                                <Button
+                                    icon="pi pi-file-pdf"
+                                    class="p-button-rounded p-button-primary p-button-sm"
+                                    tooltip="Évaluer le rapport"
+                                    @click="navigateToReportGrading(slotProps.data)"
+                                />
+                                <Button
+                                    icon="pi pi-microphone"
+                                    class="p-button-rounded p-button-success p-button-sm"
+                                    tooltip="Évaluer la soutenance"
+                                    :disabled="!isSoutenanceDay(slotProps.data)"
+                                    @click="navigateToSoutenanceGrading(slotProps.data)"
+                                />
                             </div>
                         </template>
                     </Column>
@@ -273,104 +240,25 @@
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="action-buttons">
-                                <!-- For jury role -->
-                                <template v-if="isJury">
-                                    <Button
-                                        icon="pi pi-file-pdf"
-                                        class="p-button-rounded p-button-primary p-button-sm"
-                                        tooltip="Évaluer le rapport"
-                                        @click="
-                                            navigateToReportGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                    <Button
-                                        icon="pi pi-microphone"
-                                        class="p-button-rounded p-button-success p-button-sm"
-                                        tooltip="Évaluer la soutenance"
-                                        :disabled="
-                                            !isSoutenanceDay(slotProps.data)
-                                        "
-                                        @click="
-                                            navigateToSoutenanceGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                </template>
-
-                                <!-- For encadrant role -->
-                                <template v-else-if="isEncadrant">
-                                    <Button
-                                        icon="pi pi-file-pdf"
-                                        class="p-button-rounded p-button-primary p-button-sm"
-                                        tooltip="Voir le rapport"
-                                        @click="viewReport(slotProps.data)"
-                                    />
-                                    <Button
-                                        icon="pi pi-users"
-                                        class="p-button-rounded p-button-success p-button-sm"
-                                        tooltip="Évaluer le binôme"
-                                        @click="
-                                            navigateToEncadrantGrading(
-                                                slotProps.data
-                                            )
-                                        "
-                                    />
-                                </template>
+                                <Button
+                                    icon="pi pi-file-pdf"
+                                    class="p-button-rounded p-button-primary p-button-sm"
+                                    tooltip="Évaluer le rapport"
+                                    @click="navigateToReportGrading(slotProps.data)"
+                                />
+                                <Button
+                                    icon="pi pi-microphone"
+                                    class="p-button-rounded p-button-success p-button-sm"
+                                    tooltip="Évaluer la soutenance"
+                                    :disabled="!isSoutenanceDay(slotProps.data)"
+                                    @click="navigateToSoutenanceGrading(slotProps.data)"
+                                />
                             </div>
                         </template>
                     </Column>
                 </DataTable>
             </template>
         </Card>
-
-        <!-- Report Dialog -->
-        <Dialog
-            v-model:visible="showReportDialog"
-            :modal="true"
-            :style="{ width: '80vw', height: '80vh' }"
-            header="Rapport du Binôme"
-            :maximizable="true"
-        >
-            <div v-if="selectedSoutenance && selectedSoutenance.binome">
-                <div class="report-info">
-                    <div class="info-row">
-                        <div class="info-label">Binôme:</div>
-                        <div class="info-value">
-                            {{ selectedSoutenance.binome.etudiant1?.prenom }}
-                            {{ selectedSoutenance.binome.etudiant1?.nom }}
-                            <span v-if="selectedSoutenance.binome.etudiant2">
-                                et
-                                {{
-                                    selectedSoutenance.binome.etudiant2?.prenom
-                                }}
-                                {{ selectedSoutenance.binome.etudiant2?.nom }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Sujet:</div>
-                        <div class="info-value">
-                            {{ selectedSoutenance.binome.sujet?.titre }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="report-viewer">
-                    <p class="report-placeholder">
-                        Fonction à implémenter: affichage du rapport PDF
-                    </p>
-                    <div class="report-actions">
-                        <Button
-                            label="Télécharger le rapport"
-                            icon="pi pi-download"
-                        />
-                    </div>
-                </div>
-            </div>
-        </Dialog>
     </div>
 </template>
 
@@ -388,7 +276,6 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
 import DatePicker from "primevue/calendar";
-import Dialog from "primevue/dialog";
 import Toast from "primevue/toast";
 import ProgressSpinner from "primevue/progressspinner";
 
@@ -397,8 +284,6 @@ const soutenances = ref([]);
 const selectedDate = ref(null);
 const loading = ref(false);
 const searchQuery = ref("");
-const showReportDialog = ref(false);
-const selectedSoutenance = ref(null);
 
 // Services
 const toast = useToast();
@@ -406,10 +291,6 @@ const router = useRouter();
 
 // Get current user
 const currentUser = AuthService.getCurrentUser();
-
-// User role based computed properties
-const isJury = computed(() => currentUser?.role === "JURY");
-const isEncadrant = computed(() => currentUser?.role === "ENCADRANT");
 
 // Today's date in ISO format for comparison
 const today = new Date();
@@ -467,6 +348,18 @@ const filteredSoutenances = computed(() => {
 
 // Fetch data on component mount
 onMounted(async () => {
+    // Check if user is jury, redirect if not
+    if (currentUser?.role !== "JURY") {
+        toast.add({
+            severity: "error",
+            summary: "Accès refusé",
+            detail: "Cette page est réservée aux membres du jury",
+            life: 5000,
+        });
+        router.push("/");
+        return;
+    }
+    
     await fetchSoutenances();
 });
 
@@ -504,17 +397,7 @@ function handleHeaderSearch(query) {
 async function fetchSoutenances() {
     loading.value = true;
     try {
-        // Different endpoints based on role
-        let endpoint;
-        if (isJury.value) {
-            endpoint = "/grading/jury/soutenances";
-        } else if (isEncadrant.value) {
-            endpoint = "/encadrant/soutenances";
-        } else {
-            throw new Error("Rôle non autorisé");
-        }
-
-        const response = await ApiService.get(endpoint);
+        const response = await ApiService.get("/grading/jury/soutenances");
         soutenances.value = response;
     } catch (error) {
         handleApiError(error, "Erreur lors du chargement des soutenances");
@@ -523,48 +406,24 @@ async function fetchSoutenances() {
     }
 }
 
-// Filter soutenances by date
+// Filter soutenances by date - computed property handles this
 function filterSoutenancesByDate() {
-    // The computed property handles filtering
+    // No need for implementation as computed property handles it
 }
 
 // Show today's soutenances
-// This function was removed as the "aujourd'hui" button has been removed
+function showTodaySoutenances() {
+    selectedDate.value = new Date();
+}
 
 // Reset date filter
 function resetDateFilter() {
     selectedDate.value = null;
 }
 
-// Check if a date is today
-function isToday(dateStr) {
-    return dateStr === todayISODate;
-}
-
 // Check if soutenance can be graded (only on the day of the defense)
 function isSoutenanceDay(soutenance) {
-    return isToday(soutenance.date);
-}
-
-// View report
-async function viewReport(soutenance) {
-    selectedSoutenance.value = soutenance;
-
-    try {
-        // This would need a real API endpoint to fetch the report
-        // For now, we're just showing a dialog
-        const response = await ApiService.get(
-            `/encadrant/binome/${soutenance.binome.id}/rapport`
-        );
-        if (response && response.localisationRapport) {
-            selectedSoutenance.value.rapport = response;
-        }
-    } catch (error) {
-        console.error("Error fetching report:", error);
-        // Don't show error toast, just proceed with dialog
-    }
-
-    showReportDialog.value = true;
+    return soutenance.date === todayISODate;
 }
 
 // Navigation functions
@@ -589,12 +448,6 @@ function navigateToSoutenanceGrading(soutenance) {
     // Store soutenance ID in session storage to pass to the grading page
     sessionStorage.setItem("selectedSoutenanceId", soutenance.id);
     router.push("/grading/jury/grading");
-}
-
-function navigateToEncadrantGrading(soutenance) {
-    // Store binome ID in session storage to pass to the grading page
-    sessionStorage.setItem("selectedBinomeId", soutenance.binome.id);
-    router.push("/encadrant/grading");
 }
 
 // Error handling
@@ -695,41 +548,6 @@ function handleApiError(error, defaultMessage) {
     padding: 2rem;
     text-align: center;
     color: var(--text-color-secondary);
-}
-
-.report-info {
-    margin-bottom: a.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--surface-border);
-}
-
-.info-row {
-    display: flex;
-    margin-bottom: 0.5rem;
-}
-
-.info-label {
-    font-weight: 600;
-    width: 100px;
-}
-
-.report-viewer {
-    height: 500px;
-    border: 1px solid var(--surface-border);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-.report-placeholder {
-    color: var(--text-color-secondary);
-    margin-bottom: 1rem;
-}
-
-.report-actions {
-    margin-top: 1rem;
 }
 
 /* Responsive styles */
