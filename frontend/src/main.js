@@ -8,6 +8,7 @@ import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
+import AuthService from './services/AuthService'
 
 // Import PrimeVue components
 import Button from 'primevue/button'
@@ -80,7 +81,20 @@ const initTheme = () => {
   }
 }
 
+// Check token on page load
+const checkAuthOnLoad = () => {
+  // Check if token is expired and handle logout
+  AuthService.checkTokenAndLogout()
+}
+
+// Initialize app theme
 initTheme()
+
+// Check authentication
+checkAuthOnLoad()
+
+// Add event listener for when the page is refreshed or loaded
+window.addEventListener('load', checkAuthOnLoad)
 
 // Mount the app
 app.mount('#app')

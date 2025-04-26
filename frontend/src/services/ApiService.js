@@ -1,5 +1,6 @@
 import axios from 'axios';
 import router from '../router';
+import AuthService from './AuthService';
 
 // Create axios instance
 const api = axios.create({
@@ -17,6 +18,15 @@ const getToken = () => {
 // Request interceptor for adding the auth token
 api.interceptors.request.use(
   (config) => {
+    // Check if token is expired before making a request
+    if (AuthService.isAuthenticated() && AuthService.isTokenExpired()) {
+      // Token is expired, log out and redirect
+      AuthService.logout();
+      window.location.href = '/login';
+      // Reject the request with a clear message
+      return Promise.reject(new Error('Session expired. Please log in again.'));
+    }
+
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

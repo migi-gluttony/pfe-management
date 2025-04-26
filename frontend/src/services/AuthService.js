@@ -34,11 +34,51 @@ export default {
       return {
         email: payload.sub,
         role: payload.role,
-        userId: payload.userId
+        userId: payload.userId,
+        exp: payload.exp // Extract expiration timestamp
       };
     } catch (e) {
       console.error('Error parsing token:', e);
       return null;
+    }
+  },
+
+  /**
+   * Check if the current token is expired
+   * @returns {boolean} - True if token is expired or invalid
+   */
+  isTokenExpired() {
+    const token = this.getToken();
+    
+    if (!token) {
+      return true; // No token means it's "expired"
+    }
+    
+    try {
+      const tokenData = this.parseToken(token);
+      
+      if (!tokenData || !tokenData.exp) {
+        return true; // Invalid token or no expiration
+      }
+      
+      // exp is in seconds, Date.now() is in milliseconds
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      return tokenData.exp < currentTime;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+      return true; // If we can't check, assume it's expired for safety
+    }
+  },
+
+  /**
+   * Check token and logout if expired
+   */
+  checkTokenAndLogout() {
+    if (this.isAuthenticated() && this.isTokenExpired()) {
+      console.log('Token expired, logging out');
+      this.logout();
+      window.location.href = '/login'; // Force redirect to login
     }
   },
 
