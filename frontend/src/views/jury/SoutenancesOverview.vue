@@ -129,11 +129,10 @@
                                     tooltip="Évaluer le rapport"
                                     @click="navigateToReportGrading(slotProps.data)"
                                 />
-                                <Button
+                                  <Button
                                     icon="pi pi-microphone"
                                     class="p-button-rounded p-button-success p-button-sm"
                                     tooltip="Évaluer la soutenance"
-                                    :disabled="!isSoutenanceDay(slotProps.data)"
                                     @click="navigateToSoutenanceGrading(slotProps.data)"
                                 />
                             </div>
@@ -250,7 +249,6 @@
                                     icon="pi pi-microphone"
                                     class="p-button-rounded p-button-success p-button-sm"
                                     tooltip="Évaluer la soutenance"
-                                    :disabled="!isSoutenanceDay(slotProps.data)"
                                     @click="navigateToSoutenanceGrading(slotProps.data)"
                                 />
                             </div>
@@ -434,20 +432,9 @@ function navigateToReportGrading(soutenance) {
 }
 
 function navigateToSoutenanceGrading(soutenance) {
-    // Only allow navigation if it's the day of the soutenance
-    if (!isSoutenanceDay(soutenance)) {
-        toast.add({
-            severity: "warn",
-            summary: "Action non disponible",
-            detail: "L'évaluation de la soutenance n'est disponible que le jour même",
-            life: 3000,
-        });
-        return;
-    }
-
     // Store soutenance ID in session storage to pass to the grading page
     sessionStorage.setItem("selectedSoutenanceId", soutenance.id);
-    router.push("/grading/jury/grading");
+    router.push("/jury/grading");
 }
 
 // Error handling

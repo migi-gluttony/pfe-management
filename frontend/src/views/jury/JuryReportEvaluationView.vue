@@ -498,45 +498,46 @@ const confirm = useConfirm();
 
 // Fetch data on component mount
 onMounted(async () => {
+  // Check if we came from the soutenances overview page first
+  const selectedSoutenanceId = sessionStorage.getItem('selectedSoutenanceId');
+  
+  // Fetch reports first
   await fetchReports();
   
-  // Check if we came from the soutenances overview page
-  const selectedSoutenanceId = sessionStorage.getItem('selectedSoutenanceId');
-  if (selectedSoutenanceId && reports.value.length > 0) {
+  if (selectedSoutenanceId) {
     // Clear the stored ID
     sessionStorage.removeItem('selectedSoutenanceId');
     
-    // Find the report for this soutenance's binome
-    const report = reports.value.find(r => {
-      // Try to find by soutenance id if available
-      if (r.binome && r.binome.soutenance && r.binome.soutenance.id === parseInt(selectedSoutenanceId)) {
-        return true;
+    // Fetch soutenances to get the binome ID
+    try {
+      const soutenancesResponse = await ApiService.get("/grading/jury/soutenances");
+      const targetSoutenance = soutenancesResponse.find(s => s.id === parseInt(selectedSoutenanceId));
+      
+      if (targetSoutenance && targetSoutenance.binome) {
+        // Find the report by matching binome ID
+        const report = reports.value.find(r => r.binome?.id === targetSoutenance.binome.id);
+        
+        if (report) {
+          // Select the report
+          selectedReport.value = report;
+          resetEvaluationForm();
+          loadExistingEvaluation();
+        } else {
+          // If no report found, show notification
+          toast.add({
+            severity: 'warn',
+            summary: 'Rapport non trouvé',
+            detail: 'Aucun rapport n\'a été trouvé pour cette soutenance',
+            life: 5000
+          });
+        }
       }
-      
-      // Otherwise, look for matching binome id
-      const soutenanceBinomeId = soutenances.value?.find(s => s.id === parseInt(selectedSoutenanceId))?.binome?.id;
-      return r.binome && r.binome.id === soutenanceBinomeId;
-    });
-    
-    if (report) {
-      // Select the report
-      selectedReport.value = report;
-      resetEvaluationForm();
-      loadExistingEvaluation();
-      
-      // Show a toast notification
+    } catch (error) {
+      console.error('Error fetching soutenance details:', error);
       toast.add({
-        severity: 'info',
-        summary: 'Rapport sélectionné',
-        detail: `Évaluation du rapport "${report.titre}"`,
-        life: 3000
-      });
-    } else {
-      // If no report found, show notification
-      toast.add({
-        severity: 'warn',
-        summary: 'Rapport non trouvé',
-        detail: 'Aucun rapport n\'a été trouvé pour cette soutenance',
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de récupérer les détails de la soutenance',
         life: 5000
       });
     }

@@ -60,11 +60,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import AuthService from '@/services/AuthService';
 
 const router = useRouter();
+const route = useRoute();
 const toast = useToast();
 const email = ref('');
 const password = ref('');
@@ -77,9 +78,9 @@ const validationErrors = ref({
 });
 
 onMounted(() => {
-  // If already logged in, redirect to home
+  // If already logged in, redirect to dashboard
   if (AuthService.isAuthenticated()) {
-    router.push('/');
+    router.push('/dashboard');
   }
 });
 
@@ -128,8 +129,11 @@ const handleLogin = async () => {
       life: 3000
     });
     
-    // Redirect to home page
-    router.push('/');
+    // Check if there's a redirect query parameter
+    const redirectTo = route.query.redirect || '/dashboard';
+    
+    // Redirect to the dashboard or the intended route
+    router.push(redirectTo);
     
   } catch (error) {
     console.error('Login error:', error);
