@@ -4,15 +4,18 @@ import lombok.RequiredArgsConstructor;
 import ma.estfbs.pfe_management.dto.jury.JuryDashboardDTOs.*;
 import ma.estfbs.pfe_management.model.*;
 import ma.estfbs.pfe_management.repository.*;
-import ma.estfbs.pfe_management.service.AcademicYearService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,168 +27,220 @@ public class JuryDashboardService {
     private final NoteSoutenanceRepository noteSoutenanceRepository;
     private final NoteRapportRepository noteRapportRepository;
     private final RapportRepository rapportRepository;
-    private final AcademicYearService academicYearService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Transactional(readOnly = true)
     public JuryDashboardResponse getJuryDashboard(Long juryId) {
-        Utilisateur jury = utilisateurRepository.findById(juryId)
-                .orElseThrow(() -> new RuntimeException("Jury not found with id: " + juryId));
-
-        if (jury.getRole() != Utilisateur.Role.JURY) {
-            throw new RuntimeException("User is not a jury member");
-        }
-
-        AnneeScolaire currentYear = academicYearService.getCurrentAcademicYear();
-
+        Utilisateur utilisateur = utilisateurRepository.findById(juryId)
+                .orElseThrow(() -> new RuntimeException("Membre du jury non trouvé"));
+        
+        // Get current year string directly from database
+        String currentYearAnnee = jdbcTemplate.queryForObject(
+            "SELECT annee FROM annee_scolaire WHERE courante = true", 
+            String.class
+        );
+        
         return JuryDashboardResponse.builder()
-                .juryInfo(buildJuryInfo(jury, currentYear))
-                .soutenanceStats(buildSoutenanceStats(jury, currentYear))
-                .reportStats(buildReportStats(jury, currentYear))
-                .binomeStats(buildBinomeStats(jury, currentYear))
-                .upcomingSoutenances(getUpcomingSoutenances(jury, currentYear))
-                .recentActivities(getRecentActivities(jury, currentYear))
-                .pendingEvaluations(getPendingEvaluations(jury, currentYear))
-                .reminders(buildReminders(jury, currentYear))
+                .juryInfo(getJuryInfo(utilisateur, currentYearAnnee))
+                .soutenanceStats(getSoutenanceStats(utilisateur))
+                .reportStats(getReportStats(utilisateur))
+                .binomeStats(getBinomeStats(utilisateur))
+                .upcomingSoutenances(getUpcomingSoutenances(utilisateur))
+                .recentActivities(getRecentActivities(utilisateur))
+                .pendingEvaluations(getPendingEvaluations(utilisateur))
+                .reminders(getReminders(utilisateur))
                 .build();
     }
 
-    private JuryInfo buildJuryInfo(Utilisateur jury, AnneeScolaire currentYear) {
+    private JuryInfo getJuryInfo(Utilisateur utilisateur, String anneeAcademique) {
         return JuryInfo.builder()
-                .id(jury.getId())
-                .nom(jury.getNom())
-                .prenom(jury.getPrenom())
-                .email(jury.getEmail())
-                .anneeAcademique(currentYear.getAnnee())
+                .id(utilisateur.getId())
+                .nom(utilisateur.getNom())
+                .prenom(utilisateur.getPrenom())
+                .email(utilisateur.getEmail())
+                .anneeAcademique(anneeAcademique)
                 .build();
     }
 
-    private SoutenanceStats buildSoutenanceStats(Utilisateur jury, AnneeScolaire currentYear) {
-        List<Soutenance> soutenances = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear);
-        List<NoteSoutenance> evaluations = noteSoutenanceRepository.findByJuryAndAnneeScolaire(jury, currentYear);
-
+    private SoutenanceStats getSoutenanceStats(Utilisateur jury) {
+        // Get all soutenances for current year through SQL
+        String sql = "SELECT s.* FROM soutenance s " +
+                     "JOIN annee_scolaire a ON s.annee_scolaire_id = a.id " +
+                     "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?)";
+        
+        List<Long> soutenanceIds = jdbcTemplate.queryForList(
+            sql.replace("s.*", "s.id"), 
+            Long.class, 
+            jury.getId(), 
+            jury.getId()
+        );
+        
+        List<LocalDate> dates = jdbcTemplate.queryForList(
+            sql.replace("s.*", "s.date"), 
+            LocalDate.class, 
+            jury.getId(), 
+            jury.getId()
+        );
+        
         LocalDate today = LocalDate.now();
-        int todaySoutenances = (int) soutenances.stream()
-                .filter(s -> s.getDate().isEqual(today))
-                .count();
-
-        int upcomingSoutenances = (int) soutenances.stream()
-                .filter(s -> s.getDate().isAfter(today))
-                .count();
-
-        int evaluatedSoutenances = evaluations.stream()
-                .map(NoteSoutenance::getSoutenance)
-                .collect(Collectors.toSet())
-                .size();
-
-        double averageScore = evaluations.stream()
-                .mapToDouble(
-                        eval -> (eval.getPresentationScore() + eval.getQaScore() + eval.getTimeManagementScore()) / 3.0)
-                .average()
-                .orElse(0.0);
-
+        long todayCount = dates.stream().filter(d -> d.equals(today)).count();
+        long upcomingCount = dates.stream().filter(d -> d.isAfter(today)).count();
+        
+        // Get evaluations count
+        Long evaluatedCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM note_soutenance ns " +
+            "JOIN annee_scolaire a ON ns.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND ns.jury_id = ?",
+            Long.class,
+            jury.getId()
+        );
+        
+        Double avgScore = jdbcTemplate.queryForObject(
+            "SELECT AVG(presentation_score) FROM note_soutenance ns " +
+            "JOIN annee_scolaire a ON ns.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND ns.jury_id = ?",
+            Double.class,
+            jury.getId()
+        );
+        
         return SoutenanceStats.builder()
-                .totalSoutenances(soutenances.size())
-                .todaySoutenances(todaySoutenances)
-                .upcomingSoutenances(upcomingSoutenances)
-                .evaluatedSoutenances(evaluatedSoutenances)
-                .pendingSoutenances(soutenances.size() - evaluatedSoutenances)
-                .averageEvaluationScore(averageScore)
+                .totalSoutenances(soutenanceIds.size())
+                .todaySoutenances((int) todayCount)
+                .upcomingSoutenances((int) upcomingCount)
+                .evaluatedSoutenances(evaluatedCount != null ? evaluatedCount.intValue() : 0)
+                .pendingSoutenances(soutenanceIds.size() - (evaluatedCount != null ? evaluatedCount.intValue() : 0))
+                .averageEvaluationScore(avgScore != null ? avgScore : 0.0)
                 .build();
     }
 
-    private ReportStats buildReportStats(Utilisateur jury, AnneeScolaire currentYear) {
-        List<Soutenance> soutenances = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear);
-        List<Binome> binomes = soutenances.stream()
-                .map(Soutenance::getBinome)
-                .collect(Collectors.toList());
-
-        List<Rapport> reports = new ArrayList<>();
-        for (Binome binome : binomes) {
-            reports.addAll(rapportRepository.findByBinomeAndAnneeScolaire(binome, currentYear));
-        }
-
-        List<NoteRapport> evaluations = noteRapportRepository.findByEvaluateurAndAnneeScolaire(jury, currentYear);
-
-        double averageScore = evaluations.stream()
-                .mapToDouble(eval -> (eval.getTechnicalScore() + eval.getStructureScore() + eval.getOriginalityScore())
-                        / 3.0)
-                .average()
-                .orElse(0.0);
-
+    private ReportStats getReportStats(Utilisateur jury) {
+        // Get reports count
+        Long totalReports = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM rapport r " +
+            "JOIN binome b ON r.binome_id = b.id " +
+            "JOIN soutenance s ON s.binome_id = b.id " +
+            "JOIN annee_scolaire a ON r.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?)",
+            Long.class,
+            jury.getId(), jury.getId()
+        );
+        
+        Long evaluatedReports = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM note_rapport nr " +
+            "JOIN annee_scolaire a ON nr.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND nr.evaluateur_id = ?",
+            Long.class,
+            jury.getId()
+        );
+        
+        Double avgScore = jdbcTemplate.queryForObject(
+            "SELECT AVG(technical_score) FROM note_rapport nr " +
+            "JOIN annee_scolaire a ON nr.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND nr.evaluateur_id = ?",
+            Double.class,
+            jury.getId()
+        );
+        
         return ReportStats.builder()
-                .totalReports(reports.size())
-                .evaluatedReports(evaluations.size())
-                .pendingReports(reports.size() - evaluations.size())
-                .averageReportScore(averageScore)
+                .totalReports(totalReports != null ? totalReports.intValue() : 0)
+                .evaluatedReports(evaluatedReports != null ? evaluatedReports.intValue() : 0)
+                .pendingReports(totalReports != null && evaluatedReports != null ? 
+                               totalReports.intValue() - evaluatedReports.intValue() : 0)
+                .averageReportScore(avgScore != null ? avgScore : 0.0)
                 .build();
     }
 
-    private BinomeStats buildBinomeStats(Utilisateur jury, AnneeScolaire currentYear) {
-        List<Soutenance> soutenances = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear);
-        List<Binome> binomes = soutenances.stream()
-                .map(Soutenance::getBinome)
-                .collect(Collectors.toSet())
-                .stream()
-                .collect(Collectors.toList());
+    private BinomeStats getBinomeStats(Utilisateur jury) {
+        // Get binomes count
+        Long totalBinomes = jdbcTemplate.queryForObject(
+            "SELECT COUNT(DISTINCT b.id) FROM binome b " +
+            "JOIN soutenance s ON s.binome_id = b.id " +
+            "JOIN annee_scolaire a ON b.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?)",
+            Long.class,
+            jury.getId(), jury.getId()
+        );
+        
+        Long fullyEvaluated = jdbcTemplate.queryForObject(
+            "SELECT COUNT(DISTINCT b.id) FROM binome b " +
+            "JOIN soutenance s ON s.binome_id = b.id " +
+            "JOIN note_soutenance ns ON ns.soutenance_id = s.id " +
+            "JOIN rapport r ON r.binome_id = b.id " +
+            "JOIN note_rapport nr ON nr.rapport_id = r.id " +
+            "JOIN annee_scolaire a ON b.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND ns.jury_id = ? AND nr.evaluateur_id = ?",
+            Long.class,
+            jury.getId(), jury.getId()
+        );
+        
+        Long partiallyEvaluated = jdbcTemplate.queryForObject(
+            "SELECT COUNT(DISTINCT b.id) FROM binome b " +
+            "JOIN soutenance s ON s.binome_id = b.id " +
+            "LEFT JOIN note_soutenance ns ON ns.soutenance_id = s.id AND ns.jury_id = ? " +
+            "LEFT JOIN rapport r ON r.binome_id = b.id " +
+            "LEFT JOIN note_rapport nr ON nr.rapport_id = r.id AND nr.evaluateur_id = ? " +
+            "JOIN annee_scolaire a ON b.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?) " +
+            "AND ((ns.id IS NOT NULL AND nr.id IS NULL) OR (ns.id IS NULL AND nr.id IS NOT NULL))",
+            Long.class,
+            jury.getId(), jury.getId(), jury.getId(), jury.getId()
+        );
+        
+        return BinomeStats.builder()
+                .totalBinomes(totalBinomes != null ? totalBinomes.intValue() : 0)
+                .fullyEvaluatedBinomes(fullyEvaluated != null ? fullyEvaluated.intValue() : 0)
+                .partiallyEvaluatedBinomes(partiallyEvaluated != null ? partiallyEvaluated.intValue() : 0)
+                .pendingBinomes(totalBinomes != null && fullyEvaluated != null && partiallyEvaluated != null ?
+                               totalBinomes.intValue() - fullyEvaluated.intValue() - partiallyEvaluated.intValue() : 0)
+                .build();
+    }
 
-        int fullyEvaluated = 0;
-        int partiallyEvaluated = 0;
-
-        for (Binome binome : binomes) {
-            boolean hasReportEvaluation = binome.getRapports().stream()
-                    .anyMatch(rapport -> noteRapportRepository
-                            .findByRapportAndEvaluateurAndAnneeScolaire(rapport, jury, currentYear).isPresent());
-
-            boolean hasSoutenanceEvaluation = soutenances.stream()
-                    .filter(s -> s.getBinome().equals(binome))
-                    .anyMatch(s -> {
-                        List<NoteSoutenance> evaluations = noteSoutenanceRepository.findBySoutenanceAndAnneeScolaire(s,
-                                currentYear);
-                        return evaluations.stream().anyMatch(eval -> eval.getJury().equals(jury));
-                    });
-
-            if (hasReportEvaluation && hasSoutenanceEvaluation) {
-                fullyEvaluated++;
-            } else if (hasReportEvaluation || hasSoutenanceEvaluation) {
-                partiallyEvaluated++;
+    private List<UpcomingSoutenanceDTO> getUpcomingSoutenances(Utilisateur jury) {
+        LocalDate today = LocalDate.now();
+        LocalDate upcoming = today.plusDays(7);
+        
+        List<Soutenance> soutenances = jdbcTemplate.query(
+            "SELECT s.* FROM soutenance s " +
+            "JOIN annee_scolaire a ON s.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?) " +
+            "AND s.date > ? AND s.date <= ? ORDER BY s.date, s.heure LIMIT 5",
+            (rs, rowNum) -> {
+                Soutenance s = new Soutenance();
+                s.setId(rs.getLong("id"));
+                s.setDate(rs.getDate("date").toLocalDate());
+                s.setHeure(rs.getTime("heure").toLocalTime());
+                return s;
+            },
+            jury.getId(), jury.getId(), today, upcoming
+        );
+        
+        List<UpcomingSoutenanceDTO> upcomingList = new ArrayList<>();
+        
+        for (Soutenance s : soutenances) {
+            // Load full soutenance data
+            Soutenance fullSoutenance = soutenanceRepository.findById(s.getId()).orElse(null);
+            if (fullSoutenance != null) {
+                boolean isEvaluated = noteSoutenanceRepository
+                        .findBySoutenance(fullSoutenance)
+                        .stream()
+                        .anyMatch(note -> note.getJury().getId().equals(jury.getId()));
+                
+                int daysUntil = (int) ChronoUnit.DAYS.between(today, fullSoutenance.getDate());
+                
+                upcomingList.add(UpcomingSoutenanceDTO.builder()
+                        .id(fullSoutenance.getId())
+                        .date(fullSoutenance.getDate())
+                        .heure(fullSoutenance.getHeure())
+                        .salle(fullSoutenance.getSalle().getNom())
+                        .binome(mapToBinomeInfoDTO(fullSoutenance.getBinome()))
+                        .sujetTitre(fullSoutenance.getBinome().getSujet().getTitre())
+                        .isEvaluated(isEvaluated)
+                        .daysUntilSoutenance(daysUntil)
+                        .build());
             }
         }
-
-        return BinomeStats.builder()
-                .totalBinomes(binomes.size())
-                .fullyEvaluatedBinomes(fullyEvaluated)
-                .partiallyEvaluatedBinomes(partiallyEvaluated)
-                .pendingBinomes(binomes.size() - fullyEvaluated - partiallyEvaluated)
-                .build();
-    }
-
-    private List<UpcomingSoutenanceDTO> getUpcomingSoutenances(Utilisateur jury, AnneeScolaire currentYear) {
-        LocalDate today = LocalDate.now();
-        LocalDate nextWeek = today.plusDays(7);
-
-        return soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear).stream()
-                .filter(s -> !s.getDate().isBefore(today) && !s.getDate().isAfter(nextWeek))
-                .map(this::mapToUpcomingSoutenanceDTO)
-                .sorted(Comparator.comparing(UpcomingSoutenanceDTO::getDate)
-                        .thenComparing(UpcomingSoutenanceDTO::getHeure))
-                .limit(5)
-                .collect(Collectors.toList());
-    }
-
-    private UpcomingSoutenanceDTO mapToUpcomingSoutenanceDTO(Soutenance soutenance) {
-        LocalDate today = LocalDate.now();
-        Binome binome = soutenance.getBinome();
-
-        return UpcomingSoutenanceDTO.builder()
-                .id(soutenance.getId())
-                .date(soutenance.getDate())
-                .heure(soutenance.getHeure())
-                .salle(soutenance.getSalle().getNom())
-                .binome(mapToBinomeInfoDTO(binome))
-                .sujetTitre(binome.getSujet() != null ? binome.getSujet().getTitre() : "Sans titre")
-                .isEvaluated(checkIfSoutenanceEvaluated(soutenance))
-                .daysUntilSoutenance((int) java.time.temporal.ChronoUnit.DAYS.between(today, soutenance.getDate()))
-                .build();
+        
+        return upcomingList;
     }
 
     private BinomeInfoDTO mapToBinomeInfoDTO(Binome binome) {
@@ -196,130 +251,141 @@ public class JuryDashboardService {
                 .build();
     }
 
-    private StudentDTO mapToStudentDTO(Utilisateur etudiant) {
+    private StudentDTO mapToStudentDTO(Utilisateur utilisateur) {
         return StudentDTO.builder()
-                .id(etudiant.getId())
-                .nom(etudiant.getNom())
-                .prenom(etudiant.getPrenom())
+                .id(utilisateur.getId())
+                .nom(utilisateur.getNom())
+                .prenom(utilisateur.getPrenom())
                 .build();
     }
 
-    private List<RecentActivityDTO> getRecentActivities(Utilisateur jury, AnneeScolaire currentYear) {
+    private List<RecentActivityDTO> getRecentActivities(Utilisateur jury) {
         List<RecentActivityDTO> activities = new ArrayList<>();
-
-        // Add recent soutenance evaluations
-        noteSoutenanceRepository.findByJuryAndAnneeScolaire(jury, currentYear).stream()
-                .sorted(Comparator.comparing(NoteSoutenance::getDateEvaluation).reversed())
-                .limit(5)
-                .forEach(eval -> activities.add(RecentActivityDTO.builder()
-                        .id(eval.getId())
-                        .type("SOUTENANCE_EVALUATION")
-                        .description(String.format("Évaluation de la soutenance de %s %s",
-                                eval.getEtudiant().getPrenom(), eval.getEtudiant().getNom()))
-                        .timestamp(eval.getDateEvaluation())
-                        .icon("pi pi-microphone")
-                        .build()));
-
-        // Add recent report evaluations
-        noteRapportRepository.findByEvaluateurAndAnneeScolaire(jury, currentYear).stream()
-                .sorted(Comparator.comparing(NoteRapport::getDateEvaluation).reversed())
-                .limit(5)
-                .forEach(eval -> activities.add(RecentActivityDTO.builder()
-                        .id(eval.getId())
+        
+        // Get recent report evaluations
+        List<NoteRapport> recentReportEvals = jdbcTemplate.query(
+            "SELECT nr.* FROM note_rapport nr " +
+            "JOIN annee_scolaire a ON nr.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND nr.evaluateur_id = ? " +
+            "ORDER BY nr.date_evaluation DESC LIMIT 3",
+            (rs, rowNum) -> {
+                NoteRapport nr = new NoteRapport();
+                nr.setId(rs.getLong("id"));
+                nr.setDateEvaluation(rs.getTimestamp("date_evaluation").toLocalDateTime());
+                return nr;
+            },
+            jury.getId()
+        );
+        
+        for (NoteRapport eval : recentReportEvals) {
+            NoteRapport fullEval = noteRapportRepository.findById(eval.getId()).orElse(null);
+            if (fullEval != null) {
+                activities.add(RecentActivityDTO.builder()
+                        .id(fullEval.getId())
                         .type("REPORT_EVALUATION")
-                        .description(String.format("Évaluation du rapport: %s", eval.getRapport().getTitre()))
-                        .timestamp(eval.getDateEvaluation())
+                        .description("Évaluation du rapport \"" + fullEval.getRapport().getTitre() + "\"")
+                        .timestamp(fullEval.getDateEvaluation())
                         .icon("pi pi-file-pdf")
-                        .build()));
-
+                        .build());
+            }
+        }
+        
+        // Get recent soutenance evaluations
+        List<NoteSoutenance> recentSoutenanceEvals = jdbcTemplate.query(
+            "SELECT ns.* FROM note_soutenance ns " +
+            "JOIN annee_scolaire a ON ns.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND ns.jury_id = ? " +
+            "ORDER BY ns.date_evaluation DESC LIMIT 3",
+            (rs, rowNum) -> {
+                NoteSoutenance ns = new NoteSoutenance();
+                ns.setId(rs.getLong("id"));
+                ns.setDateEvaluation(rs.getTimestamp("date_evaluation").toLocalDateTime());
+                return ns;
+            },
+            jury.getId()
+        );
+        
+        for (NoteSoutenance eval : recentSoutenanceEvals) {
+            NoteSoutenance fullEval = noteSoutenanceRepository.findById(eval.getId()).orElse(null);
+            if (fullEval != null) {
+                activities.add(RecentActivityDTO.builder()
+                        .id(fullEval.getId())
+                        .type("SOUTENANCE_EVALUATION")
+                        .description("Évaluation de la soutenance de " + 
+                                    fullEval.getEtudiant().getPrenom() + " " + fullEval.getEtudiant().getNom())
+                        .timestamp(fullEval.getDateEvaluation())
+                        .icon("pi pi-calendar")
+                        .build());
+            }
+        }
+        
         return activities.stream()
                 .sorted(Comparator.comparing(RecentActivityDTO::getTimestamp).reversed())
-                .limit(10)
+                .limit(5)
                 .collect(Collectors.toList());
     }
 
-    private List<PendingEvaluationDTO> getPendingEvaluations(Utilisateur jury, AnneeScolaire currentYear) {
-        List<PendingEvaluationDTO> pendingEvaluations = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-
-        // Pending soutenance evaluations
-        soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear).stream()
-                .filter(s -> s.getDate().isEqual(today) && !checkIfSoutenanceEvaluated(s))
-                .forEach(s -> pendingEvaluations.add(PendingEvaluationDTO.builder()
-                        .id(s.getId())
+    private List<PendingEvaluationDTO> getPendingEvaluations(Utilisateur jury) {
+        List<PendingEvaluationDTO> pendingEvals = new ArrayList<>();
+        
+        // Get upcoming soutenances that haven't been evaluated
+        List<Soutenance> pendingSoutenances = jdbcTemplate.query(
+            "SELECT s.* FROM soutenance s " +
+            "JOIN annee_scolaire a ON s.annee_scolaire_id = a.id " +
+            "WHERE a.courante = true AND (s.jury1_id = ? OR s.jury2_id = ?) " +
+            "AND s.date <= ? AND NOT EXISTS (" +
+            "SELECT 1 FROM note_soutenance ns WHERE ns.soutenance_id = s.id AND ns.jury_id = ?)",
+            (rs, rowNum) -> {
+                Soutenance s = new Soutenance();
+                s.setId(rs.getLong("id"));
+                s.setDate(rs.getDate("date").toLocalDate());
+                s.setHeure(rs.getTime("heure").toLocalTime());
+                return s;
+            },
+            jury.getId(), jury.getId(), LocalDate.now(), jury.getId()
+        );
+        
+        for (Soutenance s : pendingSoutenances) {
+            Soutenance fullSoutenance = soutenanceRepository.findById(s.getId()).orElse(null);
+            if (fullSoutenance != null) {
+                String urgency = ChronoUnit.DAYS.between(s.getDate(), LocalDate.now()) > 3 ? "HIGH" : "MEDIUM";
+                
+                pendingEvals.add(PendingEvaluationDTO.builder()
+                        .id(fullSoutenance.getId())
                         .type("SOUTENANCE")
-                        .title(String.format("Soutenance de %s",
-                                s.getBinome().getSujet() != null ? s.getBinome().getSujet().getTitre() : "Sans titre"))
-                        .dueDate(LocalDateTime.of(s.getDate(), s.getHeure()))
-                        .status("PENDING")
-                        .urgency("HIGH")
-                        .build()));
-
-        // Pending report evaluations
-        soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear).stream()
-                .flatMap(s -> rapportRepository.findByBinomeAndAnneeScolaire(s.getBinome(), currentYear).stream())
-                .filter(r -> noteRapportRepository.findByRapportAndEvaluateurAndAnneeScolaire(r, jury, currentYear)
-                        .isEmpty())
-                .forEach(r -> pendingEvaluations.add(PendingEvaluationDTO.builder()
-                        .id(r.getId())
-                        .type("REPORT")
-                        .title(r.getTitre())
-                        .dueDate(r.getDateSoumission())
-                        .status("PENDING")
-                        .urgency("MEDIUM")
-                        .build()));
-
-        return pendingEvaluations;
+                        .title("Soutenance de " + fullSoutenance.getBinome().getEtudiant1().getPrenom() + 
+                               " " + fullSoutenance.getBinome().getEtudiant1().getNom())
+                        .dueDate(fullSoutenance.getDate().atTime(fullSoutenance.getHeure()))
+                        .status("EN_ATTENTE")
+                        .urgency(urgency)
+                        .build());
+            }
+        }
+        
+        return pendingEvals;
     }
 
-    private List<ReminderDTO> buildReminders(Utilisateur jury, AnneeScolaire currentYear) {
+    private List<ReminderDTO> getReminders(Utilisateur jury) {
         List<ReminderDTO> reminders = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-
-        // Today's soutenances reminder
-        List<Soutenance> todaySoutenances = soutenanceRepository
-                .findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear).stream()
-                .filter(s -> s.getDate().isEqual(today))
-                .collect(Collectors.toList());
-
-        if (!todaySoutenances.isEmpty()) {
-            reminders.add(ReminderDTO.builder()
-                    .type("SOUTENANCE")
-                    .title("Soutenances aujourd'hui")
-                    .message(String.format("Vous avez %d soutenance(s) prévue(s) aujourd'hui", todaySoutenances.size()))
-                    .severity("critical")
-                    .actionUrl("/jury/grading")
-                    .daysRemaining(0)
-                    .build());
+        
+        List<UpcomingSoutenanceDTO> upcomingSoutenances = getUpcomingSoutenances(jury);
+        for (UpcomingSoutenanceDTO soutenance : upcomingSoutenances) {
+            if (soutenance.getDaysUntilSoutenance() <= 7) {
+                String severity = soutenance.getDaysUntilSoutenance() <= 2 ? "critical" : "warning";
+                BinomeInfoDTO binome = soutenance.getBinome();
+                String studentName = binome.getEtudiant1().getPrenom() + " " + binome.getEtudiant1().getNom();
+                
+                reminders.add(ReminderDTO.builder()
+                        .type("SOUTENANCE")
+                        .title("Soutenance à venir")
+                        .message("Soutenance de " + studentName + " dans " + soutenance.getDaysUntilSoutenance() + " jours")
+                        .severity(severity)
+                        .actionUrl("/jury/soutenances")
+                        .daysRemaining(soutenance.getDaysUntilSoutenance())
+                        .build());
+            }
         }
-
-        // Pending report evaluations reminder
-        List<Rapport> pendingReports = soutenanceRepository.findByJury1OrJury2AndAnneeScolaire(jury, jury, currentYear)
-                .stream()
-                .flatMap(s -> rapportRepository.findByBinomeAndAnneeScolaire(s.getBinome(), currentYear).stream())
-                .filter(r -> noteRapportRepository.findByRapportAndEvaluateurAndAnneeScolaire(r, jury, currentYear)
-                        .isEmpty())
-                .collect(Collectors.toList());
-
-        if (!pendingReports.isEmpty()) {
-            reminders.add(ReminderDTO.builder()
-                    .type("RAPPORT")
-                    .title("Rapports en attente")
-                    .message(String.format("Vous avez %d rapport(s) à évaluer", pendingReports.size()))
-                    .severity("warning")
-                    .actionUrl("/jury/report-evaluation")
-                    .build());
-        }
-
+        
         return reminders;
-    }
-
-    private boolean checkIfSoutenanceEvaluated(Soutenance soutenance) {
-        Binome binome = soutenance.getBinome();
-        boolean etudiant1Evaluated = noteSoutenanceRepository
-                .findByEtudiantAndSoutenance(binome.getEtudiant1(), soutenance).size() == 2;
-        boolean etudiant2Evaluated = binome.getEtudiant2() == null
-                || noteSoutenanceRepository.findByEtudiantAndSoutenance(binome.getEtudiant2(), soutenance).size() == 2;
-        return etudiant1Evaluated && etudiant2Evaluated;
     }
 }
