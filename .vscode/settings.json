@@ -1,5 +1,6 @@
 {
     "workbench.colorTheme": "Kimbie Dark",
-    "workbench.preferredDarkColorTheme": "Visual Studio Dark"
+    "workbench.preferredDarkColorTheme": "Visual Studio Dark",
+    "java.compile.nullAnalysis.mode": "disabled"
     
 }

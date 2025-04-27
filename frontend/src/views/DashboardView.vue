@@ -1,29 +1,7 @@
 <template>
   <div class="dashboard-container">
-    <!-- Header with user info and logout
-    <header class="dashboard-header">
-      <div class="container">
-        <div class="header-content">
-          <div class="logo">
-            <h1>PFE Management</h1>
-          </div>
-          <div class="user-menu">
-            <span class="user-email">{{ user?.email }}</span>
-            <Button @click="logout" class="p-button-text p-button-rounded" icon="pi pi-power-off" />
-          </div>
-        </div>
-      </div>
-    </header> -->
-
     <div class="dashboard-content">
       <div class="container">
-        <div class="welcome-section">
-          <h2>Bienvenue</h2>
-          <div class="user-role-badge">
-            {{ formatRole(user?.role) }}
-          </div>
-        </div>
-        
         <!-- Role-specific dashboards - dynamically load based on role -->
         <component :is="currentDashboard" />
       </div>
@@ -114,7 +92,6 @@ const logout = () => {
 .dashboard-header {
   background-color: var(--primary-color);
   color: white;
-  padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

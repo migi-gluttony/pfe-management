@@ -1,8 +1,9 @@
 <template>
-  <div class="student-dashboard">
+  <div class="dashboard-container">
     <Toast position="top-right" />
+    
     <!-- Loading state -->
-    <div v-if="loading" class="loading-container">
+    <div v-if="loading" class="loading-indicator">
       <ProgressSpinner />
       <p>Chargement du tableau de bord...</p>
     </div>
@@ -17,15 +18,24 @@
     
     <!-- Dashboard content -->
     <div v-else class="dashboard-content">
-      <!-- Welcome section -->
-      <div class="welcome-section">
-        <h1>Bienvenue, {{ dashboardData?.studentInfo?.prenom }} {{ dashboardData?.studentInfo?.nom }}</h1>
-        <p class="welcome-subtitle">Année académique {{ dashboardData?.studentInfo?.anneeAcademique }} - {{ dashboardData?.studentInfo?.filiere }}</p>
+      <!-- Welcome section - Full width -->
+      <div class="welcome-card">
+        <div class="welcome-info">
+          <h1>Bienvenue, {{ dashboardData?.studentInfo?.prenom }} {{ dashboardData?.studentInfo?.nom }}</h1>
+          <p class="welcome-subtitle">Année académique {{ dashboardData?.studentInfo?.anneeAcademique }} - {{ dashboardData?.studentInfo?.filiere }}</p>
+        </div>
+        <div class="student-avatar">
+          <div class="avatar-circle">
+            <span>{{ getInitials(dashboardData?.studentInfo?.prenom, dashboardData?.studentInfo?.nom) }}</span>
+          </div>
+        </div>
       </div>
       
       <!-- Reminders section -->
       <div v-if="dashboardData?.reminders?.length > 0" class="reminders-section">
-        <h3><i class="pi pi-exclamation-triangle"></i> Rappels importants</h3>
+        <div class="section-header">
+          <h3><i class="pi pi-exclamation-triangle"></i> Rappels importants</h3>
+        </div>
         <div class="reminders-grid">
           <div 
             v-for="reminder in dashboardData.reminders" 
@@ -33,122 +43,143 @@
             class="reminder-card"
             :class="`severity-${reminder.severity}`"
           >
-            <h4>{{ reminder.title }}</h4>
-            <p>{{ reminder.message }}</p>
-            <div v-if="reminder.daysRemaining !== null" class="days-remaining">
-              Plus que {{ reminder.daysRemaining }} jours
+            <div class="reminder-icon">
+              <i :class="getReminderIcon(reminder.type)"></i>
             </div>
-            <Button 
-              v-if="reminder.actionUrl" 
-              :label="reminder.type === 'RAPPORT' ? 'Déposer le rapport' : 'Action requise'"
-              :icon="reminder.type === 'RAPPORT' ? 'pi pi-upload' : 'pi pi-arrow-right'"
-              class="p-button-sm"
-              :class="{
-                'p-button-danger': reminder.severity === 'critical',
-                'p-button-warning': reminder.severity === 'warning'
-              }"
-              @click="navigateTo(reminder.actionUrl)"
-            />
+            <div class="reminder-content">
+              <h4 class="truncate-title">{{ reminder.title }}</h4>
+              <p>{{ reminder.message }}</p>
+              <div v-if="reminder.daysRemaining !== null" class="days-remaining">
+                <i class="pi pi-clock"></i> Plus que {{ reminder.daysRemaining }} jours
+              </div>
+              <Button 
+                v-if="reminder.actionUrl" 
+                :label="reminder.type === 'RAPPORT' ? 'Déposer le rapport' : 'Action requise'"
+                :icon="reminder.type === 'RAPPORT' ? 'pi pi-upload' : 'pi pi-arrow-right'"
+                class="p-button-sm"
+                :class="{
+                  'p-button-danger': reminder.severity === 'critical',
+                  'p-button-warning': reminder.severity === 'warning'
+                }"
+                @click="navigateTo(reminder.actionUrl)"
+              />
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- Main content grid -->
-      <div class="main-content-grid">
-        <!-- Project overview card -->
-        <div class="dashboard-card project-overview">
-          <h3><i class="pi pi-book"></i> Mon Projet</h3>
-          
-          <!-- Binome info -->
-          <div class="section">
-            <h4>Binôme</h4>
-            <div v-if="dashboardData?.binomeInfo?.hasBinome">
-              <div v-if="dashboardData.binomeInfo.isSolo" class="info-badge solo">
-                <i class="pi pi-user"></i> Travail individuel
-              </div>
-              <div v-else class="partner-info">
-                <div class="info-badge">
-                  <i class="pi pi-users"></i> En binôme avec:
-                </div>
+      <!-- Project Overview Cards Grid -->
+      <div class="metrics-grid">
+        <!-- Binome info -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Binôme</div>
+          </div>
+          <div v-if="dashboardData?.binomeInfo?.hasBinome">
+            <div v-if="dashboardData.binomeInfo.isSolo" class="metric-value">
+              <i class="pi pi-user"></i> Travail individuel
+            </div>
+            <div v-else class="partner-info">
+              <div class="metric-value">En binôme</div>
+              <div class="metric-info">
                 <div class="partner-details">
-                  {{ dashboardData.binomeInfo.partner.prenom }} {{ dashboardData.binomeInfo.partner.nom }}
-                  <br>
-                  <span class="email">{{ dashboardData.binomeInfo.partner.email }}</span>
+                  <div class="partner-name truncate-text">{{ dashboardData.binomeInfo.partner.prenom }} {{ dashboardData.binomeInfo.partner.nom }}</div>
+                  <div class="email truncate-text">{{ dashboardData.binomeInfo.partner.email }}</div>
                 </div>
               </div>
             </div>
-            <div v-else>
-              <Tag severity="warning" value="Pas de binôme" />
-              <Button 
-                v-if="dashboardData?.quickActions?.canChooseBinome"
-                label="Choisir un binôme" 
-                icon="pi pi-users" 
-                class="p-button-sm p-button-warning mt-2"
-                @click="navigateTo('/etudiant/binome')"
-              />
-            </div>
+          </div>
+          <div v-else class="metric-info">
+            <Tag severity="warning" value="Pas de binôme" />
+            <Button 
+              v-if="dashboardData?.quickActions?.canChooseBinome"
+              label="Choisir un binôme" 
+              icon="pi pi-users" 
+              class="p-button-sm p-button-warning mt-2"
+              @click="navigateTo('/etudiant/binome')"
+            />
           </div>
           
-          <!-- Sujet info -->
-          <div class="section">
-            <h4>Sujet</h4>
-            <div v-if="dashboardData?.sujetInfo?.hasSujet">
-              <div class="sujet-title">{{ dashboardData.sujetInfo.titre }}</div>
-              <div class="sujet-theme">
-                <Tag :value="dashboardData.sujetInfo.theme" severity="info" />
-              </div>
-              <p class="sujet-description">{{ dashboardData.sujetInfo.description }}</p>
-            </div>
-            <div v-else>
-              <Tag severity="warning" value="Pas de sujet" />
-              <Button 
-                v-if="dashboardData?.quickActions?.canChooseSujet"
-                label="Choisir un sujet" 
-                icon="pi pi-book" 
-                class="p-button-sm p-button-warning mt-2"
-                @click="navigateTo('/etudiant/sujet')"
-              />
+        </div>
+        
+        <!-- Sujet info -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Sujet</div>
+          </div>
+          <div v-if="dashboardData?.sujetInfo?.hasSujet">
+            <div class="metric-value word-wrap-text">{{ dashboardData.sujetInfo.titre }}</div>
+            <div class="metric-info">
+              <Tag :value="dashboardData.sujetInfo.theme" severity="info" />
+              <p class="sujet-description word-wrap-text">{{ dashboardData.sujetInfo.description }}</p>
             </div>
           </div>
+          <div v-else class="metric-info">
+            <Tag severity="warning" value="Pas de sujet" />
+            <Button 
+              v-if="dashboardData?.quickActions?.canChooseSujet"
+              label="Choisir un sujet" 
+              icon="pi pi-book" 
+              class="p-button-sm p-button-warning mt-2"
+              @click="navigateTo('/etudiant/sujet')"
+            />
+          </div>
           
-          <!-- Encadrant info -->
-          <div class="section">
-            <h4>Encadrant</h4>
-            <div v-if="dashboardData?.encadrantInfo?.hasEncadrant">
+        </div>
+        
+        <!-- Encadrant info -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Encadrant</div>
+          </div>
+          <div v-if="dashboardData?.encadrantInfo?.hasEncadrant">
+            <div class="metric-value">Superviseur assigné</div>
+            <div class="metric-info">
               <div class="encadrant-info">
-                <div class="encadrant-name">
+                <div class="encadrant-name truncate-text">
                   {{ dashboardData.encadrantInfo.prenom }} {{ dashboardData.encadrantInfo.nom }}
                 </div>
-                <div class="encadrant-email">
+                <div class="encadrant-email truncate-text">
                   <i class="pi pi-envelope"></i> {{ dashboardData.encadrantInfo.email }}
                 </div>
               </div>
             </div>
-            <div v-else>
-              <Tag severity="warning" value="Pas encore attribué" />
-            </div>
+          </div>
+          <div v-else class="metric-info">
+            <Tag severity="warning" value="Pas encore attribué" />
+          </div>
+          <div class="metric-footer">
+            <Button v-if="dashboardData?.encadrantInfo?.hasEncadrant" icon="pi pi-envelope" class="p-button-rounded p-button-text" />
           </div>
         </div>
         
         <!-- Documents & Report card -->
-        <div class="dashboard-card documents-card">
-          <h3><i class="pi pi-file"></i> Documents & Rapport</h3>
-          
-          <div class="documents-stats">
-            <div class="stat-item">
-              <div class="stat-value">{{ dashboardData?.documentStats?.submittedDocuments || 0 }}</div>
-              <div class="stat-label">Documents soumis</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value">{{ dashboardData?.documentStats?.reviewedDocuments || 0 }}</div>
-              <div class="stat-label">Documents évalués</div>
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Documents & Rapport</div>
+            <div class="metric-badge">
+              <span class="badge-value">{{ dashboardData?.documentStats?.submittedDocuments || 0 }}</span>
             </div>
           </div>
           
-          <div class="report-status">
-            <h4>Rapport final</h4>
+          <div class="document-metrics">
+            <div class="status-pill">
+              <span class="label">Soumis</span>
+              <span class="value">{{ dashboardData?.documentStats?.submittedDocuments || 0 }}</span>
+            </div>
+            <div class="status-pill">
+              <span class="label">Évalués</span>
+              <span class="value">{{ dashboardData?.documentStats?.reviewedDocuments || 0 }}</span>
+            </div>
+          </div>
+          
+          <div class="metric-info">
+            <h4 class="sub-title">Rapport final</h4>
             <div v-if="dashboardData?.documentStats?.hasSubmittedReport">
-              <Tag severity="success" value="Rapport déposé" />
+              <div class="status-badge">
+                <i class="pi pi-check-circle"></i>
+                <Tag severity="success" value="Rapport déposé" />
+              </div>
               <div v-if="dashboardData.documentStats.reportCanBeModified" class="report-notice">
                 <i class="pi pi-info-circle"></i> Vous pouvez encore modifier votre rapport
               </div>
@@ -157,103 +188,123 @@
               </div>
             </div>
             <div v-else>
-              <Tag severity="warning" value="Rapport non déposé" />
+              <div class="status-badge">
+                <i class="pi pi-exclamation-triangle"></i>
+                <Tag severity="warning" value="Rapport non déposé" />
+              </div>
             </div>
           </div>
           
-          <div class="document-actions">
+          <div class="metric-footer">
             <Button 
               v-if="dashboardData?.quickActions?.canSubmitDocuments"
-              label="Soumettre des documents" 
+              label="Documents" 
               icon="pi pi-upload" 
-              class="p-button-sm"
+              class="p-button-text p-button-sm"
               @click="navigateTo('/etudiant/documents')"
             />
             <Button 
-              v-if="dashboardData?.quickActions?.canSubmitReport"
-              label="Gérer le rapport" 
+              label="Rapport" 
               icon="pi pi-file-pdf" 
-              class="p-button-sm p-button-primary"
+              class="p-button-text p-button-sm"
               @click="navigateTo('/etudiant/rapport')"
             />
           </div>
         </div>
         
         <!-- Soutenance card -->
-        <div class="dashboard-card soutenance-card">
-          <h3><i class="pi pi-calendar"></i> Soutenance</h3>
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Soutenance</div>
+          </div>
           
-          <div v-if="dashboardData?.soutenanceInfo?.isScheduled">
-            <div class="soutenance-date">
-              <div class="date-display">
-                <div class="day">{{ formatDay(dashboardData.soutenanceInfo.date) }}</div>
-                <div class="month">{{ formatMonth(dashboardData.soutenanceInfo.date) }}</div>
+          <div v-if="dashboardData?.soutenanceInfo?.isScheduled" class="metric-info">
+            <div class="soutenance-date-display">
+              <div class="date-calendar">
+                <div class="date-day">{{ formatDay(dashboardData.soutenanceInfo.date) }}</div>
+                <div class="date-month">{{ formatMonth(dashboardData.soutenanceInfo.date) }}</div>
+                <div class="date-time">{{ dashboardData.soutenanceInfo.heure }}</div>
               </div>
-              <div class="date-details">
-                <div class="time">{{ dashboardData.soutenanceInfo.heure }}</div>
-                <div class="location">{{ dashboardData.soutenanceInfo.salle }}</div>
+              <div class="soutenance-location truncate-text">
+                <i class="pi pi-map-marker"></i> {{ dashboardData.soutenanceInfo.salle }}
               </div>
             </div>
             
             <div class="jury-info">
-              <h4>Jury</h4>
+              <h4 class="sub-title">Jury</h4>
               <ul class="jury-list">
-                <li><i class="pi pi-user"></i> {{ dashboardData.soutenanceInfo.jury1 }}</li>
-                <li><i class="pi pi-user"></i> {{ dashboardData.soutenanceInfo.jury2 }}</li>
+                <li class="truncate-text"><i class="pi pi-user"></i> {{ dashboardData.soutenanceInfo.jury1 }}</li>
+                <li class="truncate-text"><i class="pi pi-user"></i> {{ dashboardData.soutenanceInfo.jury2 }}</li>
               </ul>
             </div>
             
             <div v-if="dashboardData.soutenanceInfo.daysUntilSoutenance >= 0" class="countdown">
               <Tag 
                 :severity="dashboardData.soutenanceInfo.daysUntilSoutenance <= 7 ? 'warning' : 'info'"
-                :value="`Dans ${dashboardData.soutenanceInfo.daysUntilSoutenance} jours`"
+                :value="dashboardData.soutenanceInfo.daysUntilSoutenance <= 7 ? 'Imminent' : 'À venir'"
               />
+              <div class="countdown-value">
+                {{ dashboardData.soutenanceInfo.daysUntilSoutenance }} jours
+              </div>
             </div>
           </div>
-          <div v-else class="no-soutenance">
-            <i class="pi pi-calendar-times"></i>
+          <div v-else class="empty-state">
+            <i class="pi pi-calendar-times empty-icon"></i>
             <p>Soutenance non planifiée</p>
           </div>
+          
         </div>
         
         <!-- Notes card -->
-        <div class="dashboard-card notes-card">
-          <h3><i class="pi pi-star"></i> Notes</h3>
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Notes</div>
+            <div v-if="dashboardData?.currentNoteStatus?.noteFinale" class="metric-badge">
+              <span class="badge-value">{{ dashboardData?.currentNoteStatus?.noteFinale }}</span>
+              <span class="badge-label">/20</span>
+            </div>
+          </div>
           
           <!-- Current year notes -->
-          <div v-if="dashboardData?.currentNoteStatus?.allNotesPublished">
-            <h4>Année {{ dashboardData.studentInfo.anneeAcademique }}</h4>
-            <div class="notes-grid">
-              <div class="note-item" v-if="dashboardData.currentNoteStatus.hasNoteRapport">
-                <div class="note-label">Rapport</div>
-                <div class="note-value">{{ dashboardData.currentNoteStatus.noteRapport }}/20</div>
+          <div v-if="dashboardData?.currentNoteStatus?.allNotesPublished" class="metric-info">
+            <h4 class="sub-title">Année {{ dashboardData.studentInfo.anneeAcademique }}</h4>
+            <div class="grade-distribution">
+              <div class="grade-item" v-if="dashboardData.currentNoteStatus.hasNoteRapport">
+                <span class="grade-label">Rapport:</span>
+                <span class="grade-count">{{ dashboardData.currentNoteStatus.noteRapport }}</span>
               </div>
-              <div class="note-item" v-if="dashboardData.currentNoteStatus.hasNoteSoutenance">
-                <div class="note-label">Soutenance</div>
-                <div class="note-value">{{ dashboardData.currentNoteStatus.noteSoutenance }}/20</div>
+              <div class="grade-item" v-if="dashboardData.currentNoteStatus.hasNoteSoutenance">
+                <span class="grade-label">Soutenance:</span>
+                <span class="grade-count">{{ dashboardData.currentNoteStatus.noteSoutenance }}</span>
               </div>
-              <div class="note-item" v-if="dashboardData.currentNoteStatus.hasNoteEncadrant">
-                <div class="note-label">Encadrant</div>
-                <div class="note-value">{{ dashboardData.currentNoteStatus.noteEncadrant }}/20</div>
-              </div>
-              <div class="note-item final">
-                <div class="note-label">Note finale</div>
-                <div class="note-value">{{ dashboardData.currentNoteStatus.noteFinale }}/20</div>
+              <div class="grade-item" v-if="dashboardData.currentNoteStatus.hasNoteEncadrant">
+                <span class="grade-label">Encadrant:</span>
+                <span class="grade-count">{{ dashboardData.currentNoteStatus.noteEncadrant }}</span>
               </div>
             </div>
           </div>
-          <div v-else class="notes-pending">
-            <i class="pi pi-clock"></i>
+          <div v-else class="empty-state">
+            <i class="pi pi-clock empty-icon"></i>
             <p>Notes en attente de publication</p>
           </div>
           
           <!-- Note history -->
           <div v-if="dashboardData?.noteHistory?.length > 1" class="note-history">
-            <h4>Historique</h4>
-            <div v-for="note in dashboardData.noteHistory.slice(1)" :key="note.anneeAcademique" class="history-item">
-              <div class="history-year">{{ note.anneeAcademique }}</div>
-              <div class="history-note">{{ note.noteFinale }}/20 - {{ note.mention }}</div>
+            <h4 class="sub-title">Historique</h4>
+            <div class="history-list">
+              <div v-for="note in dashboardData.noteHistory.slice(1)" :key="note.anneeAcademique" class="history-item">
+                <div class="history-year">{{ note.anneeAcademique }}</div>
+                <div class="history-note">{{ note.noteFinale }}/20 - {{ note.mention }}</div>
+              </div>
             </div>
+          </div>
+          <div class="metric-footer">
+            <Button 
+              v-if="dashboardData?.currentNoteStatus?.allNotesPublished" 
+              icon="pi pi-arrow-right" 
+              class="p-button-rounded p-button-text" 
+              @click="navigateTo('/etudiant/resultats')" 
+            />
           </div>
         </div>
       </div>
@@ -262,7 +313,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import ApiService from '@/services/ApiService';
@@ -309,279 +360,256 @@ const formatMonth = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleString('fr-FR', { month: 'short' }).toUpperCase();
 };
+
+// Get initials for avatar
+const getInitials = (firstName, lastName) => {
+  if (!firstName && !lastName) return '?';
+  return (firstName?.charAt(0) || '') + (lastName?.charAt(0) || '');
+};
+
+// Get appropriate icon for reminder type
+const getReminderIcon = (type) => {
+  switch (type) {
+    case 'RAPPORT': return 'pi pi-file-pdf';
+    case 'SOUTENANCE': return 'pi pi-calendar';
+    case 'DOCUMENT': return 'pi pi-file';
+    case 'BINOME': return 'pi pi-users';
+    case 'SUJET': return 'pi pi-book';
+    default: return 'pi pi-info-circle';
+  }
+};
 </script>
 
 <style scoped>
-.student-dashboard {
-  padding: 1.5rem;
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.loading-container, .error-container {
+/* Word wrap fix */
+.word-wrap-text {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-all;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Welcome card - top section */
+.welcome-card {
+  margin-bottom: 1.5rem;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  text-align: center;
+  background-color: var(--surface-card);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.error-container i {
-  font-size: 3rem;
-  color: var(--red-500);
-  margin-bottom: 1rem;
-}
-
-.welcome-section {
-  margin-bottom: 2rem;
-}
-
-.welcome-section h1 {
+.welcome-card h1 {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   color: var(--text-color);
+  font-weight: 600;
 }
 
 .welcome-subtitle {
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   color: var(--text-color-secondary);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
 }
 
-.reminders-section {
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Main grid layout */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.reminders-section h3 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.reminders-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-.reminder-card {
+.metric-card {
   background-color: var(--surface-card);
   border-radius: 8px;
   padding: 1.5rem;
-  border-left: 4px solid;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.reminder-card.severity-critical {
-  border-left-color: var(--red-500);
-  background-color: var(--red-50);
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.reminder-card.severity-warning {
-  border-left-color: var(--yellow-500);
-  background-color: var(--yellow-50);
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
-.reminder-card.severity-info {
-  border-left-color: var(--blue-500);
-  background-color: var(--blue-50);
-}
-
-.reminder-card h4 {
-  margin: 0 0 0.5rem;
-  color: var(--text-color);
-}
-
-.reminder-card p {
-  margin: 0 0 1rem;
-  color: var(--text-color-secondary);
-}
-
-.days-remaining {
+.metric-title {
   font-weight: 600;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.metric-badge {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-value {
+  margin-right: 0.25rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
   margin-bottom: 1rem;
-}
-
-.main-content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.5rem;
-}
-
-.dashboard-card {
-  background-color: var(--surface-card);
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-}
-
-.dashboard-card h3 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1.5rem;
   color: var(--primary-color);
 }
 
-.section {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--surface-border);
+.metric-info {
+  flex: 1;
+  margin-bottom: 1rem;
 }
 
-.section:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
+.metric-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
 }
 
-.section h4 {
-  margin: 0 0 0.75rem;
+/* Binome and travail individuel */
+.metric-card .pi-user {
+  margin-right: 0.5rem;
+}
+
+.partner-info, .encadrant-info {
+  margin-top: 0.5rem;
+}
+
+.partner-name, .encadrant-name {
   color: var(--text-color);
-}
-
-.info-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  background-color: var(--surface-ground);
-  border-radius: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.info-badge.solo {
-  background-color: var(--blue-50);
-  color: var(--blue-700);
-}
-
-.partner-details {
-  margin-left: 1rem;
-}
-
-.partner-details .email {
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-}
-
-.sujet-title {
   font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
 }
 
-.sujet-theme {
-  margin-bottom: 0.5rem;
+.email {
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
+/* Sujet card */
 .sujet-description {
   color: var(--text-color-secondary);
-  margin: 0;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  max-height: 100px;
+  overflow-y: auto;
 }
 
-.encadrant-name {
-  font-weight: 600;
+/* Documents card */
+.document-metrics {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border-radius: 0.5rem;
+}
+
+.status-pill .label {
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
   margin-bottom: 0.25rem;
 }
 
-.encadrant-email {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-}
-
-.documents-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background-color: var(--surface-ground);
-  border-radius: 8px;
-}
-
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
+.status-pill .value {
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--primary-color);
 }
 
-.stat-label {
-  color: var(--text-color-secondary);
+.sub-title {
   font-size: 0.9rem;
+  color: var(--text-color);
+  margin: 0.75rem 0 0.5rem;
+  font-weight: normal;
 }
 
-.report-status {
-  margin-bottom: 1.5rem;
-}
-
-.report-notice {
+/* Soutenance card */
+.date-calendar {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background-color: var(--blue-50);
-  color: var(--blue-700);
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.report-notice.locked {
-  background-color: var(--yellow-50);
-  color: var(--yellow-700);
-}
-
-.document-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.soutenance-date {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.date-display {
-  text-align: center;
-  padding: 1rem;
   background-color: var(--primary-color);
   color: white;
-  border-radius: 8px;
-  min-width: 80px;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.date-display .day {
-  font-size: 2rem;
+.date-day {
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
 }
 
-.date-display .month {
-  font-size: 0.9rem;
+.date-month {
+  font-size: 0.8rem;
   text-transform: uppercase;
+  margin-bottom: 0.25rem;
 }
 
-.date-details {
+.date-time {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+}
+
+.soutenance-location {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.date-details .time {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.date-details .location {
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
   color: var(--text-color-secondary);
+}
+
+.jury-info {
+  margin-top: 1rem;
 }
 
 .jury-list {
@@ -595,6 +623,10 @@ const formatMonth = (dateString) => {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--surface-hover);
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .countdown {
@@ -602,60 +634,66 @@ const formatMonth = (dateString) => {
   text-align: center;
 }
 
-.no-soutenance {
+.countdown-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--primary-color);
   text-align: center;
-  padding: 2rem;
+  margin-top: 0.5rem;
+}
+
+/* Document status */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-badge i.pi-check-circle {
+  color: #43b581;
+}
+
+.status-badge i.pi-exclamation-triangle {
+  color: #faa61a;
+}
+
+.report-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(67, 181, 129, 0.1);
+  color: #43b581;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.report-notice.locked {
+  background-color: rgba(250, 166, 26, 0.1);
+  color: #faa61a;
+}
+
+/* Notes card */
+.grade-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grade-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.grade-label {
   color: var(--text-color-secondary);
 }
 
-.no-soutenance i {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.note-item {
-  text-align: center;
-  padding: 1rem;
-  background-color: var(--surface-ground);
-  border-radius: 8px;
-}
-
-.note-item.final {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-.note-label {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
-
-.note-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.notes-pending {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-color-secondary);
-}
-
-.notes-pending i {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.note-history {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--surface-border);
+.grade-count {
+  font-weight: 600;
+  color: var(--text-color);
 }
 
 .history-item {
@@ -663,31 +701,214 @@ const formatMonth = (dateString) => {
   justify-content: space-between;
   padding: 0.5rem;
   border-bottom: 1px solid var(--surface-border);
+  font-size: 0.85rem;
 }
 
-.history-item:last-child {
-  border-bottom: none;
+.history-note {
+  color: var(--primary-color);
 }
 
-.history-year {
+/* Reminders section */
+.reminders-section {
+  margin-bottom: 2rem;
+}
+
+.reminders-section .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.reminders-section h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-color);
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.mt-2 {
+.reminders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.reminder-card {
+  background-color: var(--surface-card);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 1rem;
+  transition: transform 0.2s;
+}
+
+.reminder-card:hover {
+  transform: translateY(-2px);
+}
+
+.reminder-card.severity-critical {
+  border-left: 4px solid #f44336;
+}
+
+.reminder-card.severity-warning {
+  border-left: 4px solid #ff9800;
+}
+
+.reminder-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
+  border-radius: 50%;
+}
+
+.reminder-content {
+  flex: 1;
+}
+
+.reminder-content h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.reminder-content p {
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.days-remaining {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+/* Loading and empty states */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+/* Error container */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-container i {
+  font-size: 3rem;
+  color: #f44336;
+  margin-bottom: 1rem;
+}
+
+.error-container h3 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.error-container p {
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Text truncation */
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncate-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Dark mode adjustments */
+.dark-mode .metric-card,
+.dark-mode .welcome-card,
+.dark-mode .reminder-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .status-pill {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .jury-list li {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .main-content-grid {
+  .welcome-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .welcome-info {
+    margin-bottom: 1rem;
+  }
+
+  .student-avatar {
+    margin-left: 0;
+  }
+  
+  .metric-card {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .metrics-grid {
     grid-template-columns: 1fr;
   }
   
-  .documents-stats {
-    grid-template-columns: 1fr;
-  }
-  
-  .notes-grid {
-    grid-template-columns: 1fr;
+  .metric-value {
+    font-size: 1.5rem;
   }
 }
 </style>

@@ -9,16 +9,18 @@
             <div class="sidebar-logo">
                 <!-- Full logo (visible when expanded) -->
                 <template v-if="!collapsed">
-                    <img
-                        v-if="isDarkMode"
-                        src="@/assets/logo/full_dark.svg"
-                        alt="pfe management"
-                    />
-                    <img
-                        v-else
-                        src="@/assets/logo/full_light.svg"
-                        alt="pfe management"
-                    />
+                    <router-link to="/" class="logo-link">
+                        <img
+                            v-if="isDarkMode"
+                            src="@/assets/logo/full_dark.svg"
+                            alt="pfe management"
+                        />
+                        <img
+                            v-else
+                            src="@/assets/logo/full_light.svg"
+                            alt="pfe management"
+                        />
+                    </router-link>
                     <button class="collapse-btn" @click="toggleSidebar">
                         <i class="pi pi-angle-double-left"></i>
                     </button>
@@ -26,16 +28,18 @@
 
                 <!-- Small logo (visible when collapsed) -->
                 <template v-else>
-                    <img
-                        v-if="isDarkMode"
-                        src="@/assets/logo/full_dark.svg"
-                        alt="pfe management"
-                    />
-                    <img
-                        v-else
-                        src="@/assets/logo/full_light.svg"
-                        alt="pfe management"
-                    />
+                    <router-link to="/" class="logo-link">
+                        <img
+                            v-if="isDarkMode"
+                            src="@/assets/logo/full_dark.svg"
+                            alt="pfe management"
+                        />
+                        <img
+                            v-else
+                            src="@/assets/logo/full_light.svg"
+                            alt="pfe management"
+                        />
+                    </router-link>
                 </template>
             </div>
 
@@ -321,13 +325,23 @@ const menuItems = computed(() => {
     padding: 16px 10px;
 }
 
-.sidebar-logo img {
-    height: auto;
-    width: 85%;
-    transition: all 0.3s ease;
+.logo-link {
+    display: inline-block;
+    transition: opacity 0.2s ease;
 }
 
-.sidebar-logo .small-logo {
+.logo-link:hover {
+    opacity: 0.8;
+}
+
+.sidebar-logo img {
+    height: auto;
+    width: 100%;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.collapsed .sidebar-logo img {
     width: 30px;
     height: 30px;
 }
