@@ -1,200 +1,228 @@
 <template>
   <div class="dashboard-container">
     <Toast />
-    <!-- User Info Header -->
     
-    
-    <!-- Dashboard Stats Cards -->
-    <div class="metrics-grid">
-      <!-- First row -->
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Gestion des Comptes</div>
-        </div>
-        <div class="metric-value">{{ stats.totalUsers }} comptes</div>
-        <div class="metric-counts">
-          <div class="count-item">
-            <span class="count-label">Étudiants:</span>
-            <span class="count-value">{{ stats.totalStudents }}</span>
-          </div>
-          <div class="count-item">
-            <span class="count-label">Encadrants:</span>
-            <span class="count-value">{{ stats.totalSupervisors }}</span>
-          </div>
-          <div class="count-item">
-            <span class="count-label">Jurys:</span>
-            <span class="count-value">{{ stats.totalJuries }}</span>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/comptes')" />
-        </div>
-      </div>
-      
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Gestion des Binômes</div>
-        </div>
-        <div class="metric-value">{{ stats.totalBinomes }} binômes</div>
-        <div class="metric-info">
-          <ProgressBar :value="calculateCompletionRate(stats.binomesWithSoutenance, stats.totalBinomes)" class="binome-progress" />
-          <div class="progress-info">
-            <span>{{ stats.binomesWithSoutenance }} binômes avec soutenance planifiée</span>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/binomes')" />
-        </div>
-      </div>
-      
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Gestion des Sujets</div>
-        </div>
-        <div class="metric-value">{{ stats.totalSujets }} sujets</div>
-        <div class="metric-info">
-          <div v-if="stats.pendingSuggestions > 0" class="suggestion-alert">
-            <i class="pi pi-exclamation-circle"></i>
-            <span>{{ stats.pendingSuggestions }} suggestions en attente</span>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/sujets')" />
-        </div>
-      </div>
-      
-      <!-- Second row -->
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Soutenances</div>
-        </div>
-        <div class="metric-value">{{ stats.totalSoutenances }} soutenances</div>
-        <div class="metric-info soutenance-status">
-          <div class="status-pill">
-            <span class="label">Planifiées</span>
-            <span class="value">{{ stats.plannedSoutenances }}</span>
-          </div>
-          <div class="status-pill">
-            <span class="label">Réalisées</span>
-            <span class="value">{{ stats.completedSoutenances }}</span>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/soutenances')" />
-        </div>
-      </div>
-      
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Résultats</div>
-        </div>
-        <div class="metric-value">{{ stats.averageGrade.toFixed(1) }} / 20</div>
-        <div class="metric-info">
-          <div class="grade-distribution">
-            <div class="grade-item">
-              <span class="grade-label">Très bien:</span>
-              <span class="grade-count">{{ stats.honorsCount }}</span>
-            </div>
-            <div class="grade-item">
-              <span class="grade-label">Bien:</span>
-              <span class="grade-count">{{ stats.goodCount }}</span>
-            </div>
-            <div class="grade-item">
-              <span class="grade-label">Passable:</span>
-              <span class="grade-count">{{ stats.passCount }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/notes-management')" />
-        </div>
-      </div>
-      
-      <div class="metric-card">
-        <div class="metric-header">
-          <div class="metric-title">Filières</div>
-        </div>
-        <div class="metric-value">{{ stats.totalFilieres }} filières</div>
-        <div class="metric-info">
-          <div v-for="(filiere, index) in topFilieres" :key="index" class="filiere-item">
-            <span class="filiere-name">{{ filiere.name }}</span>
-            <span class="filiere-count">{{ filiere.count }} étudiants</span>
-          </div>
-        </div>
-        <div class="metric-footer">
-          <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/comptes')" />
-        </div>
-      </div>
+    <!-- Loading state -->
+    <div v-if="loading" class="loading-indicator">
+      <ProgressSpinner />
+      <p>Chargement du tableau de bord...</p>
     </div>
     
-    <!-- Dashboard Content Sections -->
-    <div class="dashboard-sections">
-      <!-- Upcoming Soutenances Section -->
-      <div class="upcoming-soutenances">
-        <div class="section-header">
-          <h3>Soutenances à venir</h3>
-          <Button label="Voir tout" icon="pi pi-calendar" class="p-button-text" @click="navigateTo('/management/soutenances')" />
+    <!-- Error state -->
+    <div v-else-if="error" class="error-container">
+      <i class="pi pi-exclamation-circle"></i>
+      <h3>Erreur de chargement</h3>
+      <p>{{ error }}</p>
+      <Button label="Réessayer" @click="loadDashboardData" />
+    </div>
+    
+    <!-- Dashboard content -->
+    <div v-else class="dashboard-content">
+      <!-- User Info Header -->
+      <div class="welcome-card">
+        <div class="welcome-info">
+          <h1>Bienvenue, Chef de Département</h1>
+          <p class="welcome-subtitle">Année académique {{ currentYear }}</p>
         </div>
-        
-        <div v-if="loading.soutenances" class="loading-indicator">
-          <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-          <span>Chargement des soutenances...</span>
-        </div>
-        
-        <div v-else-if="upcomingSoutenances.length === 0" class="empty-state">
-          <i class="pi pi-calendar-times empty-icon"></i>
-          <p>Aucune soutenance planifiée pour les prochains jours</p>
-        </div>
-        
-        <div v-else class="soutenance-list">
-          <div v-for="(soutenance, index) in upcomingSoutenances" :key="index" class="soutenance-item">
-            <div class="soutenance-date">
-              <div class="date-day">{{ formatDay(soutenance.date) }}</div>
-              <div class="date-month">{{ formatMonth(soutenance.date) }}</div>
-              <div class="date-time">{{ soutenance.heure }}</div>
-            </div>
-            <div class="soutenance-details">
-              <div class="soutenance-students">
-                {{ getStudentNames(soutenance.binome) }}
-              </div>
-              <div class="soutenance-title">{{ soutenance.binome?.sujet?.titre || 'Pas de titre' }}</div>
-              <div class="soutenance-info">
-                <span class="soutenance-location">
-                  <i class="pi pi-map-marker"></i> {{ soutenance.salle?.nom || 'Salle non définie' }}
-                </span>
-                <span class="soutenance-jury">
-                  <i class="pi pi-users"></i> {{ getJuryNames(soutenance) }}
-                </span>
-              </div>
-            </div>
+        <div class="user-avatar">
+          <div class="avatar-circle">
+            <span>CD</span>
           </div>
         </div>
       </div>
       
-      <!-- Recent Activities Section -->
-      <div class="recent-activities">
-        <div class="section-header">
-          <h3>Activités récentes</h3>
-        </div>
-        
-        <div v-if="loading.activities" class="loading-indicator">
-          <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
-          <span>Chargement des activités...</span>
-        </div>
-        
-        <div v-else-if="activities.length === 0" class="empty-state">
-          <i class="pi pi-history empty-icon"></i>
-          <p>Aucune activité récente à afficher</p>
-        </div>
-        
-        <div v-else class="activity-list">
-          <div v-for="(activity, index) in activities" :key="index" class="activity-item">
-            <div class="activity-icon">
-              <i :class="activity.icon"></i>
+      <!-- Dashboard Stats Cards -->
+      <div class="metrics-grid">
+        <!-- First row -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Gestion des Comptes</div>
+          </div>
+          <div class="metric-value">{{ stats.totalUsers }} comptes</div>
+          <div class="metric-counts">
+            <div class="count-item">
+              <span class="count-label">Étudiants:</span>
+              <span class="count-value">{{ stats.totalStudents }}</span>
             </div>
-            <div class="activity-content">
-              <div class="activity-description">{{ activity.description }}</div>
-              <div class="activity-time">{{ formatDate(activity.timestamp) }}</div>
+            <div class="count-item">
+              <span class="count-label">Encadrants:</span>
+              <span class="count-value">{{ stats.totalSupervisors }}</span>
+            </div>
+            <div class="count-item">
+              <span class="count-label">Jurys:</span>
+              <span class="count-value">{{ stats.totalJuries }}</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/comptes')" />
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Gestion des Binômes</div>
+          </div>
+          <div class="metric-value">{{ stats.totalBinomes }} binômes</div>
+          <div class="metric-info">
+            <ProgressBar :value="calculateCompletionRate(stats.binomesWithSoutenance, stats.totalBinomes)" class="binome-progress" />
+            <div class="progress-info">
+              <span>{{ stats.binomesWithSoutenance }} binômes avec soutenance planifiée</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/binomes')" />
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Gestion des Sujets</div>
+          </div>
+          <div class="metric-value">{{ stats.totalSujets }} sujets</div>
+          <div class="metric-info">
+            <div v-if="stats.pendingSuggestions > 0" class="suggestion-alert">
+              <i class="pi pi-exclamation-circle"></i>
+              <span>{{ stats.pendingSuggestions }} suggestions en attente</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/sujets')" />
+          </div>
+        </div>
+        
+        <!-- Second row -->
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Soutenances</div>
+          </div>
+          <div class="metric-value">{{ stats.totalSoutenances }} soutenances</div>
+          <div class="metric-info soutenance-status">
+            <div class="status-pill">
+              <span class="label">Planifiées</span>
+              <span class="value">{{ stats.plannedSoutenances }}</span>
+            </div>
+            <div class="status-pill">
+              <span class="label">Réalisées</span>
+              <span class="value">{{ stats.completedSoutenances }}</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/soutenances')" />
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Résultats</div>
+          </div>
+          <div class="metric-value">{{ stats.averageGrade.toFixed(1) }} / 20</div>
+          <div class="metric-info">
+            <div class="grade-distribution">
+              <div class="grade-item">
+                <span class="grade-label">Très bien:</span>
+                <span class="grade-count">{{ stats.honorsCount }}</span>
+              </div>
+              <div class="grade-item">
+                <span class="grade-label">Bien:</span>
+                <span class="grade-count">{{ stats.goodCount }}</span>
+              </div>
+              <div class="grade-item">
+                <span class="grade-label">Passable:</span>
+                <span class="grade-count">{{ stats.passCount }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/notes-management')" />
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-header">
+            <div class="metric-title">Filières</div>
+          </div>
+          <div class="metric-value">{{ stats.totalFilieres }} filières</div>
+          <div class="metric-info">
+            <div v-for="(filiere, index) in topFilieres" :key="index" class="filiere-item">
+              <span class="filiere-name">{{ filiere.nom }}</span>
+              <span class="filiere-count">{{ filiere.etudiantCount }} étudiants</span>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <Button icon="pi pi-arrow-right" class="p-button-rounded p-button-text" @click="navigateTo('/management/comptes')" />
+          </div>
+        </div>
+      </div>
+      
+      <!-- Dashboard Content Sections -->
+      <div class="dashboard-sections">
+        <!-- Upcoming Soutenances Section -->
+        <div class="upcoming-soutenances">
+          <div class="section-header">
+            <h3>Soutenances à venir</h3>
+            <Button label="Voir tout" icon="pi pi-calendar" class="p-button-text" @click="navigateTo('/management/soutenances')" />
+          </div>
+          
+          <div v-if="loadingItems.soutenances" class="loading-indicator">
+            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+            <span>Chargement des soutenances...</span>
+          </div>
+          
+          <div v-else-if="upcomingSoutenances.length === 0" class="empty-state">
+            <i class="pi pi-calendar-times empty-icon"></i>
+            <p>Aucune soutenance planifiée pour les prochains jours</p>
+          </div>
+          
+          <div v-else class="soutenance-list">
+            <div v-for="(soutenance, index) in upcomingSoutenances" :key="index" class="soutenance-item">
+              <div class="soutenance-date">
+                <div class="date-day">{{ formatDay(soutenance.date) }}</div>
+                <div class="date-month">{{ formatMonth(soutenance.date) }}</div>
+                <div class="date-time">{{ soutenance.heure }}</div>
+              </div>
+              <div class="soutenance-details">
+                <div class="soutenance-students">
+                  {{ getStudentNames(soutenance.binome) }}
+                </div>
+                <div class="soutenance-title">{{ soutenance.binome?.sujet?.titre || 'Pas de titre' }}</div>
+                <div class="soutenance-info">
+                  <span class="soutenance-location">
+                    <i class="pi pi-map-marker"></i> {{ soutenance.salle?.nom || 'Salle non définie' }}
+                  </span>
+                  <span class="soutenance-jury">
+                    <i class="pi pi-users"></i> {{ getJuryNames(soutenance) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Activities Section -->
+        <div class="recent-activities">
+          <div class="section-header">
+            <h3>Activités récentes</h3>
+          </div>
+          
+          <div v-if="loadingItems.activities" class="loading-indicator">
+            <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="4" />
+            <span>Chargement des activités...</span>
+          </div>
+          
+          <div v-else-if="activities.length === 0" class="empty-state">
+            <i class="pi pi-history empty-icon"></i>
+            <p>Aucune activité récente à afficher</p>
+          </div>
+          
+          <div v-else class="activity-list">
+            <div v-for="(activity, index) in activities" :key="index" class="activity-item">
+              <div class="activity-icon">
+                <i :class="activity.icon"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-description">{{ activity.description }}</div>
+                <div class="activity-time">{{ formatDate(activity.timestamp) }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -208,8 +236,6 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import ApiService from '@/services/ApiService';
-import AuthService from '@/services/AuthService';
-import UserInfoHeader from '@/components/UserInfoHeader.vue';
 
 // Import PrimeVue components
 import Button from 'primevue/button';
@@ -219,16 +245,20 @@ import Toast from 'primevue/toast';
 
 const router = useRouter();
 const toast = useToast();
-const searchQuery = ref('');
+const currentYear = ref('');
 
 // Loading states
-const loading = ref({
+const loading = ref(true);
+const loadingItems = ref({
   stats: true,
   soutenances: true,
   activities: true
 });
 
-// Dashboard stats
+// Error state
+const error = ref(null);
+
+// Dashboard data
 const stats = ref({
   totalUsers: 0,
   totalStudents: 0,
@@ -245,11 +275,15 @@ const stats = ref({
   honorsCount: 0,
   goodCount: 0,
   passCount: 0,
-  totalFilieres: 0
+  totalFilieres: 0,
+  filieres: []
 });
 
 // Top filieres data
-const topFilieres = ref([]);
+const topFilieres = computed(() => {
+  if (!stats.value.filieres) return [];
+  return stats.value.filieres.slice(0, 3);
+});
 
 // Upcoming soutenances
 const upcomingSoutenances = ref([]);
@@ -333,242 +367,95 @@ const formatDate = (date) => {
   }
 };
 
-// API data fetching methods
-const fetchDashboardStats = async () => {
-  loading.value.stats = true;
-  try {
-    const response = await ApiService.get('/chef_de_departement/dashboard/stats');
-    
-    // Check if we have a valid response, if not use sample data
-    if (response && Object.keys(response).length > 0) {
-      stats.value = {
-        ...stats.value,
-        ...response
-      };
-      
-      // Extract top filieres if available
-      if (response.filieres && Array.isArray(response.filieres)) {
-        topFilieres.value = response.filieres.slice(0, 3).map(f => ({
-          name: f.nom,
-          count: f.etudiantCount
-        }));
-      }
-    } else {
-      // Use sample data if API returns empty
-      console.warn('Using sample data for dashboard stats as API returned empty response');
-      useSampleStats();
-    }
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger les statistiques du tableau de bord',
-      life: 3000
-    });
-    useSampleStats();
-  } finally {
-    loading.value.stats = false;
-  }
-};
-
-const fetchUpcomingSoutenances = async () => {
-  loading.value.soutenances = true;
-  try {
-    const response = await ApiService.get('/chef_de_departement/dashboard/upcoming-soutenances');
-    
-    if (response && Array.isArray(response) && response.length > 0) {
-      upcomingSoutenances.value = response;
-    } else {
-      // Try the regular soutenances endpoint and filter for future dates
-      const allSoutenances = await ApiService.get('/chef_de_departement/soutenances');
-      
-      if (Array.isArray(allSoutenances)) {
-        // Filter soutenances for the upcoming week
-        const today = new Date();
-        const nextWeek = new Date();
-        nextWeek.setDate(today.getDate() + 7);
-        
-        upcomingSoutenances.value = allSoutenances
-          .filter(s => {
-            const soutenanceDate = new Date(s.date);
-            return soutenanceDate >= today && soutenanceDate <= nextWeek;
-          })
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
-          .slice(0, 5);
-      } else {
-        console.warn('Using sample soutenances data as API returned invalid response');
-        useSampleSoutenances();
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching upcoming soutenances:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger les soutenances à venir',
-      life: 3000
-    });
-    useSampleSoutenances();
-  } finally {
-    loading.value.soutenances = false;
-  }
-};
-
-const fetchRecentActivities = async () => {
-  loading.value.activities = true;
-  try {
-    const response = await ApiService.get('/chef_de_departement/dashboard/activities');
-    
-    if (response && Array.isArray(response) && response.length > 0) {
-      activities.value = response;
-    } else {
-      console.warn('Using sample activities data as API returned invalid response');
-      useSampleActivities();
-    }
-  } catch (error) {
-    console.error('Error fetching recent activities:', error);
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger les activités récentes',
-      life: 3000
-    });
-    useSampleActivities();
-  } finally {
-    loading.value.activities = false;
-  }
-};
-
 // Navigation method
 const navigateTo = (path) => {
   router.push(path);
 };
 
-// Search handler
-const handleSearchQuery = (query) => {
-  searchQuery.value = query;
-  // In a real application, you would filter your data based on the query
-  console.log('Search query updated:', query);
+// Load all dashboard data
+const loadDashboardData = async () => {
+  loading.value = true;
+  error.value = null;
+  
+  try {
+    // Load dashboard stats
+    await fetchDashboardStats();
+    
+    // Load upcoming soutenances
+    await fetchUpcomingSoutenances();
+    
+    // Load recent activities
+    await fetchRecentActivities();
+    
+    loading.value = false;
+  } catch (err) {
+    console.error('Error loading dashboard data:', err);
+    error.value = 'Impossible de charger les données du tableau de bord. Veuillez réessayer plus tard.';
+    loading.value = false;
+  }
 };
 
-// Sample data for development or when API fails
-const useSampleStats = () => {
-  stats.value = {
-    totalUsers: 145,
-    totalStudents: 120,
-    totalSupervisors: 15,
-    totalJuries: 10,
-    totalBinomes: 68,
-    binomesWithSoutenance: 42,
-    totalSujets: 92,
-    pendingSuggestions: 5,
-    totalSoutenances: 42,
-    plannedSoutenances: 12,
-    completedSoutenances: 30,
-    averageGrade: 15.7,
-    honorsCount: 15,
-    goodCount: 20,
-    passCount: 7,
-    totalFilieres: 4
-  };
-  
-  topFilieres.value = [
-    { name: 'Génie Informatique', count: 45 },
-    { name: 'Génie Civil', count: 35 },
-    { name: 'Génie Électrique', count: 25 }
-  ];
-};
-
-const useSampleSoutenances = () => {
-  // Generate dates for the next 5 days
-  const today = new Date();
-  
-  upcomingSoutenances.value = [
-    {
-      id: 1,
-      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1),
-      heure: '10:00',
-      salle: { id: 1, nom: 'Salle A-203' },
-      jury1: { id: 1, nom: 'Bensouda', prenom: 'Omar' },
-      jury2: { id: 2, nom: 'Alaoui', prenom: 'Fatima' },
-      binome: {
-        id: 1,
-        etudiant1: { id: 1, nom: 'Amrani', prenom: 'Karim' },
-        etudiant2: { id: 2, nom: 'Tazi', prenom: 'Salma' },
-        sujet: { id: 1, titre: 'Intelligence Artificielle pour la Détection des Anomalies' }
-      }
-    },
-    {
-      id: 2,
-      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2),
-      heure: '14:30',
-      salle: { id: 2, nom: 'Amphithéâtre B' },
-      jury1: { id: 3, nom: 'Mansouri', prenom: 'Ahmed' },
-      jury2: { id: 4, nom: 'Benjelloun', prenom: 'Sara' },
-      binome: {
-        id: 2,
-        etudiant1: { id: 3, nom: 'El Fassi', prenom: 'Mohammed' },
-        etudiant2: null,
-        sujet: { id: 2, titre: 'Optimisation des Systèmes Distribués' }
-      }
-    },
-    {
-      id: 3,
-      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3),
-      heure: '09:00',
-      salle: { id: 3, nom: 'Salle C-105' },
-      jury1: { id: 5, nom: 'Rami', prenom: 'Younes' },
-      jury2: { id: 6, nom: 'Khalil', prenom: 'Nadia' },
-      binome: {
-        id: 3,
-        etudiant1: { id: 5, nom: 'Idrissi', prenom: 'Youssef' },
-        etudiant2: { id: 6, nom: 'Daoudi', prenom: 'Malika' },
-        sujet: { id: 3, titre: 'Application Mobile pour le Suivi Médical' }
-      }
+// API data fetching methods
+const fetchDashboardStats = async () => {
+  loadingItems.value.stats = true;
+  try {
+    const response = await ApiService.get('/chef_de_departement/dashboard/stats');
+    
+    if (response && Object.keys(response).length > 0) {
+      stats.value = response;
+      
+      // Set current year - in a real app this would come from the API
+      currentYear.value = new Date().getFullYear() + '/' + (new Date().getFullYear() + 1);
+    } else {
+      throw new Error('Empty response received from API');
     }
-  ];
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    throw error;
+  } finally {
+    loadingItems.value.stats = false;
+  }
 };
 
-const useSampleActivities = () => {
-  const now = new Date();
-  
-  activities.value = [
-    {
-      id: 1,
-      description: 'Ahmed El Mansouri a ajouté un nouvel utilisateur',
-      timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - 2, 30),
-      icon: 'pi pi-user-plus'
-    },
-    {
-      id: 2,
-      description: 'Nouvelle proposition de sujet par Sara Benjelloun',
-      timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - 5, 15),
-      icon: 'pi pi-file'
-    },
-    {
-      id: 3,
-      description: 'Modification du planning des soutenances',
-      timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 16, 45),
-      icon: 'pi pi-calendar'
-    },
-    {
-      id: 4,
-      description: 'Rapport de fin de semestre généré',
-      timestamp: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 10, 0),
-      icon: 'pi pi-chart-bar'
+const fetchUpcomingSoutenances = async () => {
+  loadingItems.value.soutenances = true;
+  try {
+    const response = await ApiService.get('/chef_de_departement/dashboard/upcoming-soutenances');
+    
+    if (response && Array.isArray(response)) {
+      upcomingSoutenances.value = response;
+    } else {
+      throw new Error('Invalid response format for upcoming soutenances');
     }
-  ];
+  } catch (error) {
+    console.error('Error fetching upcoming soutenances:', error);
+    throw error;
+  } finally {
+    loadingItems.value.soutenances = false;
+  }
+};
+
+const fetchRecentActivities = async () => {
+  loadingItems.value.activities = true;
+  try {
+    const response = await ApiService.get('/chef_de_departement/dashboard/activities');
+    
+    if (response && Array.isArray(response)) {
+      activities.value = response;
+    } else {
+      throw new Error('Invalid response format for recent activities');
+    }
+  } catch (error) {
+    console.error('Error fetching recent activities:', error);
+    throw error;
+  } finally {
+    loadingItems.value.activities = false;
+  }
 };
 
 // Fetch all data on component mount
-onMounted(async () => {
-  // Fetch all dashboard data
-  await Promise.all([
-    fetchDashboardStats(),
-    fetchUpcomingSoutenances(),
-    fetchRecentActivities()
-  ]);
+onMounted(() => {
+  loadDashboardData();
 });
 </script>
 
@@ -578,6 +465,54 @@ onMounted(async () => {
   margin: 0 auto;
   padding: 1rem;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-color-secondary);
+}
+
+/* Error container */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-container i {
+  font-size: 3rem;
+  color: #f44336;
+  margin-bottom: 1rem;
+}
+
+.error-container h3 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.error-container p {
+  color: var(--text-color-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Welcome card */
+.welcome-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--surface-card);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
 }
 
 /* Metrics grid */
@@ -783,15 +718,6 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-.loading-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  color: var(--text-color-secondary);
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -945,7 +871,8 @@ onMounted(async () => {
 /* Dark mode adjustments */
 .dark-mode .metric-card,
 .dark-mode .upcoming-soutenances,
-.dark-mode .recent-activities {
+.dark-mode .recent-activities,
+.dark-mode .welcome-card {
   background-color: rgba(255, 255, 255, 0.05);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -971,6 +898,19 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .welcome-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .welcome-info {
+    margin-bottom: 1rem;
+  }
+  
+  .user-avatar {
+    margin-left: 0;
+  }
+  
   .dashboard-sections {
     grid-template-columns: 1fr;
   }
@@ -1010,5 +950,31 @@ onMounted(async () => {
   .date-month {
     font-size: 1rem;
   }
+}
+
+.welcome-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.welcome-subtitle {
+  margin-top: 0.25rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
 }
 </style>
