@@ -1,3 +1,5 @@
+// Update to frontend/src/views/chefDeDepartement/ArchiveView.vue
+
 <template>
     <div class="archive-management">
         <Toast />
@@ -48,7 +50,27 @@
                     />
                 </div>
 
-                <div class="filiere-filter" v-if="selectedSection">
+                <!-- Account Type Filter -->
+                <div class="account-type-filter" v-if="selectedSection === 'comptes'">
+                    <h3>Type de compte</h3>
+                    <Dropdown
+                        v-model="selectedAccountType"
+                        :options="[
+                            { value: 'all', label: 'Tous les comptes' },
+                            { value: 'ETUDIANT', label: 'Étudiants' },
+                            { value: 'ENCADRANT', label: 'Encadrants' },
+                            { value: 'JURY', label: 'Jurys' }
+                        ]"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Choisir un type de compte"
+                        class="w-full"
+                        @change="loadSectionData"
+                    />
+                </div>
+                
+                <!-- Filière Filter -->
+<div class="filiere-filter" v-if="(selectedSection && selectedSection !== 'comptes') || (selectedSection === 'comptes' && selectedAccountType === 'ETUDIANT')">
                     <h3>Filière</h3>
                     <Dropdown
                         v-model="selectedFiliere"
@@ -96,8 +118,18 @@
                                 :sortable="column.sortable || false"
                                 :style="column.style || {}"
                             >
-                                <template #body="slotProps" v-if="column.template">
-                                    <component :is="column.template(slotProps.data)" />
+                                <template #body="slotProps">
+                                    <component 
+                                        v-if="column.template"
+                                        :is="column.template" 
+                                        :data="slotProps.data" 
+                                    />
+                                    <template v-else-if="column.body">
+                                        {{ column.body(slotProps.data) }}
+                                    </template>
+                                    <template v-else>
+                                        {{ getNestedValue(slotProps.data, column.field) }}
+                                    </template>
                                 </template>
                             </Column>
                         </DataTable>
@@ -110,7 +142,7 @@
         <ArchivePrintable
             v-if="isPrinting"
             :data="filteredData"
-            :columns="getColumns()"
+            :columns="getPrintColumns()"
             :title="getSectionTitle()"
             :academicYear="getSelectedYear()"
             :selectedFiliere="getSelectedFiliere()"
@@ -157,39 +189,123 @@ const availableSections = [
     { id: 'notes', label: 'Notes', icon: 'pi pi-chart-bar' }
 ];
 
+// Account type filter
+const selectedAccountType = ref('all');
+
 const filteredData = computed(() => {
     const query = searchQuery.value.toLowerCase();
     let data = [];
     
     switch (selectedSection.value) {
         case 'comptes':
-            data = sectionData.value.comptes || [];
+            // Get all accounts except CHEF_DE_DEPARTEMENT
+            data = (sectionData.value.comptes || []).filter(item => item.role !== 'CHEF_DE_DEPARTEMENT');
+            
+            // Apply account type filter
+            if (selectedAccountType.value !== 'all') {
+                data = data.filter(item => item.role === selectedAccountType.value);
+            }
+            
+            // Apply filière filter only for ETUDIANT accounts if a filière is selected
+            if (selectedAccountType.value === 'ETUDIANT' && selectedFiliere.value !== 'all') {
+                data = data.filter(item => item.filiereName && 
+                    (typeof item.filiereName === 'string' ? 
+                        item.filiereName === getSelectedFiliere() : 
+                        item.filiereName.id === selectedFiliere.value));
+            }
             break;
         case 'binomes':
             data = sectionData.value.binomes || [];
+            
+            // Apply filière filter if selected
+            if (selectedFiliere.value !== 'all') {
+                data = data.filter(item => {
+                    const filiereName = typeof item.filiereName === 'string' ? 
+                        item.filiereName : (item.filiereName?.nom || '');
+                    return filiereName === getSelectedFiliere();
+                });
+            }
             break;
         case 'sujets':
             data = sectionData.value.sujets || [];
+            
+            // Apply filière filter if selected
+            if (selectedFiliere.value !== 'all') {
+                data = data.filter(item => {
+                    const filiereName = typeof item.filiereName === 'string' ? 
+                        item.filiereName : (item.filiereName?.nom || '');
+                    return filiereName === getSelectedFiliere();
+                });
+            }
             break;
         case 'soutenances':
             data = sectionData.value.soutenances || [];
+            
+            // Apply filière filter if selected
+            if (selectedFiliere.value !== 'all') {
+                data = data.filter(item => {
+                    const binome = typeof item.binome === 'string' ? 
+                        tryParseJSON(item.binome) : item.binome;
+                    const filiereName = binome?.filiereName || '';
+                    return filiereName === getSelectedFiliere();
+                });
+            }
             break;
         case 'notes':
             data = sectionData.value.notes || [];
+            
+            // Apply filière filter if selected
+            if (selectedFiliere.value !== 'all') {
+                data = data.filter(item => {
+                    const filiereName = typeof item.filiereName === 'string' ? 
+                        item.filiereName : (item.filiereName?.nom || '');
+                    return filiereName === getSelectedFiliere();
+                });
+            }
             break;
     }
     
     if (query && data.length > 0) {
         // Generic search across all string fields
         data = data.filter(item => {
-            return Object.values(item).some(value => 
-                String(value).toLowerCase().includes(query)
-            );
+            return JSON.stringify(item).toLowerCase().includes(query);
         });
     }
     
-    return data;
+    return parseData(data);
 });
+
+// Parse any JSON string values into objects if needed
+function parseData(data) {
+    if (!data || !Array.isArray(data)) return [];
+    
+    return data.map(item => {
+        const parsedItem = { ...item };
+        
+        // Parse fields that might contain JSON strings
+        for (const key in parsedItem) {
+            if (typeof parsedItem[key] === 'string' && 
+                (parsedItem[key].startsWith('{') || parsedItem[key].startsWith('['))) {
+                try {
+                    parsedItem[key] = JSON.parse(parsedItem[key]);
+                } catch (e) {
+                    // Not valid JSON, keep as is
+                }
+            }
+        }
+        
+        return parsedItem;
+    });
+}
+
+// Get nested value from object using dot notation
+function getNestedValue(obj, path) {
+    if (!obj || !path) return '';
+    
+    const value = path.split('.').reduce((o, key) => o && o[key] !== undefined ? o[key] : null, obj);
+    return value !== null && value !== undefined ? value : '';
+}
+
 function getColumns() {
     switch (selectedSection.value) {
         case 'comptes':
@@ -197,55 +313,60 @@ function getColumns() {
                 { field: 'nom', header: 'Nom', sortable: true },
                 { field: 'prenom', header: 'Prénom', sortable: true },
                 { field: 'email', header: 'Email', sortable: true },
-                { 
-                    field: 'role', 
-                    header: 'Rôle', 
-                    sortable: true,
-                    body: (data) => getRoleLabel(data.role)
-                },
-                { field: 'cni', header: 'CNI', body: (data) => data.role !== 'ETUDIANT' ? data.cni : '-' },
-                { field: 'cne', header: 'CNE', body: (data) => data.role === 'ETUDIANT' ? data.cne : '-' },
-                { field: 'filiereName', header: 'Filière', body: (data) => data.role === 'ETUDIANT' ? data.filiereName : '-' }
+                { field: 'role', header: 'Rôle', sortable: true,
+                  body: (data) => getRoleLabel(data.role) },
+                { field: 'cni', header: 'CNI', 
+                  body: (data) => data.role !== 'ETUDIANT' ? data.cni : '-' },
+                { field: 'cne', header: 'CNE', 
+                  body: (data) => data.role === 'ETUDIANT' ? data.cne : '-' },
+                { field: 'filiereName', header: 'Filière', 
+                  body: (data) => data.role === 'ETUDIANT' ? 
+                    (typeof data.filiereName === 'string' ? data.filiereName : 
+                     (data.filiereName?.nom || '-')) : '-' }
             ];
         
         case 'binomes':
             return [
-                { 
-                    field: 'etudiant1', 
-                    header: 'Étudiant 1', 
-                    body: (data) => {
-                        if (data.etudiant1) {
-                            return `${data.etudiant1.nom || ''} ${data.etudiant1.prenom || ''}`.trim() || '-';
-                        }
-                        return '-';
+                { field: 'etudiant1', header: 'Étudiant 1', 
+                  body: (data) => {
+                    const etudiant = typeof data.etudiant1 === 'string' ? 
+                      tryParseJSON(data.etudiant1) : data.etudiant1;
+                    if (etudiant) {
+                        return `${etudiant.nom || ''} ${etudiant.prenom || ''}`.trim() || '-';
                     }
+                    return '-';
+                  }
                 },
-                { 
-                    field: 'etudiant2', 
-                    header: 'Étudiant 2', 
-                    body: (data) => {
-                        if (data.etudiant2) {
-                            return `${data.etudiant2.nom || ''} ${data.etudiant2.prenom || ''}`.trim() || '-';
-                        }
-                        return '-';
+                { field: 'etudiant2', header: 'Étudiant 2', 
+                  body: (data) => {
+                    const etudiant = typeof data.etudiant2 === 'string' ? 
+                      tryParseJSON(data.etudiant2) : data.etudiant2;
+                    if (etudiant) {
+                        return `${etudiant.nom || ''} ${etudiant.prenom || ''}`.trim() || '-';
                     }
+                    return '-';
+                  }
                 },
-                { 
-                    field: 'encadrant', 
-                    header: 'Encadrant', 
-                    body: (data) => {
-                        if (data.encadrant) {
-                            return `${data.encadrant.nom || ''} ${data.encadrant.prenom || ''}`.trim() || '-';
-                        }
-                        return '-';
+                { field: 'encadrant', header: 'Encadrant', 
+                  body: (data) => {
+                    const encadrant = typeof data.encadrant === 'string' ? 
+                      tryParseJSON(data.encadrant) : data.encadrant;
+                    if (encadrant) {
+                        return `${encadrant.nom || ''} ${encadrant.prenom || ''}`.trim() || '-';
                     }
+                    return '-';
+                  }
                 },
-                { 
-                    field: 'sujet', 
-                    header: 'Sujet', 
-                    body: (data) => data.sujet?.titre || '-'
+                { field: 'sujet', header: 'Sujet', 
+                  body: (data) => {
+                    const sujet = typeof data.sujet === 'string' ? 
+                      tryParseJSON(data.sujet) : data.sujet;
+                    return sujet?.titre || '-';
+                  }
                 },
-                { field: 'filiereName', header: 'Filière' }
+                { field: 'filiereName', header: 'Filière',
+                  body: (data) => typeof data.filiereName === 'string' ? 
+                    data.filiereName : (data.filiereName?.nom || '-') }
             ];
         
         case 'sujets':
@@ -253,75 +374,141 @@ function getColumns() {
                 { field: 'titre', header: 'Titre', sortable: true },
                 { field: 'theme', header: 'Thème', sortable: true },
                 { field: 'description', header: 'Description', style: { maxWidth: '300px' } },
-                { field: 'filiereName', header: 'Filière', sortable: true }
+                { field: 'filiereName', header: 'Filière', sortable: true,
+                  body: (data) => typeof data.filiereName === 'string' ? 
+                    data.filiereName : (data.filiereName?.nom || '-') }
             ];
         
         case 'soutenances':
             return [
-                { 
-                    field: 'date', 
-                    header: 'Date', 
-                    sortable: true, 
-                    body: (data) => data.date ? new Date(data.date).toLocaleDateString('fr-FR') : '-' 
+                { field: 'date', header: 'Date', sortable: true, 
+                  body: (data) => data.date ? new Date(data.date).toLocaleDateString('fr-FR') : '-' 
                 },
                 { field: 'heure', header: 'Heure', sortable: true },
-                { 
-                    field: 'salle', 
-                    header: 'Salle', 
-                    body: (data) => data.salle?.nom || '-'
+                { field: 'salle', header: 'Salle', 
+                  body: (data) => {
+                    const salle = typeof data.salle === 'string' ? 
+                      tryParseJSON(data.salle) : data.salle;
+                    return salle?.nom || '-';
+                  }
                 },
-                { 
-                    field: 'binome', 
-                    header: 'Binôme', 
-                    body: (data) => {
-                        if (!data.binome) return '-';
-                        let result = '';
-                        if (data.binome.etudiant1) {
-                            result += `${data.binome.etudiant1.nom || ''} ${data.binome.etudiant1.prenom || ''}`.trim();
-                        }
-                        if (data.binome.etudiant2) {
-                            result += result ? ' / ' : '';
-                            result += `${data.binome.etudiant2.nom || ''} ${data.binome.etudiant2.prenom || ''}`.trim();
-                        }
-                        return result || '-';
+                { field: 'binome', header: 'Binôme', 
+                  body: (data) => {
+                    const binome = typeof data.binome === 'string' ? 
+                      tryParseJSON(data.binome) : data.binome;
+                    if (!binome) return '-';
+                    
+                    let result = '';
+                    const etudiant1 = binome.etudiant1;
+                    const etudiant2 = binome.etudiant2;
+                    
+                    if (etudiant1) {
+                        result += `${etudiant1.nom || ''} ${etudiant1.prenom || ''}`.trim();
                     }
+                    if (etudiant2) {
+                        result += result ? ' / ' : '';
+                        result += `${etudiant2.nom || ''} ${etudiant2.prenom || ''}`.trim();
+                    }
+                    return result || '-';
+                  }
                 },
-                { 
-                    field: 'jury', 
-                    header: 'Jury', 
-                    body: (data) => {
-                        let result = '';
-                        if (data.jury1) {
-                            result += `${data.jury1.nom || ''} ${data.jury1.prenom || ''}`.trim();
-                        }
-                        if (data.jury2) {
-                            result += result ? ' / ' : '';
-                            result += `${data.jury2.nom || ''} ${data.jury2.prenom || ''}`.trim();
-                        }
-                        return result || '-';
+                { field: 'jury', header: 'Jury', 
+                  body: (data) => {
+                    let result = '';
+                    const jury1 = typeof data.jury1 === 'string' ? 
+                      tryParseJSON(data.jury1) : data.jury1;
+                    const jury2 = typeof data.jury2 === 'string' ? 
+                      tryParseJSON(data.jury2) : data.jury2;
+                    
+                    if (jury1) {
+                        result += `${jury1.nom || ''} ${jury1.prenom || ''}`.trim();
                     }
+                    if (jury2) {
+                        result += result ? ' / ' : '';
+                        result += `${jury2.nom || ''} ${jury2.prenom || ''}`.trim();
+                    }
+                    return result || '-';
+                  }
+                },
+                { field: 'filiere', header: 'Filière', 
+                  body: (data) => {
+                    const binome = typeof data.binome === 'string' ? 
+                      tryParseJSON(data.binome) : data.binome;
+                    return binome?.filiereName || '-';
+                  }
                 }
             ];
         
         case 'notes':
             return [
-                { field: 'etudiant.nom', header: 'Nom', sortable: true, body: (data) => data.etudiant?.nom || '-' },
-                { field: 'etudiant.prenom', header: 'Prénom', sortable: true, body: (data) => data.etudiant?.prenom || '-' },
-                { field: 'etudiant.cne', header: 'CNE', body: (data) => data.etudiant?.cne || '-' },
-                { field: 'noteRapport', header: 'Note Rapport', sortable: true, body: (data) => formatGrade(data.noteRapport) },
-                { field: 'noteSoutenance', header: 'Note Soutenance', sortable: true, body: (data) => formatGrade(data.noteSoutenance) },
-                { field: 'noteEncadrant', header: 'Note Encadrant', sortable: true, body: (data) => formatGrade(data.noteEncadrant) },
-                { field: 'noteFinale', header: 'Note Finale', sortable: true, body: (data) => formatGrade(calculateFinalGrade(data)) },
-                { field: 'filiereName', header: 'Filière', sortable: true }
+                { field: 'etudiant.nom', header: 'Nom', sortable: true, 
+                  body: (data) => {
+                    const etudiant = typeof data.etudiant === 'string' ? 
+                      tryParseJSON(data.etudiant) : data.etudiant;
+                    return etudiant?.nom || '-';
+                  }
+                },
+                { field: 'etudiant.prenom', header: 'Prénom', sortable: true,
+                  body: (data) => {
+                    const etudiant = typeof data.etudiant === 'string' ? 
+                      tryParseJSON(data.etudiant) : data.etudiant;
+                    return etudiant?.prenom || '-';
+                  }
+                },
+                { field: 'etudiant.cne', header: 'CNE',
+                  body: (data) => {
+                    const etudiant = typeof data.etudiant === 'string' ? 
+                      tryParseJSON(data.etudiant) : data.etudiant;
+                    return etudiant?.cne || '-';
+                  }
+                },
+                { field: 'noteRapport', header: 'Note Rapport', sortable: true, 
+                  body: (data) => formatGrade(data.noteRapport) 
+                },
+                { field: 'noteSoutenance', header: 'Note Soutenance', sortable: true, 
+                  body: (data) => formatGrade(data.noteSoutenance) 
+                },
+                { field: 'noteEncadrant', header: 'Note Encadrant', sortable: true, 
+                  body: (data) => formatGrade(data.noteEncadrant) 
+                },
+                { field: 'noteFinale', header: 'Note Finale', sortable: true, 
+                  body: (data) => formatGrade(calculateFinalGrade(data)) 
+                },
+                { field: 'filiereName', header: 'Filière', sortable: true,
+                  body: (data) => typeof data.filiereName === 'string' ? 
+                    data.filiereName : (data.filiereName?.nom || '-') }
             ];
         
         default:
             return [];
     }
 }
+
+// Get simplified columns for printing - remove sortable and style props
+function getPrintColumns() {
+    const columns = getColumns();
+    return columns.map(column => ({
+        field: column.field,
+        header: column.header,
+        body: column.body
+    }));
+}
+
 function getPaginatorTemplate() {
     const itemLabel = selectedSection.value === 'binomes' ? 'binômes' : selectedSection.value;
     return `Montrant {first} à {last} sur {totalRecords} ${itemLabel}`;
+}
+
+// Try to parse JSON, return null if parsing fails
+function tryParseJSON(jsonString) {
+    try {
+        if (typeof jsonString === 'string') {
+            return JSON.parse(jsonString);
+        }
+        return jsonString;
+    } catch (e) {
+        return null;
+    }
 }
 
 // Fetch metadata on mount
@@ -368,30 +555,30 @@ async function loadSectionData() {
         switch (selectedSection.value) {
             case 'comptes':
                 const comptes = await ApiService.get(
-                    `/chef_de_departement/archive/comptes/all/${selectedYear.value}`
+                    `/chef_de_departement/archive/comptes/${filiereParam}/${selectedYear.value}`
                 );
-                sectionData.value = { comptes: comptes.comptes };
+                sectionData.value = { comptes: comptes.comptes || [] };
                 break;
             
             case 'binomes':
                 const binomes = await ApiService.get(
                     `/chef_de_departement/archive/binomes/${filiereParam}/${selectedYear.value}`
                 );
-                sectionData.value = { binomes: binomes.binomes };
+                sectionData.value = { binomes: binomes.binomes || [] };
                 break;
             
             case 'sujets':
                 const sujets = await ApiService.get(
                     `/chef_de_departement/archive/sujets/${filiereParam}/${selectedYear.value}`
                 );
-                sectionData.value = { sujets: sujets.sujets };
+                sectionData.value = { sujets: sujets.sujets || [] };
                 break;
             
             case 'soutenances':
                 const soutenances = await ApiService.get(
                     `/chef_de_departement/archive/soutenances/${filiereParam}/${selectedYear.value}`
                 );
-                sectionData.value = { soutenances };
+                sectionData.value = { soutenances: soutenances || [] };
                 break;
             
             case 'notes':
@@ -399,8 +586,12 @@ async function loadSectionData() {
                     `/chef_de_departement/archive/notes/${filiereParam}/${selectedYear.value}`
                 );
                 sectionData.value = { 
-                    notes: notes.notes,
-                    pourcentages: notes.pourcentages
+                    notes: notes.notes || [],
+                    pourcentages: notes.pourcentages || {
+                        pourcentageRapport: 40,
+                        pourcentageSoutenance: 40,
+                        pourcentageEncadrant: 20
+                    }
                 };
                 break;
         }
@@ -466,7 +657,7 @@ function getSelectedFiliere() {
 }
 
 function formatGrade(grade) {
-    return grade !== null && grade !== undefined ? grade.toFixed(2) : '-';
+    return grade !== null && grade !== undefined ? parseFloat(grade).toFixed(2) : '-';
 }
 
 function calculateFinalGrade(note) {
@@ -474,10 +665,14 @@ function calculateFinalGrade(note) {
     
     const { pourcentageRapport, pourcentageSoutenance, pourcentageEncadrant } = sectionData.value.pourcentages;
     
+    const noteRapport = parseFloat(note.noteRapport || 0);
+    const noteSoutenance = parseFloat(note.noteSoutenance || 0);
+    const noteEncadrant = parseFloat(note.noteEncadrant || 0);
+    
     return (
-        note.noteRapport * (pourcentageRapport / 100) +
-        note.noteSoutenance * (pourcentageSoutenance / 100) +
-        note.noteEncadrant * (pourcentageEncadrant / 100)
+        noteRapport * (pourcentageRapport / 100) +
+        noteSoutenance * (pourcentageSoutenance / 100) +
+        noteEncadrant * (pourcentageEncadrant / 100)
     );
 }
 
