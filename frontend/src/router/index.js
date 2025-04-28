@@ -21,7 +21,8 @@ import SujetSelectionView from '@/views/etudiant/SujetSelectionView.vue'
 import DocumentSubmissionView from '@/views/etudiant/DocumentSubmissionView.vue'
 import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
 import EncadrantDocumentEvaluationView from '@/views/encadrant/EncadrantDocumentEvaluationView.vue'
-import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
+import ArchiveView from '@/views/chefDeDepartement/ArchiveView.vue'
+
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -111,6 +112,15 @@ const router = createRouter({
       path: '/management/settings',
       name: 'settings',
       component: SettingsView,
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'CHEF_DE_DEPARTEMENT'
+      }
+    },
+    {
+      path: '/management/archive',
+      name: 'archive',
+      component: ArchiveView,
       meta: {
         requiresAuth: true,
         requiresRole: 'CHEF_DE_DEPARTEMENT'

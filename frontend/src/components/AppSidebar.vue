@@ -243,6 +243,12 @@ const menuItems = computed(() => {
                 route: "/management/notes-management",
             },
             {
+                label: "Archive",
+                icon: "pi pi-building-columns",
+                command: () => router.push("/management/archive"),
+                route: "/management/archive",
+            },
+            {
                 label: "Paramètres",
                 icon: "pi pi-cog",
                 command: () => router.push("/management/settings"),
