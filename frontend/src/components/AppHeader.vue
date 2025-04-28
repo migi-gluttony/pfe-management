@@ -1,30 +1,30 @@
 <template>
-  <header v-if="!isAuthenticated" class="app-header">
+  <header v-if="!isAuthenticated" class="app-header" :class="{ 'header-hidden': isHeaderHidden }">
     <div class="logo-section">
       <div class="logo-container">
-        <!-- Primary Logo -->
-        <div class="logo-placeholder primary-logo">
-          <img src="@/assets/LogoESTFBS.png" alt="EST FBS Logo" />
-        </div>
-        <!-- Secondary Logo -->
-        <div class="logo-placeholder secondary-logo">
-          <img src="@/assets/pfe_man_logo_whole_final.svg" alt="USMS Logo" />
-        </div>
+        <router-link to="/" class="logo-link">
+          <!-- Primary Logo -->
+          <div class="logo-placeholder primary-logo">
+            <img src="@/assets/LogoESTFBS.png" alt="EST FBS Logo" />
+          </div>
+        </router-link>
+        <router-link to="/" class="logo-link">
+          <!-- Secondary Logo -->
+          <div class="logo-placeholder secondary-logo">
+            <img src="@/assets/pfe_man_logo_whole_final.svg" alt="USMS Logo" />
+          </div>
+        </router-link>
       </div>
     </div>
     
     <div class="content-section">
-      <div class="app-title">
-        <h1>Gestion des Projets de Fin d'Études</h1>
-      </div>
-      
       <div class="action-menu">
         <div class="">
           <Button 
             @click="navigateToLogin"
             class="p-button-text p-button-rounded" 
             icon="pi pi-sign-in" 
-            label="Connexion"
+            label="Se Connecter"
           />
         </div>
       </div>
@@ -34,7 +34,7 @@
 
 <script setup>
 // In AppHeader.vue
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AuthService from '../services/AuthService';
 import Button from 'primevue/button';
@@ -43,18 +43,41 @@ const router = useRouter();
 
 // Create a reactive reference to track authentication state
 const authState = ref(AuthService.isAuthenticated());
+const isHeaderHidden = ref(false);
+const lastScrollPosition = ref(0);
 
 // Function to update the auth state
 const updateAuthState = () => {
   authState.value = AuthService.isAuthenticated();
 };
 
+// Track scroll position for sticky header behavior
+const handleScroll = () => {
+  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  
+  // Show header when scrolling up, hide when scrolling down
+  if (currentScrollPosition < lastScrollPosition.value) {
+    isHeaderHidden.value = false;
+  } else if (currentScrollPosition > 50) {
+    isHeaderHidden.value = true;
+  }
+  
+  lastScrollPosition.value = currentScrollPosition;
+};
+
 // Auth state computed property that will be reactive
 const isAuthenticated = computed(() => authState.value);
 
-// Add an event listener for custom authentication events
+// Add event listeners
 onMounted(() => {
   window.addEventListener('auth-state-changed', updateAuthState);
+  window.addEventListener('scroll', handleScroll);
+});
+
+// Clean up event listeners
+onUnmounted(() => {
+  window.removeEventListener('auth-state-changed', updateAuthState);
+  window.removeEventListener('scroll', handleScroll);
 });
 
 // Navigation function
@@ -65,6 +88,8 @@ const navigateToLogin = () => {
 
 <style scoped>
 .app-header {
+    background-color: var(--background-color);
+
   display: flex;
   position: fixed;
   top: 0;
@@ -73,6 +98,11 @@ const navigateToLogin = () => {
   height: 75px;
   z-index: 1000;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.header-hidden {
+  transform: translateY(-100%);
 }
 
 .logo-section {
@@ -110,7 +140,7 @@ const navigateToLogin = () => {
 
 .content-section {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex: 1;
   padding: 0 1.5rem;
@@ -118,24 +148,11 @@ const navigateToLogin = () => {
   border-bottom: 1px solid var(--surface-border);
 }
 
-.app-title {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-}
-
-.app-title h1 {
-  font-size: 1.2rem;
-  margin: 0;
-  color: var(--text-color);
-  font-weight: 600;
-  text-align: center;
-}
-
 .action-menu {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: auto;
 }
 
 /* Responsive Adjustments */
@@ -156,20 +173,12 @@ const navigateToLogin = () => {
     order: 2;
     padding: 0.75rem 1rem;
   }
-  
-  .app-title h1 {
-    font-size: 1rem;
-  }
 }
 
 @media (max-width: 480px) {
   .logo-placeholder {
     height: 40px;
     width: 40px;
-  }
-  
-  .app-title h1 {
-    font-size: 0.85rem;
   }
   
   .logo-container {

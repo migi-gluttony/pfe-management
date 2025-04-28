@@ -22,12 +22,19 @@ import DocumentSubmissionView from '@/views/etudiant/DocumentSubmissionView.vue'
 import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
 import EncadrantDocumentEvaluationView from '@/views/encadrant/EncadrantDocumentEvaluationView.vue'
 import ArchiveView from '@/views/chefDeDepartement/ArchiveView.vue'
+import LandingPage from '@/views/LandingPage.vue'
 
 // Create router instance
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     // Public routes (no authentication required)
+    {
+      path:'/',
+      name:'',
+      component: LandingPage,
+      meta: { guest: true }
+    },
     {
       path: '/login',
       name: 'login',
@@ -217,12 +224,6 @@ const router = createRouter({
         requiresRole: 'ETUDIANT'
       }
     },
-    // Redirect root to dashboard
-    {
-      path: '/',
-      redirect: '/dashboard'
-    },
-
     // Catch-all route for 404
     {
       path: '/:pathMatch(.*)*',
@@ -266,5 +267,14 @@ router.beforeEach((to, from, next) => {
     next();
   }
 })
+
+router.beforeEach((to, from, next) => {
+  if (to.name === '' || to.path === '/') {
+    document.body.classList.add('landing-page');
+  } else {
+    document.body.classList.remove('landing-page');
+  }
+  next();
+});
 
 export default router

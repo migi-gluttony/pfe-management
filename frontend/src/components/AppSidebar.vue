@@ -144,7 +144,7 @@ const logout = () => {
     AuthService.logout();
     // Emit a custom event that components can listen to
     window.dispatchEvent(new CustomEvent("auth-state-changed"));
-    router.push("/login");
+    router.push("/");
 };
 
 // Navigation helper functions

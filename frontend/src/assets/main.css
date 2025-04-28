@@ -42,6 +42,11 @@ html, body {
   padding: 1rem;
 }
 
+/* Remove padding specifically for landing page */
+.landing-page #app {
+  padding: 0;
+}
+
 /* Component layout helpers */
 .component {
   margin-bottom: var(--component-spacing);
@@ -93,6 +98,11 @@ p {
 @media (min-width: 768px) {
   #app {
     padding: 2rem;
+  }
+  
+  /* Override padding for landing page at larger screens too */
+  .landing-page #app {
+    padding: 0;
   }
   
   .component-card {
