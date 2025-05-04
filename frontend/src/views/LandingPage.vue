@@ -5,16 +5,18 @@
       <div class="hero-content">
         <h1 class="hero-title">Gestion des Projets de Fin d'Études</h1>
         <p class="hero-subtitle">
-          Plateforme complète pour la gestion, le suivi et l'évaluation 
+          Plateforme complète pour la gestion, le suivi et l'évaluation
           des PFE au sein du département de mathématiques/informatique à l'ESTFBS
         </p>
         <div class="hero-buttons">
           <Button label="Se Connecter" icon="pi pi-user" class="p-button-rounded" @click="navigateTo('/login')" />
-          <Button label="En Savoir Plus" icon="pi pi-info-circle" class="p-button-rounded p-button-outlined" @click="scrollToFeatures" />
+          <Button label="En Savoir Plus" icon="pi pi-info-circle" class="p-button-rounded p-button-outlined"
+            @click="scrollToFeatures" />
         </div>
       </div>
       <div class="hero-image">
-        <img src="@/assets/illustrations/college project-amico (2).svg" alt="Étudiants travaillant sur un projet" class="hero-img" />
+        <img src="@/assets/illustrations/college project-amico (2).svg" alt="Étudiants travaillant sur un projet"
+          class="hero-img" />
       </div>
     </div>
 
@@ -41,13 +43,6 @@
         <div class="stat-value">30+</div>
         <div class="stat-label">Encadrants</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-icon">
-          <i class="pi pi-building"></i>
-        </div>
-        <div class="stat-value">15+</div>
-        <div class="stat-label">Partenaires</div>
-      </div>
     </div>
 
     <!-- Features Section -->
@@ -65,7 +60,7 @@
           <h3>Formation des Binômes</h3>
           <p>Système de requêtes pour former et valider des binômes, avec options de travail individuel.</p>
         </div>
-        
+
         <div class="feature-card">
           <div class="feature-icon">
             <i class="pi pi-list"></i>
@@ -73,7 +68,7 @@
           <h3>Gestion des Sujets</h3>
           <p>Catalogue de sujets par filière avec possibilité de proposer de nouveaux sujets.</p>
         </div>
-        
+
         <div class="feature-card">
           <div class="feature-icon">
             <i class="pi pi-chart-line"></i>
@@ -81,7 +76,7 @@
           <h3>Suivi des Projets</h3>
           <p>Dépôt de documents intermédiaires et tableau de bord pour visualiser l'avancement.</p>
         </div>
-        
+
         <div class="feature-card">
           <div class="feature-icon">
             <i class="pi pi-calendar"></i>
@@ -89,7 +84,7 @@
           <h3>Planification des Soutenances</h3>
           <p>Organisation des soutenances avec affectation des jurys et salles.</p>
         </div>
-        
+
         <div class="feature-card">
           <div class="feature-icon">
             <i class="pi pi-check-square"></i>
@@ -97,7 +92,7 @@
           <h3>Système d'Évaluation</h3>
           <p>Notation des rapports et soutenances avec pondération configurable.</p>
         </div>
-        
+
         <div class="feature-card">
           <div class="feature-icon">
             <i class="pi pi-file"></i>
@@ -138,7 +133,8 @@
         <Button label="Commencer" icon="pi pi-arrow-right" class="p-button-rounded" @click="navigateTo('/login')" />
       </div>
       <div class="image-half">
-        <img src="@/assets/illustrations/college students-rafiki.svg" alt="Étudiants collaborant" class="rounded-image" />
+        <img src="@/assets/illustrations/college students-rafiki.svg" alt="Étudiants collaborant"
+          class="rounded-image" />
       </div>
     </div>
 
@@ -180,7 +176,8 @@
     <div class="cta-section">
       <h2>Prêt à optimiser la gestion de vos PFE ?</h2>
       <p>Rejoignez la plateforme utilisée par le département de mathématiques/informatique à l'ESTFBS</p>
-      <Button label="Se Connecter" icon="pi pi-sign-in" class="p-button-rounded p-button-lg" @click="navigateTo('/login')" />
+      <Button label="Se Connecter" icon="pi pi-sign-in" class="p-button-rounded p-button-lg"
+        @click="navigateTo('/login')" />
     </div>
 
     <!-- Footer -->
@@ -191,14 +188,6 @@
       <div class="logo-text">
         <h3>PFE Management</h3>
         <p>Système de Gestion des Projets de Fin d'Études</p>
-      </div>
-    </div>
-    
-    <div class="footer-logo estfbs-logo">
-      <img src="@/assets/LogoESTFBS.png" alt="Logo ESTFBS" class="logo-img" />
-      <div class="contact-info">
-        <p><i class="pi pi-map-marker"></i> Hay Tighnari, Route nationale N11 de Casablanca commune de Fkih Ben Salah, Boite Postale 336</p>
-        <p><i class="pi pi-globe"></i> <a href="https://estfbs.usms.ac.ma" target="_blank">estfbs.usms.ac.ma</a></p>
       </div>
     </div>
     
@@ -220,6 +209,24 @@
       <p><i class="pi pi-envelope"></i> pfe.management@usms.ma</p>
     </div>
   </div>
+  
+  <div class="footer-map-section"><div class="map-info">
+      <div class="footer-logo estfbs-logo">
+        <img src="@/assets/LogoESTFBS.png" alt="Logo ESTFBS" class="logo-img" />
+        <div class="contact-info">
+                  <h3>Ecole Supérieure de Technologie Fkih Ben Salah</h3>
+          <p><i class="pi pi-map-marker"></i> Hay Tighnari, Route nationale N11 de Casablanca commune de Fkih Ben Salah, Boite Postale 336</p>
+          <p><i class="pi pi-globe"></i> <a href="https://estfbs.usms.ac.ma" target="_blank">https://estfbs.usms.ac.ma</a></p>
+        </div>
+      </div>
+    </div>
+    <div class="map-container">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3561.499118935203!2d-6.6659375!3d32.5163125!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xda46bc6644b9563%3A0x6ee82fe090e3e2f6!2sEST%20FKIH%20BEN%20SALEH!5e1!3m2!1sen!2sma!4v1745966594307!5m2!1sen!2sma" 
+        width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    
+  </div>
+  
   <div class="footer-bottom">
     <p>&copy; 2025 EST Fkih Ben Salah. Tous droits réservés.</p>
   </div>
@@ -247,8 +254,8 @@ export default {
 
     // Scroll to features section
     const scrollToFeatures = () => {
-      document.getElementById('features').scrollIntoView({ 
-        behavior: 'smooth' 
+      document.getElementById('features').scrollIntoView({
+        behavior: 'smooth'
       });
     };
 
@@ -520,6 +527,31 @@ export default {
   margin: 0 auto 2rem;
 }
 
+/* Nouvelle section pour la carte */
+.footer-map-section {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto 2rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.map-container {
+  flex: 3;
+  min-width: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.map-info {
+  flex: 2;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .footer-logo {
   flex: 1;
   min-width: 200px;
@@ -698,6 +730,10 @@ export default {
   .footer-logo, .footer-links, .footer-contact {
     flex: 1 0 40%;
   }
+  
+  .map-container, .map-info {
+    flex: 1 0 100%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -761,6 +797,10 @@ export default {
   
   .contact-info p {
     justify-content: center;
+  }
+  
+  .map-container {
+    height: 250px;
   }
 }
 

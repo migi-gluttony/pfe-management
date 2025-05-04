@@ -269,7 +269,7 @@ router.beforeEach((to, from, next) => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === '' || to.path === '/') {
+  if (to.name === '' || to.path === '/'||to.path==='/login') {
     document.body.classList.add('landing-page');
   } else {
     document.body.classList.remove('landing-page');

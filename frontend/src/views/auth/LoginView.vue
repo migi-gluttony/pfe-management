@@ -162,8 +162,7 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 90vh;
-  padding: 1rem;
+  min-height: 100vh;
 }
 
 .login-form {

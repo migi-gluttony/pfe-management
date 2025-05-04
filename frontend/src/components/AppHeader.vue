@@ -16,16 +16,12 @@
         </router-link>
       </div>
     </div>
-    
+
     <div class="content-section">
       <div class="action-menu">
         <div class="">
-          <Button 
-            @click="navigateToLogin"
-            class="p-button-text p-button-rounded" 
-            icon="pi pi-sign-in" 
-            label="Se Connecter"
-          />
+          <Button @click="navigateToLogin" class="p-button-text p-button-rounded" icon="pi pi-sign-in"
+            label="Se Connecter" />
         </div>
       </div>
     </div>
@@ -54,14 +50,14 @@ const updateAuthState = () => {
 // Track scroll position for sticky header behavior
 const handleScroll = () => {
   const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-  
+
   // Show header when scrolling up, hide when scrolling down
   if (currentScrollPosition < lastScrollPosition.value) {
     isHeaderHidden.value = false;
   } else if (currentScrollPosition > 50) {
     isHeaderHidden.value = true;
   }
-  
+
   lastScrollPosition.value = currentScrollPosition;
 };
 
@@ -88,8 +84,7 @@ const navigateToLogin = () => {
 
 <style scoped>
 .app-header {
-    background-color: var(--background-color);
-
+  background-color: var(--background-color);
   display: flex;
   position: fixed;
   top: 0;
@@ -97,22 +92,28 @@ const navigateToLogin = () => {
   right: 0;
   height: 75px;
   z-index: 1000;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 2px 5px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease;
+  margin: 10px;
+  border-radius: calc(1rem + 3px);
 }
 
 .header-hidden {
-  transform: translateY(-100%);
+  transform: translateY(-130%);
 }
 
 .logo-section {
-  width: 250px; /* Match sidebar width */
-  height: 100%;
+  width: 250px;
+  /* Match sidebar width */
+  height: calc(100%-6px);
   background-color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--surface-border);
+  /* border-bottom: 1px solid var(--surface-border); */
+  margin: 3px;
+  border-radius: 1rem;
+  overflow: hidden;
 }
 
 .logo-container {
@@ -134,7 +135,7 @@ const navigateToLogin = () => {
 .logo-placeholder img {
   max-height: 100%;
   object-fit: contain;
-  filter: brightness(0) invert(1); 
+  filter: brightness(0) invert(1);
   /* Makes logos white */
 }
 
@@ -161,13 +162,13 @@ const navigateToLogin = () => {
     flex-direction: column;
     height: auto;
   }
-  
+
   .logo-section {
     width: 100%;
     padding: 0.5rem 0;
     order: 1;
   }
-  
+
   .content-section {
     width: 100%;
     order: 2;
@@ -180,7 +181,7 @@ const navigateToLogin = () => {
     height: 40px;
     width: 40px;
   }
-  
+
   .logo-container {
     padding: 0 0.5rem;
   }

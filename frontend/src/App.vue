@@ -134,7 +134,7 @@ body {
 .main-layout {
   display: flex;
   flex: 1;
-  padding-top: var(--header-height);
+  /* padding-top: var(--header-height); */
 }
 
 /* Remove top padding when header is not present */
