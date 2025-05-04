@@ -23,6 +23,7 @@ import ReportSubmissionView from '@/views/etudiant/ReportSubmissionView.vue'
 import EncadrantDocumentEvaluationView from '@/views/encadrant/EncadrantDocumentEvaluationView.vue'
 import ArchiveView from '@/views/chefDeDepartement/ArchiveView.vue'
 import LandingPage from '@/views/LandingPage.vue'
+import ProfileView from '@/views/ProfileView.vue';
 
 // Create router instance
 const router = createRouter({
@@ -30,8 +31,8 @@ const router = createRouter({
   routes: [
     // Public routes (no authentication required)
     {
-      path:'/',
-      name:'',
+      path: '/',
+      name: '',
       component: LandingPage,
       meta: { guest: true }
     },
@@ -58,6 +59,12 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
       meta: { requiresAuth: true }
     },
     // CHEF_DE_DEPARTEMENT routes
@@ -269,7 +276,7 @@ router.beforeEach((to, from, next) => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === '' || to.path === '/'||to.path==='/login') {
+  if (to.name === '' || to.path === '/' || to.path === '/login') {
     document.body.classList.add('landing-page');
   } else {
     document.body.classList.remove('landing-page');

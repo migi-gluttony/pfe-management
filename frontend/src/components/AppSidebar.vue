@@ -1,25 +1,13 @@
 <template>
-    <aside
-        v-if="isAuthenticated"
-        class="app-sidebar"
-        :class="{ collapsed: collapsed }"
-    >
+    <aside v-if="isAuthenticated" class="app-sidebar" :class="{ collapsed: collapsed }">
         <div class="sidebar-content">
             <!-- Logo section with collapse toggle -->
             <div class="sidebar-logo">
                 <!-- Full logo (visible when expanded) -->
                 <template v-if="!collapsed">
                     <router-link to="/" class="logo-link">
-                        <img
-                            v-if="isDarkMode"
-                            src="@/assets/logo/full_dark.svg"
-                            alt="pfe management"
-                        />
-                        <img
-                            v-else
-                            src="@/assets/logo/full_light.svg"
-                            alt="pfe management"
-                        />
+                        <img v-if="isDarkMode" src="@/assets/logo/full_dark.svg" alt="pfe management" />
+                        <img v-else src="@/assets/logo/full_light.svg" alt="pfe management" />
                     </router-link>
                     <button class="collapse-btn" @click="toggleSidebar">
                         <i class="pi pi-angle-double-left"></i>
@@ -29,16 +17,8 @@
                 <!-- Small logo (visible when collapsed) -->
                 <template v-else>
                     <router-link to="/" class="logo-link">
-                        <img
-                            v-if="isDarkMode"
-                            src="@/assets/logo/full_dark.svg"
-                            alt="pfe management"
-                        />
-                        <img
-                            v-else
-                            src="@/assets/logo/full_light.svg"
-                            alt="pfe management"
-                        />
+                        <img v-if="isDarkMode" src="@/assets/logo/full_dark.svg" alt="pfe management" />
+                        <img v-else src="@/assets/logo/full_light.svg" alt="pfe management" />
                     </router-link>
                 </template>
             </div>
@@ -52,14 +32,9 @@
 
             <!-- Menu items -->
             <div class="sidebar-menu">
-                <div
-                    v-for="(item, index) in menuItems"
-                    :key="index"
-                    class="menu-item"
-                    :class="{ active: isActiveRoute(item.route) }"
-                    @click="navigateTo(item.command)"
-                    :title="collapsed ? item.label : ''"
-                >
+                <div v-for="(item, index) in menuItems" :key="index" class="menu-item"
+                    :class="{ active: isActiveRoute(item.route) }" @click="navigateTo(item.command)"
+                    :title="collapsed ? item.label : ''">
                     <i :class="item.icon"></i>
                     <span v-if="!collapsed">{{ item.label }}</span>
                 </div>
@@ -67,11 +42,12 @@
 
             <!-- Logout button -->
             <div class="sidebar-footer">
-                <div
-                    class="menu-item logout-item"
-                    @click="logout"
-                    :title="collapsed ? 'Déconnexion' : ''"
-                >
+                <div class="menu-item" @click="router.push('/profile')" :class="{ active: isActiveRoute('/profile') }"
+                    :title="collapsed ? 'Profil' : ''">
+                    <i class="pi pi-user-edit"></i>
+                    <span v-if="!collapsed">Mon Profil</span>
+                </div>
+                <div class="menu-item logout-item" @click="logout" :title="collapsed ? 'Déconnexion' : ''">
                     <i class="pi pi-sign-out"></i>
                     <span v-if="!collapsed">Déconnexion</span>
                 </div>
