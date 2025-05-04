@@ -1,4 +1,4 @@
-// Update to frontend/src/views/chefDeDepartement/ArchiveView.vue
+// Updated frontend/src/views/chefDeDepartement/ArchiveView.vue
 
 <template>
     <div class="archive-management">
@@ -34,8 +34,11 @@
             </div>
         </div>
 
+        <!-- Loading Indicator -->
+        <ProgressSpinner v-if="initialLoading" class="loading-spinner" />
+
         <!-- Main Content with Sidebar -->
-        <div class="archive-content" v-if="selectedYear">
+        <div class="archive-content" v-if="selectedYear && !initialLoading">
             <!-- Sidebar for Section Selection -->
             <div class="sidebar no-print">
                 <h3>Sections</h3>
@@ -70,7 +73,7 @@
                 </div>
                 
                 <!-- Filière Filter -->
-<div class="filiere-filter" v-if="(selectedSection && selectedSection !== 'comptes') || (selectedSection === 'comptes' && selectedAccountType === 'ETUDIANT')">
+                <div class="filiere-filter" v-if="(selectedSection && selectedSection !== 'comptes') || (selectedSection === 'comptes' && selectedAccountType === 'ETUDIANT')">
                     <h3>Filière</h3>
                     <Dropdown
                         v-model="selectedFiliere"
@@ -165,6 +168,7 @@ import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
+import ProgressSpinner from 'primevue/progressspinner';
 
 // Component state
 const academicYears = ref([]);
@@ -174,8 +178,12 @@ const selectedSection = ref(null);
 const selectedFiliere = ref('all');
 const searchQuery = ref('');
 const loading = ref(false);
+const initialLoading = ref(true);
 const sectionData = ref({});
 const isPrinting = ref(false);
+
+// Default section to show
+const DEFAULT_SECTION = 'comptes';
 
 // Services
 const toast = useToast();
@@ -511,9 +519,34 @@ function tryParseJSON(jsonString) {
     }
 }
 
+// Find and return the latest academic year
+function findLatestAcademicYear(years) {
+    if (!years || years.length === 0) return null;
+    
+    // Sort years by ID assuming higher ID = newer year
+    // Alternatively, sort by academic year string if in format "YYYY-YYYY"
+    return years.sort((a, b) => {
+        // Try to extract start year from format "YYYY-YYYY"
+        const aYear = a.annee && a.annee.includes('-') ? 
+            parseInt(a.annee.split('-')[0]) : 0;
+        const bYear = b.annee && b.annee.includes('-') ? 
+            parseInt(b.annee.split('-')[0]) : 0;
+            
+        // If years can be compared, use that, otherwise fall back to ID comparison
+        if (aYear && bYear) {
+            return bYear - aYear; // Descending order
+        }
+        
+        // Fall back to ID comparison (assuming higher ID = newer)
+        return b.id - a.id;
+    })[0];
+}
+
 // Fetch metadata on mount
 onMounted(async () => {
+    initialLoading.value = true;
     await fetchArchiveMetadata();
+    initialLoading.value = false;
 });
 
 // Methods
@@ -523,6 +556,20 @@ async function fetchArchiveMetadata() {
         const response = await ApiService.get('/chef_de_departement/archive/metadata');
         academicYears.value = response.academicYears;
         filieres.value = response.filieres;
+        
+        // Select the latest academic year by default
+        if (academicYears.value.length > 0) {
+            const latestYear = findLatestAcademicYear(academicYears.value);
+            if (latestYear) {
+                selectedYear.value = latestYear.id;
+                
+                // Set default section
+                selectedSection.value = DEFAULT_SECTION;
+                
+                // Load data for the selected year and section
+                await loadSectionData();
+            }
+        }
     } catch (error) {
         handleApiError(error, 'Erreur lors du chargement des métadonnées');
     } finally {
@@ -531,9 +578,16 @@ async function fetchArchiveMetadata() {
 }
 
 async function onYearChange() {
-    selectedSection.value = null;
+    // If no section is selected, use default
+    if (!selectedSection.value) {
+        selectedSection.value = DEFAULT_SECTION;
+    }
+    
     selectedFiliere.value = 'all';
     sectionData.value = {};
+    
+    // Load data for the selected year and section
+    await loadSectionData();
 }
 
 async function selectSection(sectionId) {
@@ -727,13 +781,18 @@ function handleApiError(error, defaultMessage) {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    margin: 2rem auto;
+}
+
 .archive-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #eee;
 }
 
 .header-actions {
@@ -789,9 +848,10 @@ function handleApiError(error, defaultMessage) {
 .section-button.active {
     background-color: var(--primary-color);
     color: white;
+    border-color: var(--primary-color);
 }
 
-.filiere-filter {
+.filiere-filter , .account-type-filter {
     margin-top: 2rem;
 }
 
