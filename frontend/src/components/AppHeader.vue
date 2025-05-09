@@ -20,7 +20,7 @@
     <div class="content-section">
       <div class="action-menu">
         <div class="">
-          <Button @click="navigateToLogin" class="p-button-text p-button-rounded" icon="pi pi-sign-in"
+          <Button @click="navigateToLogin" class="custom-green-button " outlined icon="pi pi-sign-in"
             label="Se Connecter" />
         </div>
       </div>
@@ -186,4 +186,29 @@ const navigateToLogin = () => {
     padding: 0 0.5rem;
   }
 }
+
+
+
+/* Custom button  */
+.custom-green-button {
+  height: 3.5rem;
+  width: 12rem;
+  font-size: large;
+  border-radius: 1rem;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Target the hover state specifically with high specificity */
+.custom-green-button:hover,
+.p-button.custom-green-button:enabled:hover,
+.p-button.p-button-rounded.custom-green-button:enabled:hover {
+  color: var(--primary-color)!important;
+  border-color: var(--primary-color)!important;
+background-color: rgba(var(--primary-color-rgb), 0.05)!important;
+}
+
+
+
+
 </style>

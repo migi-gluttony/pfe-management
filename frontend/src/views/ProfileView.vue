@@ -1,14 +1,4 @@
-// Format date for display
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('fr-FR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(date);
-}<template>
+<template>
   <div class="profile-view">
     <Toast />
     <ConfirmDialog />
@@ -369,34 +359,11 @@ async function changePassword() {
     }
   });
 }
-
-// Fetch additional user details on mount
-onMounted(async () => {
-  if (user.value && user.value.userId) {
-    loadingProfile.value = true;
-    try {
-      // Fetch complete user profile from API
-      const profileData = await ApiService.get(`/auth/profile`);
-      userProfile.value = profileData;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Impossible de charger les informations du profil',
-        life: 3000
-      });
-    } finally {
-      loadingProfile.value = false;
-    }
-  }
-});
 </script>
 
 <style scoped>
 .profile-view {
   width: 100%;
-  max-width: 1200px;
   margin: 0 auto;
 }
 

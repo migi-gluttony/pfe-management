@@ -10,6 +10,8 @@
   --text-color: #213547;
   --background-color: #ffffff;
   --primary-color: #4f46e5;
+    --primary-color-rgb: 79,70,229; /* #4f46e5 converted to RGB */
+
   --secondary-color: #8b5cf6;
   --border-color: #e5e7eb;
   --component-spacing: 1.5rem;
@@ -20,6 +22,8 @@
   --text-color: #e5e7eb;
   --background-color: #1e1e1e;
   --primary-color: #818cf8;
+    --primary-color-rgb: 129,140,248; /* #818cf8 converted to RGB */
+
   --secondary-color: #a78bfa;
   --border-color: #4b5563;
 }

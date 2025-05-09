@@ -7,7 +7,6 @@
                 responsiveLayout="scroll"
                 stripedRows
                 :paginator="filteredNotes.length > 10"
-                class="data-table"
                 :rows="10"
                 paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
                 :rowsPerPageOptions="[10, 20, 50]"

@@ -3,19 +3,20 @@
     <!-- Hero Section -->
     <div class="hero-section">
       <div class="hero-content">
-        <h1 class="hero-title">Gestion des Projets de Fin d'Études</h1>
+        <h1 class="hero-title">pfe management</h1>
+        <h2>Gestion des Projets de Fin d'Études</h2>
         <p class="hero-subtitle">
           Plateforme complète pour la gestion, le suivi et l'évaluation
           des PFE au sein du département de mathématiques/informatique à l'ESTFBS
         </p>
         <div class="hero-buttons">
-          <Button label="Se Connecter" icon="pi pi-user" class="p-button-rounded" @click="navigateTo('/login')" />
-          <Button label="En Savoir Plus" icon="pi pi-info-circle" class="p-button-rounded p-button-outlined"
-            @click="scrollToFeatures" />
+          <Button label="Se Connecter" icon="pi pi-user" class="p-button-rounded custom-green-button"
+            @click="navigateTo('/login')" /> <Button label="En Savoir Plus" icon="pi pi-info-circle"
+            class="p-button-rounded p-button-outlined en-savoir-button custom-green-button-2" @click="scrollToFeatures" />
         </div>
       </div>
       <div class="hero-image">
-        <img src="@/assets/illustrations/college project-amico (2).svg" alt="Étudiants travaillant sur un projet"
+        <img src="@/assets/illustrations/graduation hats-bro.svg" alt="Étudiants travaillant sur un projet"
           class="hero-img" />
       </div>
     </div>
@@ -130,7 +131,7 @@
             <span>Notifications pour les dates importantes</span>
           </li>
         </ul>
-        <Button label="Commencer" icon="pi pi-arrow-right" class="p-button-rounded" @click="navigateTo('/login')" />
+        <Button label="Commencer" icon="pi pi-arrow-right" class="custom-green-button-3 p-button-rounded" @click="navigateTo('/login')" />
       </div>
       <div class="image-half">
         <img src="@/assets/illustrations/college students-rafiki.svg" alt="Étudiants collaborant"
@@ -168,7 +169,7 @@
             <span>Communication facilitée avec les étudiants</span>
           </li>
         </ul>
-        <Button label="Découvrir" icon="pi pi-arrow-right" class="p-button-rounded" @click="navigateTo('/login')" />
+        <Button label="Découvrir" icon="pi pi-arrow-right" class="custom-green-button-3 p-button-rounded" @click="navigateTo('/login')" />
       </div>
     </div>
 
@@ -176,61 +177,66 @@
     <div class="cta-section">
       <h2>Prêt à optimiser la gestion de vos PFE ?</h2>
       <p>Rejoignez la plateforme utilisée par le département de mathématiques/informatique à l'ESTFBS</p>
-      <Button label="Se Connecter" icon="pi pi-sign-in" class="p-button-rounded p-button-lg"
+      <Button label="Se Connecter" icon="pi pi-sign-in" class="custom-green-button-2 p-button-rounded p-button-lg"
         @click="navigateTo('/login')" />
     </div>
 
     <!-- Footer -->
-<footer class="landing-footer">
-  <div class="footer-content">
-    <div class="footer-logo">
-      <img src="@/assets/pfe_man_logo_whole_final.svg" alt="Logo PFE" class="logo-img" />
-      <div class="logo-text">
-        <h3>PFE Management</h3>
-        <p>Système de Gestion des Projets de Fin d'Études</p>
-      </div>
-    </div>
-    
-    <div class="footer-links">
-      <h4>Navigation</h4>
-      <ul>
-        <li><a href="#" @click.prevent="navigateTo('/')">Accueil</a></li>
-        <li><a href="#" @click.prevent="scrollToFeatures">Fonctionnalités</a></li>
-        <li><a href="#" @click.prevent="navigateTo('/login')">Se connecter</a></li>
-        <li><a href="#" @click.prevent="navigateTo('/reset-password')">Mot de passe oublié</a></li>
-      </ul>
-    </div>
-    
-    <div class="footer-contact">
-      <h4>Contact</h4>
-      <p><i class="pi pi-envelope"></i> estfbs@usms.ma</p>
-      <p><i class="pi pi-phone"></i> +212 5 23 43 46 66</p>
-      <p><i class="pi pi-phone"></i> +212 5 23 43 49 99</p>
-      <p><i class="pi pi-envelope"></i> pfe.management@usms.ma</p>
-    </div>
-  </div>
-  
-  <div class="footer-map-section"><div class="map-info">
-      <div class="footer-logo estfbs-logo">
-        <img src="@/assets/LogoESTFBS.png" alt="Logo ESTFBS" class="logo-img" />
-        <div class="contact-info">
-                  <h3>Ecole Supérieure de Technologie Fkih Ben Salah</h3>
-          <p><i class="pi pi-map-marker"></i> Hay Tighnari, Route nationale N11 de Casablanca commune de Fkih Ben Salah, Boite Postale 336</p>
-          <p><i class="pi pi-globe"></i> <a href="https://estfbs.usms.ac.ma" target="_blank">https://estfbs.usms.ac.ma</a></p>
+    <footer class="landing-footer">
+      <div class="footer-content">
+        <div class="footer-logo">
+          <img src="@/assets/pfe_man_logo_whole_final.svg" alt="Logo PFE" class="logo-img" />
+          <div class="logo-text">
+            <h3>PFE Management</h3>
+            <p>Système de Gestion des Projets de Fin d'Études</p>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="#" @click.prevent="navigateTo('/')">Accueil</a></li>
+            <li><a href="#" @click.prevent="scrollToFeatures">Fonctionnalités</a></li>
+            <li><a href="#" @click.prevent="navigateTo('/login')">Se connecter</a></li>
+            <li><a href="#" @click.prevent="navigateTo('/reset-password')">Mot de passe oublié</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-contact">
+          <h4>Contact</h4>
+          <p><i class="pi pi-envelope"></i> estfbs@usms.ma</p>
+          <p><i class="pi pi-phone"></i> +212 5 23 43 46 66</p>
+          <p><i class="pi pi-phone"></i> +212 5 23 43 49 99</p>
+          <p><i class="pi pi-envelope"></i> pfe.management@usms.ma</p>
         </div>
       </div>
-    </div>
-    <div class="map-container">
-      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3561.499118935203!2d-6.6659375!3d32.5163125!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xda46bc6644b9563%3A0x6ee82fe090e3e2f6!2sEST%20FKIH%20BEN%20SALEH!5e1!3m2!1sen!2sma!4v1745966594307!5m2!1sen!2sma" 
-        width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    </div>
-    
-  </div>
-  
-  <div class="footer-bottom">
-    <p>&copy; 2025 EST Fkih Ben Salah. Tous droits réservés.</p>
-  </div>
-</footer>
+
+      <div class="footer-map-section">
+        <div class="map-info">
+          <div class="footer-logo estfbs-logo">
+            <img src="@/assets/LogoESTFBS.png" alt="Logo ESTFBS" class="logo-img" />
+            <div class="contact-info">
+              <h3>Ecole Supérieure de Technologie Fkih Ben Salah</h3>
+              <p><i class="pi pi-map-marker"></i> Hay Tighnari, Route nationale N11 de Casablanca commune de Fkih Ben
+                Salah, Boite Postale 336</p>
+              <p><i class="pi pi-globe"></i> <a href="https://estfbs.usms.ac.ma"
+                  target="_blank">https://estfbs.usms.ac.ma</a></p>
+            </div>
+          </div>
+        </div>
+        <div class="map-container">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3561.499118935203!2d-6.6659375!3d32.5163125!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xda46bc6644b9563%3A0x6ee82fe090e3e2f6!2sEST%20FKIH%20BEN%20SALEH!5e1!3m2!1sen!2sma!4v1745966594307!5m2!1sen!2sma"
+            width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 EST Fkih Ben Salah. Tous droits réservés.</p>
+      </div>
+    </footer>
 
   </div>
 </template>
@@ -286,10 +292,16 @@ export default {
 .hero-section {
   display: flex;
   align-items: center;
-  padding: 4rem 2rem;
-  padding-top: calc(75px + 2rem); /* Fixed header height */
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  color: white;
+  justify-content: space-around;
+  padding: 4rem 6rem;
+  padding-top: calc(75px + 3rem);
+  /* Fixed header height */
+  /*background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);*/
+  background: var(--background-color);
+
+  /* color: white; */
+  color: var(--text-color);
+
   border-radius: 0 0 2rem 2rem;
   gap: 2rem;
   margin: 0;
@@ -301,9 +313,11 @@ export default {
 }
 
 .hero-title {
-  font-size: 2.5rem;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-style: italic;
+  font-size: 5.2rem;
   margin-bottom: 1rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .hero-subtitle {
@@ -318,16 +332,20 @@ export default {
   gap: 1rem;
 }
 
+.en-savoir-button {
+  border: none;
+}
+
 .hero-image {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
 }
 
 .hero-img {
   max-width: 100%;
-  width: 50%;
+  width: 60%;
   transition: transform 0.3s;
 }
 
@@ -431,7 +449,8 @@ export default {
 }
 
 /* Students and Faculty Sections */
-.students-section, .faculty-section {
+.students-section,
+.faculty-section {
   display: flex;
   align-items: center;
   padding: 5rem 2rem;
@@ -495,8 +514,8 @@ export default {
 .cta-section {
   text-align: center;
   padding: 5rem 2rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  color: white;
+  /* background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); */
+  color: var(--text-color);
   border-radius: 2rem 2rem 0 0;
   margin: 0;
 }
@@ -608,13 +627,15 @@ export default {
   text-decoration: underline;
 }
 
-.footer-links, .footer-contact {
+.footer-links,
+.footer-contact {
   flex: 1;
   min-width: 200px;
   margin-bottom: 1.5rem;
 }
 
-.footer-links h4, .footer-contact h4 {
+.footer-links h4,
+.footer-contact h4 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
   color: var(--text-color);
@@ -622,7 +643,8 @@ export default {
   padding-bottom: 0.5rem;
 }
 
-.footer-links h4:after, .footer-contact h4:after {
+.footer-links h4:after,
+.footer-contact h4:after {
   content: "";
   position: absolute;
   left: 0;
@@ -727,11 +749,15 @@ export default {
 }
 
 @media (max-width: 992px) {
-  .footer-logo, .footer-links, .footer-contact {
+
+  .footer-logo,
+  .footer-links,
+  .footer-contact {
     flex: 1 0 40%;
   }
-  
-  .map-container, .map-info {
+
+  .map-container,
+  .map-info {
     flex: 1 0 100%;
   }
 }
@@ -743,62 +769,66 @@ export default {
     padding: 3rem 1rem;
     padding-top: calc(60px + 1rem);
   }
-  
+
   .hero-title {
     font-size: 2rem;
   }
-  
+
   .hero-buttons {
     justify-content: center;
   }
-  
+
   .stats-strip {
     flex-wrap: wrap;
     transform: translateY(0);
     margin-top: 2rem;
   }
-  
+
   .stat-item {
     flex: 1 0 40%;
   }
-  
-  .students-section, .faculty-section {
+
+  .students-section,
+  .faculty-section {
     flex-direction: column;
     padding: 3rem 1rem;
   }
-  
+
   .faculty-section {
     flex-direction: column-reverse;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
-  
-  .footer-logo, .footer-links, .footer-contact {
+
+  .footer-logo,
+  .footer-links,
+  .footer-contact {
     flex: 1 0 100%;
     text-align: center;
   }
-  
-  .footer-links h4:after, .footer-contact h4:after {
+
+  .footer-links h4:after,
+  .footer-contact h4:after {
     left: 50%;
     transform: translateX(-50%);
   }
-  
+
   .footer-links ul {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-  
+
   .footer-contact p {
     justify-content: center;
   }
-  
+
   .contact-info p {
     justify-content: center;
   }
-  
+
   .map-container {
     height: 250px;
   }
@@ -808,17 +838,85 @@ export default {
   .hero-title {
     font-size: 1.8rem;
   }
-  
+
   .hero-buttons {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .stat-item {
     flex: 1 0 100%;
   }
-  
-  .section-header h2, .cta-section h2 {
+
+  .section-header h2,
+  .cta-section h2 {
     font-size: 1.8rem;
   }
-}</style>
+}
+
+/* Custom button  */
+.custom-green-button {
+  height: 3.5rem;
+  width: 12rem;
+  font-size: large;
+  border-radius: 1rem;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: rgba(0, 0, 0, 0);
+}
+
+/* Target the hover state specifically with high specificity */
+.custom-green-button:hover,
+.p-button.custom-green-button:enabled:hover,
+.p-button.p-button-rounded.custom-green-button:enabled:hover {
+  color: var(--primary-color)!important;
+  border-color: var(--primary-color)!important;
+background-color: rgba(var(--primary-color-rgb), 0.05)!important;
+}
+
+
+/* Custom button  */
+.custom-green-button-2 {
+  height: 3.5rem;
+  width: 12rem;
+  font-size: large;
+  border-radius: 1rem;
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background-color: rgba(0, 0, 0, 0);
+
+}
+
+/* Target the hover state specifically with high specificity */
+.custom-green-button-2:hover,
+.p-button.custom-green-button-2:enabled:hover,
+.p-button.p-button-rounded.custom-green-button-2:enabled:hover {
+  color: var(--primary-color) !important;
+border: none;  background-color: rgba(var(--primary-color-rgb), 0.05) !important;
+}
+/* Custom button  */
+.custom-green-button-3 {
+  height: 3rem;
+  width: 10rem;
+  font-size: large;
+  border-radius: 1rem;
+  color: var(--primary-color);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+border-color: var(--primary-color);  
+  background-color: rgba(0,0,0, 0) !important;
+
+}
+
+/* Target the hover state specifically with high specificity */
+.custom-green-button-3:hover,
+.p-button.custom-green-button-3:enabled:hover,
+.p-button.p-button-rounded.custom-green-button-3:enabled:hover {
+  color: var(--primary-color) !important;
+border-top: none;
+  border-left: none;
+  border-right: none;
+border-color: var(--primary-color);   background-color: rgba(var(--primary-color-rgb), 0.05) !important;
+}
+</style>
