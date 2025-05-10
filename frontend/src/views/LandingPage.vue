@@ -292,7 +292,7 @@ export default {
 .hero-section {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-evenly;
   padding: 4rem 6rem;
   padding-top: calc(75px + 3rem);
   /* Fixed header height */
@@ -309,15 +309,20 @@ export default {
 
 .hero-content {
   flex: 1;
-  max-width: 600px;
+  max-width: 60%;
 }
 
 .hero-title {
   font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   font-style: italic;
-  font-size: 5.2rem;
+  font-size: 6.3rem;
   margin-bottom: 1rem;
   font-weight: 600;
+  background: linear-gradient(to right, #4f46e5, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-left: 0.5rem;
 }
 
 .hero-subtitle {
@@ -339,7 +344,7 @@ export default {
 .hero-image {
   flex: 1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
 }
 

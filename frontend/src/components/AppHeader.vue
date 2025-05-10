@@ -92,7 +92,7 @@ const navigateToLogin = () => {
   right: 0;
   height: 75px;
   z-index: 1000;
-  box-shadow: 4px 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 2px 2px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
   margin: 10px;
   border-radius: calc(1rem + 3px);
