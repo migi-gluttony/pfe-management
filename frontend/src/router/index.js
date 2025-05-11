@@ -40,19 +40,19 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView,
-      meta: { guest: true }
+      meta: { guest: true, hideHeader: true }  // Add hideHeader meta
     },
     {
       path: '/reset-password',
       name: 'resetPassword',
       component: PasswordResetRequestView,
-      meta: { guest: true }
+      meta: { guest: true, hideHeader: true }  // Add hideHeader meta
     },
     {
       path: '/reset-password-confirm',
       name: 'resetPasswordConfirm',
       component: PasswordResetConfirmView,
-      meta: { guest: true }
+      meta: { guest: true, hideHeader: true }  // Add hideHeader meta
     },
     // Protected routes (authentication required)
     {
@@ -276,7 +276,7 @@ router.beforeEach((to, from, next) => {
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.name === '' || to.path === '/' || to.path === '/login') {
+  if (to.name === '' || to.path === '/' || to.path === '/login' || to.path === '/reset-password' || to.path === '/reset-password-confirm') {
     document.body.classList.add('landing-page');
   } else {
     document.body.classList.remove('landing-page');

@@ -1,59 +1,102 @@
 <template>
-  <div class="login-container">
-    <div class="component-card login-form">
-      <h1 class="text-center">Connexion</h1>
-      <div class="form-wrapper">
-        <form @submit.prevent="handleLogin">
-          <div class="form-group mb-3">
-            <label for="email">Adresse e-mail</label>
+  <div class="auth-container">
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="brand-logo">
+                  <router-link to="/" class="logo-link">
+
+          <img src="@/assets/pfe_man_logo_whole_final.svg" alt="Logo" class="logo-img" />
+                  </router-link>
+
+        </div>
+        <div class="auth-illustration">
+          <img src="@/assets/illustrations/Security On-pana.svg" alt="Login Illustration" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h2>Bienvenue</h2>
+          <p>Connectez-vous à votre compte</p>
+        </div>
+        
+        <form @submit.prevent="handleLogin" class="auth-form">
+          <div class="form-group">
+            <label for="email" class="form-label">
+              <i class="pi pi-envelope"></i>
+              Adresse e-mail
+            </label>
             <InputText 
               id="email" 
               v-model="email" 
               type="email" 
-              class="w-full"
+              class="form-input"
               :class="{ 'p-invalid': validationErrors.email }" 
               aria-describedby="email-error"
-              placeholder="Entrez votre adresse e-mail"
+              placeholder="votrenom@usms.ac.ma"
               required    
             />
-            <small id="email-error" class="p-error">{{ validationErrors.email }}</small>
+            <small id="email-error" class="p-error form-error">{{ validationErrors.email }}</small>
           </div>
 
-          <div class="form-group mb-3">
-            <div class="flex justify-content-between">
-              <label for="password">Mot de passe</label>
-            </div>
+          <div class="form-group">
+            <label for="password" class="form-label">
+              <i class="pi pi-lock"></i>
+              Mot de passe
+            </label>
             <Password 
               id="password" 
               v-model="password" 
               :feedback="false"
               toggleMask
-              class="w-full" 
+              class="form-input password-input" 
               :class="{ 'p-invalid': validationErrors.password }"
               aria-describedby="password-error"
               placeholder="Entrez votre mot de passe"
               required
             />
-            <small id="password-error" class="p-error">{{ validationErrors.password }}</small>
-            <div class="flex justify-content-between">
-              <router-link to="/reset-password" class="forgot-password mt-4">Mot de passe oublié ?</router-link>
+            <small id="password-error" class="p-error form-error">{{ validationErrors.password }}</small>
+          </div>
+
+          <div class="form-options">
+            <div class="remember-me">
+              <Checkbox 
+                v-model="rememberMe" 
+                :binary="true" 
+                inputId="rememberMe"
+                class="custom-checkbox"
+              />
+              <label for="rememberMe" class="remember-label">Se souvenir de moi</label>
             </div>
+            <router-link to="/reset-password" class="forgot-link">
+              Mot de passe oublié ?
+            </router-link>
           </div>
 
           <Button 
             type="submit" 
-            label="Se connecter" 
+            :label="loading ? 'Connexion...' : 'Se connecter'" 
             icon="pi pi-sign-in" 
-            class="w-full p-button-text p-button-rounded" 
+            class="submit-button" 
             :loading="loading"
+            :disabled="loading"
           />
         </form>
         
-        <div v-if="errorMessage" class="error-message mt-3 p-error">
+        <div v-if="errorMessage" class="error-message">
+          <i class="pi pi-exclamation-circle"></i>
           {{ errorMessage }}
+        </div>
+
+        <div class="auth-footer">
+<p>Première utilisation ?</p>
+<p class="contact-text">Pour activer votre compte, veuillez créer un mot de passe via le lien de réinitialisation</p>
         </div>
       </div>
     </div>
+    
     <Toast />
   </div>
 </template>
@@ -63,6 +106,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import AuthService from '@/services/AuthService';
+import Checkbox from 'primevue/checkbox';
 
 const router = useRouter();
 const route = useRoute();
@@ -78,7 +122,6 @@ const validationErrors = ref({
 });
 
 onMounted(() => {
-  // If already logged in, redirect to dashboard
   if (AuthService.isAuthenticated()) {
     router.push('/dashboard');
   }
@@ -91,7 +134,6 @@ const validateForm = () => {
     password: ''
   };
 
-  // Email validation
   if (!email.value) {
     validationErrors.value.email = 'L\'adresse e-mail est requise';
     isValid = false;
@@ -100,7 +142,6 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // Password validation
   if (!password.value) {
     validationErrors.value.password = 'Le mot de passe est requis';
     isValid = false;
@@ -118,10 +159,8 @@ const handleLogin = async () => {
     loading.value = true;
     errorMessage.value = '';
 
-    // Call the AuthService login method
     await AuthService.login(email.value, password.value, rememberMe.value);
     
-    // Show success message
     toast.add({
       severity: 'success',
       summary: 'Connecté',
@@ -129,16 +168,12 @@ const handleLogin = async () => {
       life: 3000
     });
     
-    // Check if there's a redirect query parameter
     const redirectTo = route.query.redirect || '/dashboard';
-    
-    // Redirect to the dashboard or the intended route
     router.push(redirectTo);
     
   } catch (error) {
     console.error('Login error:', error);
     
-    // Handle specific error messages from the backend
     if (error.message) {
       errorMessage.value = error.message;
     } else {
@@ -158,57 +193,297 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
+.auth-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 100vh;
+  background-color: var(--background-color);
 }
 
-.login-form {
-  max-width: 480px;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 0.5s ease-out;
+.auth-left {
+  flex: 1;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+.auth-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-.form-wrapper {
-  padding: 1.5rem 1rem;
+.auth-left-content {
+  text-align: center;
+  color: white;
+  z-index: 1;
+  padding: 2rem;
 }
 
-.form-group {
+.brand-logo {
   margin-bottom: 1.5rem;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+.logo-img {
+  height: 150px;
+  filter: brightness(0) invert(1);
 }
 
-.forgot-password {
-  font-size: 0.875rem;
+
+
+
+
+.auth-illustration {
+  margin-top: 2rem;
+}
+
+.auth-illustration img {
+  max-width: 76%;
+  width: 730px;
+  filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
+}
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+  background: var(--surface-card);
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.auth-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  color: var(--text-color-secondary);
+  font-size: 1rem;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.form-label i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--surface-border);
+  background: var(--surface-ground);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.form-error {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.remember-label {
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.forgot-link {
   color: var(--primary-color);
   text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.forgot-password:hover {
+.forgot-link:hover {
   text-decoration: underline;
 }
 
-.error-message {
-  text-align: center;
-  padding: 0.75rem;
-  border-radius: 0.25rem;
-  background-color: rgba(244, 67, 54, 0.1);
+.submit-button {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(var(--primary-color-rgb), 0.3);
 }
 
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--primary-color-rgb), 0.4);
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-message {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 10px;
+  color: #f44336;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.auth-footer p {
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.contact-text {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Password input styling */
 :deep(.p-password-input) {
   width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--surface-border);
+  background: var(--surface-ground);
+  transition: all 0.2s ease;
+}
+
+:deep(.p-password-input:focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+:deep(.p-password .p-icon) {
+  color: var(--text-color-secondary);
+}
+
+/* Checkbox styling */
+:deep(.p-checkbox .p-checkbox-box) {
+  border-radius: 6px;
+  border: 2px solid var(--surface-border);
+}
+
+:deep(.p-checkbox .p-checkbox-box.p-highlight) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .auth-left {
+    display: none;
+  }
+  
+  .auth-right {
+    flex: 1;
+  }
+  
+  .auth-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .auth-header h2 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card {
+  animation: fadeIn 0.6s ease both;
+}
+
+.auth-left-content {
+  animation: fadeIn 0.8s ease both;
+  animation-delay: 0.2s;
 }
 </style>

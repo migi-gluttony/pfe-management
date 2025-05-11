@@ -3,11 +3,11 @@
     'dark-mode': isDarkMode, 
     'sidebar-collapsed': sidebarCollapsed,
     'sidebar-visible': isAuthenticated,
-    'no-header': isAuthenticated
+    'no-header': isAuthenticated || hideHeader
   }">
-    <AppHeader />
+    <AppHeader v-if="!hideHeader" />
     
-    <div class="main-layout" :class="{ 'no-header': isAuthenticated }">
+    <div class="main-layout" :class="{ 'no-header': isAuthenticated || hideHeader }">
       <AppSidebar 
         v-if="isAuthenticated"
         :collapsed="sidebarCollapsed"
@@ -31,13 +31,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { RouterView } from 'vue-router';
+import { ref, onMounted, computed, watch } from 'vue';
+import { RouterView, useRoute } from 'vue-router';
 import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Button from 'primevue/button';
 import { ThemeService } from '@/services/ThemeService';
 import AuthService from '@/services/AuthService';
+
+// Get route instance
+const route = useRoute();
 
 // Sidebar state
 const sidebarCollapsed = ref(false);
@@ -47,6 +50,11 @@ const isAuthenticated = ref(AuthService.isAuthenticated());
 
 // Theme state
 const isDarkMode = ref(false);
+
+// Computed property to check if header should be hidden
+const hideHeader = computed(() => {
+  return route.meta.hideHeader === true;
+});
 
 // Toggle sidebar collapsed state
 const toggleSidebar = () => {

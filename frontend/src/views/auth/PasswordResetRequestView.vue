@@ -1,111 +1,140 @@
 <template>
-  <div class="login-container">
-    <div class="component-card login-form">
-      <h1 class="text-center">Réinitialisation de mot de passe</h1>
-      <div class="form-wrapper">
-        <form @submit.prevent="handleResetRequest">
-          <!-- Email input -->
-          <div class="form-group mb-3">
-            <label for="email">Adresse e-mail</label>
-            <div class="p-input-icon-left w-full">
-              <InputText 
-                id="email" 
-                v-model="email" 
-                :class="{ 'p-invalid': validationErrors.email }"
-                class="w-full" 
-                placeholder="votrenom.efb@usms.ac.ma" 
-                aria-describedby="email-error"
-              />
-            </div>
-            <small id="email-error" class="p-error">{{ validationErrors.email }}</small>
+  <div class="auth-container">
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="brand-logo">
+        <router-link to="/" class="logo-link">
+
+          <img src="@/assets/pfe_man_logo_whole_final.svg" alt="Logo" class="logo-img" />
+                  </router-link>
+
+        </div>
+        <div class="auth-illustration">
+          <img src="@/assets/illustrations/Forgot password-rafiki.svg" alt="Password Reset Illustration" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="auth-right">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="back-button">
+            <router-link to="/login" class="back-link">
+              <i class="pi pi-arrow-left"></i>
+              Retour
+            </router-link>
+          </div>
+          <h2>Mot de passe oublié ?</h2>
+          <p>Vérifiez votre identité pour réinitialiser votre mot de passe</p>
+        </div>
+        
+        <form @submit.prevent="handleResetRequest" class="auth-form">
+          <div class="form-group">
+            <label for="email" class="form-label">
+              <i class="pi pi-envelope"></i>
+              Adresse e-mail (e-mail universitaire)
+            </label>
+            <InputText 
+              id="email" 
+              v-model="email" 
+              type="email"
+              class="form-input"
+              :class="{ 'p-invalid': validationErrors.email }"
+              placeholder="votrenom.efb@usms.ac.ma" 
+              aria-describedby="email-error"
+            />
+            <small id="email-error" class="p-error form-error">{{ validationErrors.email }}</small>
           </div>
           
-          <!-- Date de naissance -->
-          <div class="form-group mb-3">
-            <label for="dateNaissance">Date de naissance</label>
+          <div class="form-group">
+            <label for="dateNaissance" class="form-label">
+              <i class="pi pi-calendar"></i>
+              Date de naissance
+            </label>
             <Calendar 
               id="dateNaissance" 
               v-model="dateNaissance" 
               :class="{ 'p-invalid': validationErrors.dateNaissance }"
               dateFormat="dd/mm/yy"
-              class="w-full" 
+              class="form-input calendar-input" 
               placeholder="JJ/MM/AAAA"
               showIcon
               autocomplete="bday"
-
               aria-describedby="dateNaissance-error"
             />
-            <small id="dateNaissance-error" class="p-error">{{ validationErrors.dateNaissance }}</small>
+            <small id="dateNaissance-error" class="p-error form-error">{{ validationErrors.dateNaissance }}</small>
           </div>
           
-          <!-- Identification type selection (CNE or CNI) -->
-          <div class="form-group mb-3">
-            <label>Type d'identification</label>
-            <div class="p-selectbutton-sm w-full">
-              <SelectButton v-model="identificationType" :options="identificationOptions" optionLabel="label" class="w-full" />
+          <div class="form-group">
+            <label class="form-label">Type d'identification</label>
+            <div class="id-type-selector">
+              <div 
+                v-for="option in identificationOptions" 
+                :key="option.value"
+                class="id-option"
+                :class="{ active: identificationType.value === option.value }"
+                @click="identificationType = option"
+              >
+                <i :class="option.icon"></i>
+                <span>{{ option.label }}</span>
+              </div>
             </div>
           </div>
           
-          <!-- CNI input (for ENCADRANT, JURY, CHEF_DE_DEPARTEMENT) -->
-          <div v-if="identificationType.value === 'cni'" class="form-group mb-3">
-            <label for="cni">Numéro CNI</label>
-            <div class="p-input-icon-left w-full">
-              <InputText 
-                id="cni" 
-                v-model="cni" 
-                :class="{ 'p-invalid': validationErrors.cni }"
-                class="w-full" 
-                placeholder="Entrez votre numéro CNI" 
-                aria-describedby="cni-error"
-              />
-            </div>
-            <small id="cni-error" class="p-error">{{ validationErrors.cni }}</small>
+          <div v-if="identificationType.value === 'cni'" class="form-group">
+            <label for="cni" class="form-label">
+              <i class="pi pi-id-card"></i>
+              Numéro CNI
+            </label>
+            <InputText 
+              id="cni" 
+              v-model="cni" 
+              class="form-input"
+              :class="{ 'p-invalid': validationErrors.cni }"
+              placeholder="Entrez votre numéro CNI" 
+              aria-describedby="cni-error"
+            />
+            <small id="cni-error" class="p-error form-error">{{ validationErrors.cni }}</small>
           </div>
           
-          <!-- CNE input (for ETUDIANT) -->
-          <div v-if="identificationType.value === 'cne'" class="form-group mb-3">
-            <label for="cne">Numéro CNE</label>
-            <div class="p-input-icon-left w-full">
-              <InputText 
-                id="cne" 
-                v-model="cne" 
-                :class="{ 'p-invalid': validationErrors.cne }"
-                class="w-full" 
-                placeholder="Entrez votre numéro CNE" 
-                aria-describedby="cne-error"
-              />
-            </div>
-            <small id="cne-error" class="p-error">{{ validationErrors.cne }}</small>
+          <div v-if="identificationType.value === 'cne'" class="form-group">
+            <label for="cne" class="form-label">
+              <i class="pi pi-id-card"></i>
+              Numéro CNE
+            </label>
+            <InputText 
+              id="cne" 
+              v-model="cne" 
+              class="form-input"
+              :class="{ 'p-invalid': validationErrors.cne }"
+              placeholder="Entrez votre numéro CNE" 
+              aria-describedby="cne-error"
+            />
+            <small id="cne-error" class="p-error form-error">{{ validationErrors.cne }}</small>
           </div>
           
-          <!-- Submit button -->
           <Button 
             type="submit" 
-            label="Vérifier l'identité" 
+            :label="loading ? 'Vérification...' : 'Vérifier mon identité'" 
             icon="pi pi-check-circle" 
-            class="w-full p-button-text p-button-rounded" 
+            class="submit-button" 
             :loading="loading"
+            :disabled="loading"
           />
-          
-          <!-- Back to login link -->
-          <div class="mt-3 text-center">
-            <router-link to="/login" class="forgot-password">
-              <i class="pi pi-arrow-left"></i> Retour à la page de connexion
-            </router-link>
-          </div>
         </form>
         
-        <!-- Error message -->
-        <div v-if="errorMessage" class="error-message mt-3 p-error">
+        <div v-if="errorMessage" class="error-message">
+          <i class="pi pi-exclamation-circle"></i>
           {{ errorMessage }}
         </div>
         
-        <!-- Success message -->
-        <div v-if="successMessage" class="success-message mt-3 p-success">
+        <div v-if="successMessage" class="success-message">
+          <i class="pi pi-check-circle"></i>
           {{ successMessage }}
         </div>
       </div>
     </div>
+    
     <Toast position="top-center" />
   </div>
 </template>
@@ -116,21 +145,17 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import AuthService from '@/services/AuthService';
 import Calendar from 'primevue/calendar';
-import SelectButton from 'primevue/selectbutton';
 
-import DatePicker from 'primevue/datepicker';
-
-// Component state
 const router = useRouter();
 const toast = useToast();
 const email = ref('');
 const dateNaissance = ref(null);
 const cni = ref('');
 const cne = ref('');
-const identificationType = ref({ value: 'cni', label: 'CNI (Enseignants)' });
+const identificationType = ref({ value: 'cni', label: 'CNI (Enseignants)', icon: 'pi pi-briefcase' });
 const identificationOptions = ref([
-  { value: 'cni', label: 'CNI (Enseignants)' },
-  { value: 'cne', label: 'CNE (Étudiants)' }
+  { value: 'cni', label: 'CNI (Enseignants)', icon: 'pi pi-briefcase' },
+  { value: 'cne', label: 'CNE (Étudiants)', icon: 'pi pi-graduation-cap' }
 ]);
 
 const loading = ref(false);
@@ -144,15 +169,12 @@ const validationErrors = ref({
 });
 const resetToken = ref('');
 
-// On component mount
 onMounted(() => {
-  // If already logged in, redirect to dashboard
   if (AuthService.isAuthenticated()) {
     router.push('/dashboard');
   }
 });
 
-// Form validation
 const validateForm = () => {
   let isValid = true;
   validationErrors.value = {
@@ -162,7 +184,6 @@ const validateForm = () => {
     cne: ''
   };
 
-  // Email validation
   if (!email.value) {
     validationErrors.value.email = 'L\'email est requis';
     isValid = false;
@@ -171,13 +192,11 @@ const validateForm = () => {
     isValid = false;
   }
 
-  // Date de naissance validation
   if (!dateNaissance.value) {
     validationErrors.value.dateNaissance = 'La date de naissance est requise';
     isValid = false;
   }
 
-  // ID validation based on type
   if (identificationType.value.value === 'cni') {
     if (!cni.value) {
       validationErrors.value.cni = 'Le numéro CNI est requis';
@@ -193,7 +212,6 @@ const validateForm = () => {
   return isValid;
 };
 
-// Handle reset request
 const handleResetRequest = async () => {
   if (!validateForm()) {
     return;
@@ -204,22 +222,17 @@ const handleResetRequest = async () => {
     errorMessage.value = '';
     successMessage.value = '';
 
-    // Prepare reset request data
     const resetData = {
       email: email.value,
       dateNaissance: dateNaissance.value,
-      // Include only the appropriate ID type
       ...(identificationType.value.value === 'cni' ? { cni: cni.value } : { cne: cne.value })
     };
 
-    // Call API to request password reset
     const response = await AuthService.requestPasswordReset(resetData);
     
-    // Store the token for the next step
     if (response.token) {
       resetToken.value = response.token;
       
-      // Show success message
       successMessage.value = 'Vérification réussie. Vous allez être redirigé vers la page de réinitialisation du mot de passe.';
       
       toast.add({
@@ -229,7 +242,6 @@ const handleResetRequest = async () => {
         life: 3000
       });
       
-      // Redirect to reset confirmation page with token
       setTimeout(() => {
         router.push({
           name: 'resetPasswordConfirm',
@@ -240,7 +252,6 @@ const handleResetRequest = async () => {
   } catch (error) {
     console.error('Password reset request error:', error);
     
-    // Handle error messages
     if (error.message) {
       errorMessage.value = error.message;
     } else {
@@ -260,69 +271,329 @@ const handleResetRequest = async () => {
 </script>
 
 <style scoped>
-.login-container {
+.auth-container {
   display: flex;
-  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+.auth-left {
+  flex: 1;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  display: flex;
   align-items: center;
-  min-height: 90vh;
-  padding: 1rem;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.login-form {
-  max-width: 35%;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 0.5s ease-out;
+.auth-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+.auth-left-content {
+  text-align: center;
+  color: white;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
 }
 
-.form-wrapper {
-  padding: 1.5rem 1rem;
-}
-
-.form-group {
+.brand-logo {
+  margin-top: 2rem;
   margin-bottom: 1.5rem;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+.logo-img {
+  height: 150px;
+  filter: brightness(0) invert(1);
 }
 
-.forgot-password {
-  font-size: 0.875rem;
-  color: var(--primary-color);
+
+
+
+
+.auth-illustration {
+  margin-top: 2rem;
+}
+
+.auth-illustration img {
+  max-width: 76%;
+  width: 730px;
+  filter: drop-shadow(0 10px 25px rgba(0,0,0,0.1));
+}
+
+
+.auth-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 650px;
+  background: var(--surface-card);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  top: -10px;
+}
+
+.back-link {
+  color: var(--text-color-secondary);
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
-.forgot-password:hover {
-  text-decoration: underline;
+.back-link:hover {
+  color: var(--primary-color);
+  transform: translateX(-5px);
+}
+
+.auth-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  color: var(--text-color-secondary);
+  font-size: 1rem;
+}
+
+.auth-form {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.form-label i {
+  color: var(--primary-color);
+  font-size: 1rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--surface-border);
+  background: var(--surface-ground);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.form-error {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.id-type-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.id-option {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid var(--surface-border);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.id-option i {
+  font-size: 1.5rem;
+  color: var(--text-color-secondary);
+}
+
+.id-option span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color-secondary);
+}
+
+.id-option.active {
+  border-color: var(--primary-color);
+  background-color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.id-option.active i,
+.id-option.active span {
+  color: var(--primary-color);
+}
+
+.id-option:hover:not(.active) {
+  border-color: var(--surface-border-hover);
+  background-color: var(--surface-hover);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.submit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--primary-color-rgb), 0.4);
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .error-message {
-  text-align: center;
-  padding: 0.75rem;
-  border-radius: 0.25rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
   background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 10px;
+  color: #f44336;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .success-message {
-  text-align: center;
-  padding: 0.75rem;
-  border-radius: 0.25rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
   background-color: rgba(76, 175, 80, 0.1);
+  border-radius: 10px;
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
 }
 
-:deep(.p-calendar), :deep(.p-calendar-w-btn) {
+/* Calendar styling */
+:deep(.p-calendar) {
   width: 100%;
 }
 
-:deep(.p-password-input) {
+:deep(.p-calendar .p-inputtext) {
   width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--surface-border);
+  background: var(--surface-ground);
+  transition: all 0.2s ease;
+}
+
+:deep(.p-calendar .p-inputtext:focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+}
+
+:deep(.p-calendar .p-icon) {
+  color: var(--text-color-secondary);
+}
+
+/* Responsive design */
+@media (max-width: 992px) {
+  .auth-left {
+    display: none;
+  }
+  
+  .auth-right {
+    flex: 1;
+  }
+  
+  .auth-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .auth-header h2 {
+    font-size: 1.75rem;
+  }
+  
+  .id-type-selector {
+    flex-direction: column;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-card {
+  animation: fadeIn 0.6s ease both;
+}
+
+.auth-left-content {
+  animation: fadeIn 0.8s ease both;
+  animation-delay: 0.2s;
 }
 </style>
