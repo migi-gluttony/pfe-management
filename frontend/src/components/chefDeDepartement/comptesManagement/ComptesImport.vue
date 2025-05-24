@@ -266,6 +266,13 @@ watch(() => props.visible, (newValue) => {
     errors.value = [];
   }
 });
+watch(() => pastedData.value, (newValue) => {
+  if (activeTab.value === 'paste' && newValue && newValue.trim() !== '') {
+    parseData(newValue, pasteFormat.value);
+  } else if (activeTab.value === 'paste') {
+    previewData.value = [];
+  }
+});
 
 // Computed property to determine if import button should be enabled
 const canImport = computed(() => {

@@ -235,10 +235,10 @@ function getGradeClass(grade) {
     if (grade === null || grade === undefined) return "";
     if (grade >= 16) return "grade-excellent";
     if (grade >= 14) return "grade-very-good";
-    if (grade >= 12) return "grade-good";
-    if (grade >= 10) return "grade-satisfactory";
-    return "grade-poor";
+    if (grade >= 12) return "grade-satisfactory"; // Changed from grade-good
+    return "grade-poor"; // Applies to all grades < 12 now
 }
+
 
 function calculateFinalGrade(note) {
     // Use the pourcentages to calculate the weighted final grade
@@ -261,10 +261,10 @@ function calculateFinalGrade(note) {
 function getMention(grade) {
     if (grade >= 16) return "Excellent";
     if (grade >= 14) return "Très Bien";
-    if (grade >= 12) return "Bien";
-    if (grade >= 10) return "Passable";
-    return "Insuffisant";
+    if (grade >= 12) return "Passable"; // Changed from "Bien"
+    return "Insuffisant"; // Applies to all grades < 12 now
 }
+
 
 function getMentionSeverity(mention) {
     switch (mention) {
@@ -272,9 +272,7 @@ function getMentionSeverity(mention) {
             return "success";
         case "Très Bien":
             return "info";
-        case "Bien":
-            return "info";
-        case "Passable":
+        case "Passable": // This was previously "Bien", but we've changed the mention name
             return "warning";
         case "Insuffisant":
             return "danger";

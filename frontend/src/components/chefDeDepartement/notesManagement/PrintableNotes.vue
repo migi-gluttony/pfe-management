@@ -271,9 +271,8 @@ function getMention(grade) {
   if (grade === null || grade === undefined) return '-';
   if (grade >= 16) return 'Excellent';
   if (grade >= 14) return 'Très Bien';
-  if (grade >= 12) return 'Bien';
-  if (grade >= 10) return 'Passable';
-  return 'Insuffisant';
+  if (grade >= 12) return 'Passable'; // Changed from "Bien"
+  return 'Insuffisant'; // Applies to all grades < 12 now
 }
 
 function canShowFinalGrade(note) {

@@ -123,12 +123,12 @@
                         <div class="reports-section">
                             <h3 class="section-title">
                                 <i class="pi pi-file-pdf" style="margin-right: 0.5rem"></i>
-                                Rapports du Binôme
+                                Rapport du Binôme
                             </h3>
                             
                             <div v-if="loadingReports" class="loading-container">
                                 <ProgressSpinner />
-                                <p>Chargement des rapports...</p>
+                                <p>Chargement des rapport...</p>
                             </div>
                             
                             <div v-else-if="reports.length === 0" class="empty-reports">
